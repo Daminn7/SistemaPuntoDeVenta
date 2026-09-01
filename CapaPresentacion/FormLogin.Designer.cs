@@ -140,6 +140,7 @@
             // BIngresar
             // 
             this.BIngresar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
+            this.BIngresar.Cursor = System.Windows.Forms.Cursors.Hand;
             this.BIngresar.FlatAppearance.BorderSize = 0;
             this.BIngresar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BIngresar.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -199,8 +200,8 @@
             // 
             // FormLogin
             // 
-            this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
-            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
+            this.AutoScaleDimensions = new System.Drawing.SizeF(120F, 120F);
+            this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Dpi;
             this.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(36)))));
             this.ClientSize = new System.Drawing.Size(943, 561);
             this.Controls.Add(this.LErrorPassword);
@@ -211,7 +212,7 @@
             this.Controls.Add(this.PPassword);
             this.Controls.Add(this.PUsuario);
             this.Controls.Add(this.PIzquierdo);
-            this.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.Cursor = System.Windows.Forms.Cursors.Default;
             this.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(130)))), ((int)(((byte)(130)))), ((int)(((byte)(130)))));
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedDialog;
             this.KeyPreview = true;

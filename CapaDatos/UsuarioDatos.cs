@@ -8,30 +8,30 @@ namespace CapaDatos
 {
     public class UsuarioDatos
     {
-        public bool Autenticar(string usuario, string password, out string rol, out string nombreCompleto)
+        public bool Autenticar(string codigoAcceso, string password, out string rol, out string nombreCompleto)
         {
-            // Simulación temporal en memoria (más adelante conectará a la API REST / MySQL)
-            if (usuario == "admin" && password == "admin123")
+            rol = string.Empty;
+            nombreCompleto = string.Empty;
+            // Simulación temporal en memoria para pruebas (más adelante conectará a la API REST / MySQL)
+            if (codigoAcceso.Equals("admin", StringComparison.OrdinalIgnoreCase) && password == "admin123")
             {
+                nombreCompleto = "Carlos Mendoza";
                 rol = "Administrador";
-                nombreCompleto = "Administrador General";
                 return true;
             }
-            else if (usuario == "vendedor" && password == "1234")
+            else if (codigoAcceso.Equals("vendedor", StringComparison.OrdinalIgnoreCase) && password == "1234")
             {
+                nombreCompleto = "Martín Gómez";
                 rol = "Vendedor";
-                nombreCompleto = "Vendedor Mostrador";
                 return true;
             }
-            else if (usuario == "cajero" && password == "1234")
+            else if (codigoAcceso.Equals("cajero", StringComparison.OrdinalIgnoreCase) && password == "1234")
             {
+                nombreCompleto = "Laura Benítez";
                 rol = "Cobranza";
-                nombreCompleto = "Cajero Turno Mañana";
                 return true;
             }
 
-            rol = string.Empty;
-            nombreCompleto = string.Empty;
             return false;
         }
     }

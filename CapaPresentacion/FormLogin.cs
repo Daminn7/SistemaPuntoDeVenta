@@ -242,10 +242,11 @@ namespace CapaPresentacion
 
                 this.Hide();
 
-                // Aquí abriremos el FormPrincipal pasando el rol y nombre
-                // FormPrincipal frmPrincipal = new FormPrincipal(nombreCompleto, rol);
-                // frmPrincipal.ShowDialog();
+                // Abrimos el FormPrincipal con los datos de sesión
+                FormPrincipal frmPrincipal = new FormPrincipal(nombreCompleto, rol);
+                frmPrincipal.ShowDialog();
 
+                // Al cerrar el FormPrincipal, cerramos la aplicación
                 this.Close();
             }
             else
