@@ -1,5 +1,0 @@
-<Solution>
-  <Project Path="CapaDatos/CapaDatos.csproj" />
-  <Project Path="CapaLogica/CapaLogica.csproj" />
-  <Project Path="CapaPresentacion/CapaPresentacion.csproj" />
-</Solution>

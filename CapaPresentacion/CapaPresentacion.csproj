@@ -46,27 +46,49 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
-    <Compile Include="Form1.cs">
+    <Compile Include="FormLogin.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Form1.Designer.cs">
-      <DependentUpon>Form1.cs</DependentUpon>
+    <Compile Include="FormLogin.Designer.cs">
+      <DependentUpon>FormLogin.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormPrincipal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPrincipal.Designer.cs">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormProductos.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormProductos.Designer.cs">
+      <DependentUpon>FormProductos.cs</DependentUpon>
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormLogin.resx">
+      <DependentUpon>FormLogin.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormPrincipal.resx">
+      <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormProductos.resx">
+      <DependentUpon>FormProductos.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
-      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
       <SubType>Designer</SubType>
+      <LastGenOutput>Resources.Designer.cs</LastGenOutput>
     </EmbeddedResource>
-    <Compile Include="Properties\Resources.Designer.cs">
-      <AutoGen>True</AutoGen>
-      <DependentUpon>Resources.resx</DependentUpon>
-    </Compile>
     <None Include="Properties\Settings.settings">
       <Generator>SettingsSingleFileGenerator</Generator>
       <LastGenOutput>Settings.Designer.cs</LastGenOutput>
     </None>
+    <Compile Include="Properties\Resources.Designer.cs">
+      <AutoGen>True</AutoGen>
+      <DesignTime>True</DesignTime>
+      <DependentUpon>Resources.resx</DependentUpon>
+    </Compile>
     <Compile Include="Properties\Settings.Designer.cs">
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
@@ -81,6 +103,69 @@
       <Project>{b469bed7-1494-4c16-b6ef-b4815f7abf0a}</Project>
       <Name>CapaLogica</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\logo.jpeg" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\5987462.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\usuario.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\contraseña.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\user.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\usuario_.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\candado_.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\candado_1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\usuario_1.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\Cajita.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_nuevo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_guardar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_editar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_desactivar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_limpiar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_buscar.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_editar_blanco.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_desactivar_blanco.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_guardar_blanco.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_limpiar_blanco.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\boton_nuevo_blanco.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
