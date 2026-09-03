@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -19,15 +20,43 @@ namespace CapaPresentacion
         public FormPrincipal(string nombreUsuario, string rolUsuario)
         {
             InitializeComponent();
-            GenerarIconosMenu();
             _nombreUsuario = nombreUsuario;
             _rolUsuario = rolUsuario;
+        }
+        private void FormPrincipal_Load(object sender, EventArgs e)
+        {
+            /*// Evaluamos el rol del usuario autenticado
+            switch (UsuarioSesion.Rol.ToUpper())
+            {
+                case "COBRANZA":
+                case "CAJERO":
+                    AbrirFormHijo(new FormCobroCaja());
+                    ResaltarBotonActivo(btnCaja);
+                    break;
+
+                case "VENDEDOR":
+                    AbrirFormHijo(new FormNuevaPreVenta());
+                    ResaltarBotonActivo(btnVentas);
+                    break;
+
+                case "ADMINISTRADOR":
+                default:
+                    // Si ya tienes FormDashboard usas ese; si no, FormHistorialVentas
+                    AbrirFormHijo(new FormDashboard());
+                    ResaltarBotonActivo(btnInicio); // o btnVentas / btnDashboard
+                    break;
+            }*/
+
+            // 1. Genera los PNGs en la carpeta bin/Debug si aún no existen
+            GenerarIconosMenu();
 
             ConfigurarSesion();
-            IniciarReloj();
             AplicarPermisosPorRol();   
-        }
+            IniciarReloj();
+            // 5. Abre la pantalla correspondiente sin dejar el contenedor vacío
+            //CargarPantallaInicial();
 
+        }
         private void ConfigurarSesion()
         {
             LUsuarioInfo.Text = $"Usuario: {_nombreUsuario} | Rol: {_rolUsuario.ToUpper()}";
@@ -36,9 +65,9 @@ namespace CapaPresentacion
         // Restringe el acceso a módulos según el perfil (RF-SEG#01)
         private void AplicarPermisosPorRol()
         {
-            switch (_rolUsuario)
+            switch (_rolUsuario.Trim().ToLower())
             {
-                case "Vendedor":
+                case "vendedor":
                     // Solo consulta catálogo, alta clientes y órdenes
                     BMenuVentas.Visible = true;
                     BMenuClientes.Visible = true;
@@ -48,7 +77,7 @@ namespace CapaPresentacion
                     BMenuReportes.Visible = false;
                     break;
 
-                case "Cobranza":
+                case "cobranza":
                     // Operativo de Caja y Cobranza
                     BMenuVentas.Visible = false;
                     BMenuClientes.Visible = true;
@@ -58,7 +87,7 @@ namespace CapaPresentacion
                     BMenuReportes.Visible = false;
                     break;
 
-                case "Administrador":
+                case "administrador":
                     // Acceso total a todos los módulos
                     BMenuVentas.Visible = true;
                     BMenuClientes.Visible = true;
@@ -90,6 +119,31 @@ namespace CapaPresentacion
             }
         }
 
+        // Carga la primera pantalla al entrar sin dejar el panel gris vacío
+        private void CargarPantallaInicial()
+        {
+            switch (_rolUsuario.Trim().ToLower())
+            {
+                case "vendedor":
+                    // Cuando crees FormNuevaPreVenta lo activas aquí:
+                    // AbrirFormularioEnContenedor<FormNuevaPreVenta>();
+                    AbrirFormularioEnContenedor<FormClientes>();
+                    break;
+
+                case "cobranza":
+                    // Cuando crees FormCobroCaja lo activas aquí:
+                    // AbrirFormularioEnContenedor<FormCobroCaja>();
+                    AbrirFormularioEnContenedor<FormClientes>();
+                    break;
+
+                case "administrador":
+                default:
+                    // Mientras no exista FormDashboard, arranca en Catálogo
+                    AbrirFormularioEnContenedor<FormProductos>();
+                    break;
+            }
+        }
+
         // Método maestro para abrir cualquier formulario dentro del PContenedor
         public void AbrirFormularioEnContenedor<T>() where T : Form, new()
         {
@@ -113,7 +167,6 @@ namespace CapaPresentacion
             PContenedor.Controls.Add(_formularioActivo);
             PContenedor.Tag = _formularioActivo;
             _formularioActivo.Show();
-            _formularioActivo.BringToFront();
         }
 
         //Generador de Iconos para no exportar una por una cada imagen
@@ -134,7 +187,7 @@ namespace CapaPresentacion
             };
 
             int posicionX = 20;  // Margen inicial izquierdo
-            int anchoBoton = 140; // Ancho suficiente para que ninguna palabra se corte
+            int anchoBoton = 160; // Ancho suficiente para que ninguna palabra se corte
             int altoBoton = 70;   // Altura adaptada al panel de 90px
             // Centrado vertical dinámico respecto al panel contenedor (PMenu)
             int posicionY = (PMenu.Height - altoBoton) / 2; // (90 - 70) / 2 = 10
@@ -148,14 +201,14 @@ namespace CapaPresentacion
                 posicionX += anchoBoton + 12; // 12px de separación entre botones
 
                 // Quitamos el Padding lateral que apretaba el texto
-                item.boton.Padding = Padding.Empty;
+                item.boton.Padding = new Padding(12, 0, 8, 0);
 
                 // Estilos
                 item.boton.Text = item.texto;
                 item.boton.Image = item.icono;
                 item.boton.BackColor = colorFondo;
                 item.boton.ForeColor = Color.White;
-                item.boton.Font = new Font("Segoe UI", 9.0f, FontStyle.Bold);
+                item.boton.Font = new Font("Segoe UI", 12.0f, FontStyle.Bold);
                 item.boton.FlatStyle = FlatStyle.Flat;
                 item.boton.FlatAppearance.BorderSize = 0;
                 item.boton.Cursor = Cursors.Hand;
@@ -164,22 +217,37 @@ namespace CapaPresentacion
                 // Hover
                 item.boton.MouseEnter += (s, e) => ((Button)s).BackColor = colorHover;
                 item.boton.MouseLeave += (s, e) => ((Button)s).BackColor = colorFondo;
+
+                //3.Ajusta la alineación visual(icono a la izquierda del texto)
+                Button[] botones = { BMenuVentas, BMenuClientes, BMenuProductos, BMenuCaja, BMenuUsuarios, BMenuReportes }; 
+                foreach (var btn in botones) { 
+                    if (btn != null) { 
+                        btn.ImageAlign = ContentAlignment.MiddleLeft; 
+                        btn.TextAlign = ContentAlignment.MiddleRight; 
+                        btn.TextImageRelation = TextImageRelation.ImageBeforeText; } 
+                }
             }
         }
 
         //Generación de iconos
         private Image DibujarIconoVentas(Color color)
         {
-            Bitmap bmp = new Bitmap(36, 36);
+            Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 2.5f))
+                using (Pen pen = new Pen(color, 3.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    g.DrawLines(pen, new[] { new Point(3, 6), new Point(9, 6), new Point(14, 23), new Point(29, 23), new Point(32, 12), new Point(10, 12) });
-                    g.FillEllipse(brush, 14, 26, 4.5f, 4.5f);
-                    g.FillEllipse(brush, 26, 26, 4.5f, 4.5f);
+                    g.DrawLines(pen, new[] { 
+                        new Point(4, 8), 
+                        new Point(11, 8), 
+                        new Point(17, 28), 
+                        new Point(35, 28), 
+                        new Point(39, 14), 
+                        new Point(13, 14) });
+                    g.FillEllipse(brush, 17, 32, 5.5f, 5.5f);
+                    g.FillEllipse(brush, 32, 32, 5.5f, 5.5f);
                 }
             }
             return bmp;
@@ -187,17 +255,17 @@ namespace CapaPresentacion
 
         private Image DibujarIconoClientes(Color color)
         {
-            Bitmap bmp = new Bitmap(36, 36);
+            Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 using (Brush brush = new SolidBrush(color))
-                using (Pen pen = new Pen(color, 2.5f))
+                using (Pen pen = new Pen(color, 3.0f))
                 {
-                    g.FillEllipse(brush, 12, 3, 12, 12); // Cabeza
+                    g.FillEllipse(brush, 15, 4, 14, 14); // Cabeza
                     using (var p = new System.Drawing.Drawing2D.GraphicsPath())
                     {
-                        p.AddArc(6, 18, 24, 24, 180, 180);
+                        p.AddArc(7, 22, 30, 30, 180, 180);
                         p.CloseFigure();
                         g.FillPath(brush, p);
                     }
@@ -208,16 +276,16 @@ namespace CapaPresentacion
 
         private Image DibujarIconoCatalogo(Color color)
         {
-            Bitmap bmp = new Bitmap(36, 36);
+            Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 2.5f))
+                using (Pen pen = new Pen(color, 3.0f))
                 {
-                    g.DrawPolygon(pen, new[] { new Point(18, 4), new Point(31, 12), new Point(31, 24), new Point(18, 32), new Point(5, 24), new Point(5, 12) });
-                    g.DrawLine(pen, 18, 4, 18, 32);
-                    g.DrawLine(pen, 5, 12, 18, 18);
-                    g.DrawLine(pen, 31, 12, 18, 18);
+                    g.DrawPolygon(pen, new[] { new Point(22, 5), new Point(38, 14), new Point(38, 30), new Point(22, 39), new Point(6, 30), new Point(6, 14) });
+                    g.DrawLine(pen, 22, 5, 22, 39);
+                    g.DrawLine(pen, 6, 14, 22, 22);
+                    g.DrawLine(pen, 38, 14, 22, 22);
                 }
             }
             return bmp;
@@ -225,15 +293,15 @@ namespace CapaPresentacion
 
         private Image DibujarIconoCaja(Color color)
         {
-            Bitmap bmp = new Bitmap(36, 36);
+            Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 2.5f))
+                using (Pen pen = new Pen(color, 3.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    g.DrawRectangle(pen, 4, 9, 28, 18);
-                    g.FillEllipse(brush, 15, 15, 6, 6);
+                    g.DrawRectangle(pen, 5, 11, 34, 22);
+                    g.FillEllipse(brush, 18, 18, 8, 8);
                 }
             }
             return bmp;
@@ -241,16 +309,16 @@ namespace CapaPresentacion
 
         private Image DibujarIconoPersonal(Color color)
         {
-            Bitmap bmp = new Bitmap(36, 36);
+            Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 2.5f))
+                using (Pen pen = new Pen(color, 3.0f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    g.DrawRectangle(pen, 6, 4, 24, 28);
-                    g.FillEllipse(brush, 14, 9, 8, 8);
-                    g.DrawLine(pen, 11, 24, 25, 24);
+                    g.DrawRectangle(pen, 7, 5, 30, 34);
+                    g.FillEllipse(brush, 17, 11, 10, 10);
+                    g.DrawLine(pen, 13, 30, 31, 30);
                 }
             }
             return bmp;
@@ -258,46 +326,20 @@ namespace CapaPresentacion
 
         private Image DibujarIconoInformes(Color color)
         {
-            Bitmap bmp = new Bitmap(36, 36);
+            Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
                 using (Brush brush = new SolidBrush(color))
-                using (Pen pen = new Pen(color, 2.5f))
+                using (Pen pen = new Pen(color, 3.2f))
                 {
-                    g.DrawLine(pen, 4, 30, 32, 30);
-                    g.FillRectangle(brush, 7, 18, 5, 12);
-                    g.FillRectangle(brush, 15, 12, 5, 18);
-                    g.FillRectangle(brush, 23, 6, 5, 24);
+                    g.DrawLine(pen, 5, 37, 39, 37);
+                    g.FillRectangle(brush, 9, 22, 6, 15);
+                    g.FillRectangle(brush, 19, 15, 6, 22);
+                    g.FillRectangle(brush, 29, 7, 6, 30);
                 }
             }
             return bmp;
-        }
-
-        private void FormPrincipal_Load(object sender, EventArgs e)
-        {
-            // 1. Genera los PNGs en la carpeta bin/Debug si aún no existen
-            GenerarIconosMenu();
-
-            // 2. Asigna cada imagen generada a su respectivo botón
-            BMenuVentas.Image = Image.FromFile("ico_ventas.png");
-            BMenuClientes.Image = Image.FromFile("ico_clientes.png");
-            BMenuProductos.Image = Image.FromFile("ico_catalogo.png");
-            BMenuCaja.Image = Image.FromFile("ico_caja.png");
-            BMenuUsuarios.Image = Image.FromFile("ico_personal.png");
-            BMenuReportes.Image = Image.FromFile("ico_informes.png");
-
-            // 3. Ajusta la alineación visual (icono a la izquierda del texto)
-            Button[] botones = { BMenuVentas, BMenuClientes, BMenuProductos, BMenuCaja, BMenuUsuarios, BMenuReportes };
-            foreach (var btn in botones)
-            {
-                if (btn != null)
-                {
-                    btn.ImageAlign = ContentAlignment.MiddleLeft;
-                    btn.TextAlign = ContentAlignment.MiddleRight;
-                    btn.TextImageRelation = TextImageRelation.ImageBeforeText;
-                }
-            }
         }
 
         private void BCerrarSesion_Click(object sender, EventArgs e)
@@ -311,6 +353,11 @@ namespace CapaPresentacion
 
             if (resultado == DialogResult.Yes)
             {
+                if (_timerReloj != null)
+                {
+                    _timerReloj.Stop();
+                    _timerReloj.Dispose();
+                }
                 this.Close();
             }
         }
@@ -318,6 +365,21 @@ namespace CapaPresentacion
         private void BMenuProductos_Click(object sender, EventArgs e)
         {
             AbrirFormularioEnContenedor<FormProductos>();
+        }
+
+        private void BMenuClientes_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioEnContenedor<FormClientes>();
+        }
+
+        private void BMenuVentas_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioEnContenedor<FormHistorialVentas>();
+        }
+
+        private void BMenuCaja_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioEnContenedor<FormMovimientosCaja>();
         }
     }
 }
