@@ -46,17 +46,35 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormHistorialVentas.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormHistorialVentas.Designer.cs">
+      <DependentUpon>FormHistorialVentas.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormLogin.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FormLogin.Designer.cs">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormMovimientosCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormMovimientosCaja.Designer.cs">
+      <DependentUpon>FormMovimientosCaja.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormPrincipal.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="FormPrincipal.Designer.cs">
       <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormClientes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormClientes.Designer.cs">
+      <DependentUpon>FormClientes.cs</DependentUpon>
     </Compile>
     <Compile Include="FormProductos.cs">
       <SubType>Form</SubType>
@@ -66,11 +84,20 @@
     </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormHistorialVentas.resx">
+      <DependentUpon>FormHistorialVentas.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormLogin.resx">
       <DependentUpon>FormLogin.cs</DependentUpon>
     </EmbeddedResource>
+    <EmbeddedResource Include="FormMovimientosCaja.resx">
+      <DependentUpon>FormMovimientosCaja.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormPrincipal.resx">
       <DependentUpon>FormPrincipal.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="FormClientes.resx">
+      <DependentUpon>FormClientes.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="FormProductos.resx">
       <DependentUpon>FormProductos.cs</DependentUpon>
@@ -166,6 +193,9 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="Resources\boton_nuevo_blanco.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Resources\7542547.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>
