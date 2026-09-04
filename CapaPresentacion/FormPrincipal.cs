@@ -55,6 +55,8 @@ namespace CapaPresentacion
             IniciarReloj();
             // 5. Abre la pantalla correspondiente sin dejar el contenedor vacío
             //CargarPantallaInicial();
+            // Carga inicial automática de la pantalla principal
+            BMenuDashboard_Click(null, EventArgs.Empty);
 
         }
         private void ConfigurarSesion()
@@ -188,7 +190,7 @@ namespace CapaPresentacion
 
             int posicionX = 20;  // Margen inicial izquierdo
             int anchoBoton = 160; // Ancho suficiente para que ninguna palabra se corte
-            int altoBoton = 70;   // Altura adaptada al panel de 90px
+            int altoBoton = 60;   // Altura adaptada al panel de 90px
             // Centrado vertical dinámico respecto al panel contenedor (PMenu)
             int posicionY = (PMenu.Height - altoBoton) / 2; // (90 - 70) / 2 = 10
             foreach (var item in listaBotones)
@@ -290,7 +292,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoCaja(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -341,7 +342,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void BCerrarSesion_Click(object sender, EventArgs e)
         {
             DialogResult resultado = MessageBox.Show(
@@ -380,6 +380,10 @@ namespace CapaPresentacion
         private void BMenuCaja_Click(object sender, EventArgs e)
         {
             AbrirFormularioEnContenedor<FormMovimientosCaja>();
+        }
+        private void BMenuDashboard_Click(object sender, EventArgs e)
+        {
+            AbrirFormularioEnContenedor<FormDashboard>();
         }
     }
 }

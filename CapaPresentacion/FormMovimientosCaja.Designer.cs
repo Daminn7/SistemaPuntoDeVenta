@@ -137,7 +137,14 @@
             dataGridViewCellStyle25.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(225)))), ((int)(((byte)(235)))), ((int)(((byte)(245)))));
             dataGridViewCellStyle25.SelectionForeColor = System.Drawing.Color.Black;
             dataGridViewCellStyle25.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.dgvMovimientos.DefaultCellStyle = dataGridViewCellStyle25;
+            this.dgvMovimientos.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            this.dgvMovimientos.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            this.dgvMovimientos.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53); // Ocre
+            this.dgvMovimientos.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
+            this.dgvMovimientos.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 249, 250);
+            this.dgvMovimientos.AlternatingRowsDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            this.dgvMovimientos.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53); // Ocre idéntico
+            this.dgvMovimientos.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
             this.dgvMovimientos.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvMovimientos.EnableHeadersVisualStyles = false;
             this.dgvMovimientos.Location = new System.Drawing.Point(0, 6);
@@ -226,6 +233,7 @@
             // pnlTarjetaLateral
             // 
             this.pnlTarjetaLateral.BackColor = System.Drawing.Color.White;
+            this.pnlTarjetaLateral.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlTarjetaLateral.Controls.Add(this.dgvBalance);
             this.pnlTarjetaLateral.Controls.Add(this.pnlAccionesTarjeta);
             this.pnlTarjetaLateral.Controls.Add(this.lblSubtituloTarjeta);

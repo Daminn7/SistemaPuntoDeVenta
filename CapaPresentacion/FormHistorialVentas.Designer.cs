@@ -74,6 +74,7 @@
             this.lblTituloPrincipal = new System.Windows.Forms.Label();
             this.pbIconoTitulo = new System.Windows.Forms.PictureBox();
             this.pnlEncabezado = new System.Windows.Forms.Panel();
+            this.Load += new System.EventHandler(this.FormHistorialVentas_Load);
             this.pnlFondo.SuspendLayout();
             this.tlpContenido.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvVentas)).BeginInit();
@@ -225,6 +226,7 @@
             // pnlTarjetaLateral
             // 
             this.pnlTarjetaLateral.BackColor = System.Drawing.Color.White;
+            this.pnlTarjetaLateral.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.pnlTarjetaLateral.Controls.Add(this.dgvDetalle);
             this.pnlTarjetaLateral.Controls.Add(this.pnlAccionesTarjeta);
             this.pnlTarjetaLateral.Controls.Add(this.lblSubtituloTarjeta);
@@ -586,7 +588,7 @@
             this.lblTituloPrincipal.Location = new System.Drawing.Point(38, 5);
             this.lblTituloPrincipal.AutoSize = true;
             //
-            this.Load += new System.EventHandler(this.FormHistorialVentas_Load);
+            
 
             // 
             // FormHistorialVentas
