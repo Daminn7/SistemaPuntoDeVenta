@@ -33,15 +33,17 @@
             this.BCerrarSesion = new System.Windows.Forms.Button();
             this.LUsuarioInfo = new System.Windows.Forms.Label();
             this.LTitulo = new System.Windows.Forms.Label();
-            this.PMenu = new System.Windows.Forms.Panel();
-            this.BMenuReportes = new System.Windows.Forms.Button();
-            this.BMenuUsuarios = new System.Windows.Forms.Button();
-            this.BMenuCaja = new System.Windows.Forms.Button();
-            this.BMenuProductos = new System.Windows.Forms.Button();
-            this.BMenuClientes = new System.Windows.Forms.Button();
+            this.FLPModulos = new System.Windows.Forms.FlowLayoutPanel();
             this.BMenuVentas = new System.Windows.Forms.Button();
+            this.BMenuClientes = new System.Windows.Forms.Button();
+            this.BMenuProductos = new System.Windows.Forms.Button();
+            this.BMenuCaja = new System.Windows.Forms.Button();
+            this.BMenuUsuarios = new System.Windows.Forms.Button();
+            this.BMenuReportes = new System.Windows.Forms.Button();
             this.PContenedor = new System.Windows.Forms.Panel();
+            this.PMenu = new System.Windows.Forms.Panel();
             this.PCabecera.SuspendLayout();
+            this.FLPModulos.SuspendLayout();
             this.PMenu.SuspendLayout();
             this.SuspendLayout();
             // 
@@ -109,93 +111,109 @@
             this.LTitulo.TabIndex = 0;
             this.LTitulo.Text = "Hierro y Forja";
             // 
-            // PMenu
+            // FLPModulos
             // 
-            this.PMenu.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(40)))), ((int)(((byte)(44)))));
-            this.PMenu.Controls.Add(this.BMenuReportes);
-            this.PMenu.Controls.Add(this.BMenuUsuarios);
-            this.PMenu.Controls.Add(this.BMenuCaja);
-            this.PMenu.Controls.Add(this.BMenuProductos);
-            this.PMenu.Controls.Add(this.BMenuClientes);
-            this.PMenu.Controls.Add(this.BMenuVentas);
-            this.PMenu.Dock = System.Windows.Forms.DockStyle.Top;
-            this.PMenu.Location = new System.Drawing.Point(0, 60);
-            this.PMenu.Name = "PMenu";
-            this.PMenu.Size = new System.Drawing.Size(1330, 90);
-            this.PMenu.TabIndex = 1;
+            this.FLPModulos.Controls.Add(this.BMenuVentas);
+            this.FLPModulos.Controls.Add(this.BMenuClientes);
+            this.FLPModulos.Controls.Add(this.BMenuProductos);
+            this.FLPModulos.Controls.Add(this.BMenuCaja);
+            this.FLPModulos.Controls.Add(this.BMenuUsuarios);
+            this.FLPModulos.Controls.Add(this.BMenuReportes);
+            this.FLPModulos.Dock = System.Windows.Forms.DockStyle.Top;
+            this.FLPModulos.Location = new System.Drawing.Point(0, 0);
+            this.FLPModulos.Name = "FLPModulos";
+            this.FLPModulos.RightToLeft = System.Windows.Forms.RightToLeft.No;
+            this.FLPModulos.Size = new System.Drawing.Size(1330, 87);
+            this.FLPModulos.TabIndex = 0;
+            this.FLPModulos.WrapContents = false;
             // 
-            // BMenuReportes
+            // BMenuVentas
             // 
-            this.BMenuReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BMenuReportes.ForeColor = System.Drawing.Color.White;
-            this.BMenuReportes.Location = new System.Drawing.Point(739, 11);
-            this.BMenuReportes.Name = "BMenuReportes";
-            this.BMenuReportes.Size = new System.Drawing.Size(140, 70);
-            this.BMenuReportes.TabIndex = 5;
-            this.BMenuReportes.Text = "Informes";
-            this.BMenuReportes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.BMenuReportes.UseVisualStyleBackColor = true;
+            this.BMenuVentas.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BMenuVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BMenuVentas.ForeColor = System.Drawing.Color.White;
+            this.BMenuVentas.Location = new System.Drawing.Point(3, 7);
+            this.BMenuVentas.Margin = new System.Windows.Forms.Padding(3, 7, 3, 3);
+            this.BMenuVentas.Name = "BMenuVentas";
+            this.BMenuVentas.Size = new System.Drawing.Size(140, 72);
+            this.BMenuVentas.TabIndex = 12;
+            this.BMenuVentas.Text = "Ventas";
+            this.BMenuVentas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.BMenuVentas.UseVisualStyleBackColor = true;
+            this.BMenuVentas.Click += new System.EventHandler(this.BMenuVentas_Click);
             // 
-            // BMenuUsuarios
+            // BMenuClientes
             // 
-            this.BMenuUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BMenuUsuarios.ForeColor = System.Drawing.Color.White;
-            this.BMenuUsuarios.Location = new System.Drawing.Point(593, 11);
-            this.BMenuUsuarios.Name = "BMenuUsuarios";
-            this.BMenuUsuarios.Size = new System.Drawing.Size(140, 70);
-            this.BMenuUsuarios.TabIndex = 4;
-            this.BMenuUsuarios.Text = "Personal y Perfiles";
-            this.BMenuUsuarios.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.BMenuUsuarios.UseVisualStyleBackColor = true;
-            // 
-            // BMenuCaja
-            // 
-            this.BMenuCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BMenuCaja.ForeColor = System.Drawing.Color.White;
-            this.BMenuCaja.Location = new System.Drawing.Point(447, 11);
-            this.BMenuCaja.Name = "BMenuCaja";
-            this.BMenuCaja.Size = new System.Drawing.Size(140, 70);
-            this.BMenuCaja.TabIndex = 3;
-            this.BMenuCaja.Text = "Caja";
-            this.BMenuCaja.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.BMenuCaja.UseVisualStyleBackColor = true;
+            this.BMenuClientes.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BMenuClientes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BMenuClientes.ForeColor = System.Drawing.Color.White;
+            this.BMenuClientes.Location = new System.Drawing.Point(149, 7);
+            this.BMenuClientes.Margin = new System.Windows.Forms.Padding(3, 7, 3, 3);
+            this.BMenuClientes.Name = "BMenuClientes";
+            this.BMenuClientes.Size = new System.Drawing.Size(140, 72);
+            this.BMenuClientes.TabIndex = 13;
+            this.BMenuClientes.Text = "Clientes";
+            this.BMenuClientes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.BMenuClientes.UseVisualStyleBackColor = true;
+            this.BMenuClientes.Click += new System.EventHandler(this.BMenuClientes_Click);
             // 
             // BMenuProductos
             // 
+            this.BMenuProductos.Dock = System.Windows.Forms.DockStyle.Top;
             this.BMenuProductos.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BMenuProductos.ForeColor = System.Drawing.Color.White;
-            this.BMenuProductos.Location = new System.Drawing.Point(301, 11);
+            this.BMenuProductos.Location = new System.Drawing.Point(295, 7);
+            this.BMenuProductos.Margin = new System.Windows.Forms.Padding(3, 7, 3, 3);
             this.BMenuProductos.Name = "BMenuProductos";
-            this.BMenuProductos.Size = new System.Drawing.Size(140, 70);
-            this.BMenuProductos.TabIndex = 2;
+            this.BMenuProductos.Size = new System.Drawing.Size(140, 72);
+            this.BMenuProductos.TabIndex = 14;
             this.BMenuProductos.Text = "Catálogo";
             this.BMenuProductos.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
             this.BMenuProductos.UseVisualStyleBackColor = true;
             this.BMenuProductos.Click += new System.EventHandler(this.BMenuProductos_Click);
             // 
-            // BMenuClientes
+            // BMenuCaja
             // 
-            this.BMenuClientes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BMenuClientes.ForeColor = System.Drawing.Color.White;
-            this.BMenuClientes.Location = new System.Drawing.Point(155, 11);
-            this.BMenuClientes.Name = "BMenuClientes";
-            this.BMenuClientes.Size = new System.Drawing.Size(140, 70);
-            this.BMenuClientes.TabIndex = 1;
-            this.BMenuClientes.Text = "Clientes";
-            this.BMenuClientes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.BMenuClientes.UseVisualStyleBackColor = true;
+            this.BMenuCaja.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BMenuCaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BMenuCaja.ForeColor = System.Drawing.Color.White;
+            this.BMenuCaja.Location = new System.Drawing.Point(441, 7);
+            this.BMenuCaja.Margin = new System.Windows.Forms.Padding(3, 7, 3, 3);
+            this.BMenuCaja.Name = "BMenuCaja";
+            this.BMenuCaja.Size = new System.Drawing.Size(140, 72);
+            this.BMenuCaja.TabIndex = 15;
+            this.BMenuCaja.Text = "Caja";
+            this.BMenuCaja.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.BMenuCaja.UseVisualStyleBackColor = true;
+            this.BMenuCaja.Click += new System.EventHandler(this.BMenuCaja_Click);
             // 
-            // BMenuVentas
+            // BMenuUsuarios
             // 
-            this.BMenuVentas.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BMenuVentas.ForeColor = System.Drawing.Color.White;
-            this.BMenuVentas.Location = new System.Drawing.Point(9, 11);
-            this.BMenuVentas.Name = "BMenuVentas";
-            this.BMenuVentas.Size = new System.Drawing.Size(140, 70);
-            this.BMenuVentas.TabIndex = 0;
-            this.BMenuVentas.Text = "Ventas";
-            this.BMenuVentas.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
-            this.BMenuVentas.UseVisualStyleBackColor = true;
+            this.BMenuUsuarios.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BMenuUsuarios.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BMenuUsuarios.ForeColor = System.Drawing.Color.White;
+            this.BMenuUsuarios.Location = new System.Drawing.Point(587, 7);
+            this.BMenuUsuarios.Margin = new System.Windows.Forms.Padding(3, 7, 3, 3);
+            this.BMenuUsuarios.Name = "BMenuUsuarios";
+            this.BMenuUsuarios.Size = new System.Drawing.Size(140, 72);
+            this.BMenuUsuarios.TabIndex = 16;
+            this.BMenuUsuarios.Text = "Personal y Perfiles";
+            this.BMenuUsuarios.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.BMenuUsuarios.UseVisualStyleBackColor = true;
+            // 
+            // BMenuReportes
+            // 
+            this.BMenuReportes.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BMenuReportes.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BMenuReportes.ForeColor = System.Drawing.Color.White;
+            this.BMenuReportes.Location = new System.Drawing.Point(733, 7);
+            this.BMenuReportes.Margin = new System.Windows.Forms.Padding(3, 7, 3, 3);
+            this.BMenuReportes.Name = "BMenuReportes";
+            this.BMenuReportes.Size = new System.Drawing.Size(140, 72);
+            this.BMenuReportes.TabIndex = 17;
+            this.BMenuReportes.Text = "Informes";
+            this.BMenuReportes.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageAboveText;
+            this.BMenuReportes.UseVisualStyleBackColor = true;
             // 
             // PContenedor
             // 
@@ -205,6 +223,17 @@
             this.PContenedor.Name = "PContenedor";
             this.PContenedor.Size = new System.Drawing.Size(1330, 440);
             this.PContenedor.TabIndex = 2;
+            // 
+            // PMenu
+            // 
+            this.PMenu.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(38)))), ((int)(((byte)(40)))), ((int)(((byte)(44)))));
+            this.PMenu.Controls.Add(this.FLPModulos);
+            this.PMenu.Dock = System.Windows.Forms.DockStyle.Top;
+            this.PMenu.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.PMenu.Location = new System.Drawing.Point(0, 60);
+            this.PMenu.Name = "PMenu";
+            this.PMenu.Size = new System.Drawing.Size(1330, 90);
+            this.PMenu.TabIndex = 1;
             // 
             // FormPrincipal
             // 
@@ -222,6 +251,7 @@
             this.Load += new System.EventHandler(this.FormPrincipal_Load);
             this.PCabecera.ResumeLayout(false);
             this.PCabecera.PerformLayout();
+            this.FLPModulos.ResumeLayout(false);
             this.PMenu.ResumeLayout(false);
             this.ResumeLayout(false);
 
@@ -233,14 +263,15 @@
         private System.Windows.Forms.Button BCerrarSesion;
         private System.Windows.Forms.Label LUsuarioInfo;
         private System.Windows.Forms.Label LTitulo;
-        private System.Windows.Forms.Panel PMenu;
         private System.Windows.Forms.Panel PContenedor;
+        private System.Windows.Forms.Label LFechaHora;
+        private System.Windows.Forms.FlowLayoutPanel FLPModulos;
+        private System.Windows.Forms.Panel PMenu;
         private System.Windows.Forms.Button BMenuReportes;
         private System.Windows.Forms.Button BMenuUsuarios;
         private System.Windows.Forms.Button BMenuCaja;
         private System.Windows.Forms.Button BMenuProductos;
         private System.Windows.Forms.Button BMenuClientes;
         private System.Windows.Forms.Button BMenuVentas;
-        private System.Windows.Forms.Label LFechaHora;
     }
 }
