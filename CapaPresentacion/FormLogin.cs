@@ -129,7 +129,6 @@ namespace CapaPresentacion
                     e.Handled = true;
                 }
             };
-
             //Letras, números y símbolos en contraseña
             TPassword.KeyPress += (s, e) =>
             {
@@ -193,7 +192,6 @@ namespace CapaPresentacion
             string clave = (TPassword.Text == "Contraseña") ? "" : TPassword.Text;
 
             bool hayError = false;
-
             //Validación individual previa antes de procesar
             if (string.IsNullOrWhiteSpace(usuario))
             {
@@ -218,7 +216,7 @@ namespace CapaPresentacion
 
             if (string.IsNullOrEmpty(error))
             {
-                // Notificación elegante con la paleta institucional que se desvanece o dura 1 segundo
+                // Notificación con la paleta que se desvanece o dura 1 segundo
                 MostrarBienvenidaFlotante(nombreCompleto, rol);
 
                 this.Hide();
@@ -228,7 +226,6 @@ namespace CapaPresentacion
                 {
                     frmPrincipal.ShowDialog();
                 }
-
                 // Al cerrar el FormPrincipal, cerramos la aplicación
                 this.Close();
             }
@@ -292,7 +289,6 @@ namespace CapaPresentacion
                         e.Graphics.DrawLines(penCheck, checkPoints);
                     }
                 };
-
                 // Saludo principal 
                 Label lblHola = new Label
                 {
@@ -302,7 +298,6 @@ namespace CapaPresentacion
                     Location = new Point(84, 32),
                     AutoSize = true
                 };
-
                 // Rol activo destacado en ocre suave
                 Label lblRol = new Label
                 {
@@ -312,7 +307,6 @@ namespace CapaPresentacion
                     Location = new Point(85, 60),
                     AutoSize = true
                 };
-
                 // Mensaje secundario de inicialización
                 Label lblCargando = new Label
                 {
