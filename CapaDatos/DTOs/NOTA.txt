@@ -1,0 +1,4 @@
+﻿Esta Carpeta contiene las clases que representan los datos que viajan entre tu app y la API.
+LoginDto.cs: esta clase contiene el codigo de usuario y contraseña envía las credenciales a la API cuando se hace login
+LoginResponseDto.cs: Recibe la respuesta de la API después del login (el token, tu nombre, tu rol)
+ProductoDto.cs:esta clase recibe la lista de productos de la API y la muestra en pantalla
