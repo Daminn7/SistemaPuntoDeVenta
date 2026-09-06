@@ -21,7 +21,6 @@ namespace CapaPresentacion
         {
             InitializeComponent();
             InicializarComportamiento();
-            
         }
         private void InicializarComportamiento()
         {   
@@ -31,28 +30,27 @@ namespace CapaPresentacion
             ConfigurarCascadaProvincias();
             ConfigurarValidacionEmailEnVivo();
         }
- 
         // 1. RESTRICCIONES DE TECLADO (KeyPress)
         private void ConfigurarRestriccionesTeclado()
         {
             // DNI: 8 dígitos continuos puros
-            TCodigoInterno.MaxLength = 8;
-            TCodigoInterno.KeyPress += SoloNumeros_KeyPress;
+            TBCodigoInterno.MaxLength = 8;
+            TBCodigoInterno.KeyPress += SoloNumeros_KeyPress;
 
             // CUIL/CUIT: hasta 13 caracteres con los dos guiones (XX-XXXXXXXX-X)
-            TCuilCuit.MaxLength = 13;
-            TCuilCuit.KeyPress += SoloNumeros_KeyPress;
+            TBCuilCuit.MaxLength = 13;
+            TBCuilCuit.KeyPress += SoloNumeros_KeyPress;
 
             // Teléfono: solo números, sin guiones ni caracteres
             TTelefono.MaxLength = 15;
             TTelefono.KeyPress += SoloNumeros_KeyPress;
 
-            // N° / Altura: solo números (opcional)
-            TNro.MaxLength = 6;
-            TNro.KeyPress += SoloNumeros_KeyPress;
+            // N° / Altura: solo números
+            TBNro.MaxLength = 6;
+            TBNro.KeyPress += SoloNumeros_KeyPress;
 
             // Solo letras y espacios en Nombre y Apellido
-            TNombreRazonSocial.KeyPress += SoloLetrasYEspacios_KeyPress;
+            TBNombreRazonSocial.KeyPress += SoloLetrasYEspacios_KeyPress;
             TApellido.KeyPress += SoloLetrasYEspacios_KeyPress;
         }
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
@@ -68,14 +66,14 @@ namespace CapaPresentacion
         // 2. FORMATEO EN TIEMPO REAL DEL DNI (Ej: 42-123-456)
         private void ConfigurarFormateoCuilEnVivo()
         {
-            TCuilCuit.TextChanged += (s, e) =>
+            TBCuilCuit.TextChanged += (s, e) =>
             {
                 if (_actualizandoCuil) return;
 
                 // Extraer únicamente los dígitos numéricos
-                string digitos = new string(TCuilCuit.Text.Where(char.IsDigit).ToArray());
+                string digitos = new string(TBCuilCuit.Text.Where(char.IsDigit).ToArray());
 
-                // Límite de 11 dígitos reales en Argentina
+                // Límite de 11 dígitos reales
                 if (digitos.Length > 11)
                     digitos = digitos.Substring(0, 11);
 
@@ -94,8 +92,8 @@ namespace CapaPresentacion
                 }
 
                 _actualizandoCuil = true;
-                TCuilCuit.Text = textoFormateado;
-                TCuilCuit.SelectionStart = TCuilCuit.Text.Length; // Mantiene el cursor al final
+                TBCuilCuit.Text = textoFormateado;
+                TBCuilCuit.SelectionStart = TBCuilCuit.Text.Length; // Mantiene el cursor al final
                 _actualizandoCuil = false;
             };
         }
@@ -106,61 +104,61 @@ namespace CapaPresentacion
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
 
             // 1. Mientras tipea: confirmación sutil
-            TEmail.TextChanged += (s, e) =>
+            TBEmail.TextChanged += (s, e) =>
             {
-                string email = TEmail.Text.Trim();
+                string email = TBEmail.Text.Trim();
 
                 if (string.IsNullOrEmpty(email))
                 {
-                    TEmail.ForeColor = Color.FromArgb(38, 40, 44); // Grafito normal
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
                     return;
                 }
 
                 // Si ya completó una estructura válida mientras escribe, le damos feedback positivo
                 if (Regex.IsMatch(email, patronEmail))
                 {
-                    TEmail.ForeColor = Color.FromArgb(39, 174, 96); // Verde éxito
+                    TBEmail.ForeColor = Color.FromArgb(39, 174, 96); // Verde éxito
                 }
                 else
                 {
-                    TEmail.ForeColor = Color.FromArgb(38, 40, 44); // Vuelve al color estándar mientras tipea
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44); // Vuelve al color estándar mientras tipea
                 }
             };
 
             // 2. Al perder el foco (el usuario terminó de escribir y pasó a otro campo)
-            TEmail.Leave += (s, e) =>
+            TBEmail.Leave += (s, e) =>
             {
-                string email = TEmail.Text.Trim();
+                string email = TBEmail.Text.Trim();
 
                 if (string.IsNullOrWhiteSpace(email))
                 {
-                    // Opcional: si es campo obligatorio
-                    TEmail.ForeColor = Color.FromArgb(192, 57, 43); // Rojo alerta
+                    // Si es campo obligatorio
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43); // Rojo alerta
                     LEmail.Text = "Correo Electrónico * (Obligatorio)";
                     LEmail.ForeColor = Color.FromArgb(192, 57, 43);
                 }
                 else if (!Regex.IsMatch(email, patronEmail))
                 {
                     // Formato inválido al salir
-                    TEmail.ForeColor = Color.FromArgb(192, 57, 43); // Rojo alerta
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43); // Rojo alerta
                     LEmail.Text = "Correo Electrónico (Formato inválido: ej@dominio.com)";
                     LEmail.ForeColor = Color.FromArgb(192, 57, 43);
                 }
                 else
                 {
                     // Válido
-                    TEmail.ForeColor = Color.FromArgb(38, 40, 44);
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
                     LEmail.Text = "Correo Electrónico";
                     LEmail.ForeColor = Color.FromArgb(70, 70, 70);
                 }
             };
 
-            // 3. Al reingresar al campo: restablece la etiqueta
-            TEmail.Enter += (s, e) =>
+            // 3. Al reingresar al campo, restablece la etiqueta
+            TBEmail.Enter += (s, e) =>
             {
                 LEmail.Text = "Correo Electrónico";
                 LEmail.ForeColor = Color.FromArgb(70, 70, 70);
-                TEmail.ForeColor = Color.FromArgb(38, 40, 44);
+                TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             };
         }
         // 3. CASCADA PROVINCIAS -> LOCALIDADES
@@ -204,26 +202,26 @@ namespace CapaPresentacion
             mensajeError = string.Empty;
 
             // DNI: obligatorio, exactamente 8 dígitos puros
-            string dni = TCodigoInterno.Text.Trim();
+            string dni = TBCodigoInterno.Text.Trim();
             if (string.IsNullOrWhiteSpace(dni) || dni.Length != 8 || !dni.All(char.IsDigit))
             {
                 mensajeError = "El DNI es obligatorio y debe contener exactamente 8 números.";
-                TCodigoInterno.Focus();
+                TBCodigoInterno.Focus();
                 return false;
             }
 
             // CUIL/CUIT: si se ingresó, debe tener exactamente 11 dígitos numéricos (XX-XXXXXXXX-X)
-            string cuilDigitos = new string(TCuilCuit.Text.Where(char.IsDigit).ToArray());
+            string cuilDigitos = new string(TBCuilCuit.Text.Where(char.IsDigit).ToArray());
             if (!string.IsNullOrWhiteSpace(cuilDigitos))
             {
                 if (cuilDigitos.Length != 11)
                 {
                     mensajeError = "El CUIL/CUIT debe contener 11 dígitos numéricos con el formato XX-XXXXXXXX-X.";
-                    TCuilCuit.Focus();
+                    TBCuilCuit.Focus();
                     return false;
                 }
 
-                // Comprobación de coherencia: los 8 dígitos del medio suelen ser el DNI (para personas físicas: 20, 27, 23)
+                // Comprobación de coherencia, los 8 dígitos del medio suelen ser el DNI
                 string cuilDniCentro = cuilDigitos.Substring(2, 8);
                 string prefijo = cuilDigitos.Substring(0, 2);
                 if ((prefijo == "20" || prefijo == "27" || prefijo == "23" || prefijo == "24") && cuilDniCentro != dni)
@@ -237,17 +235,17 @@ namespace CapaPresentacion
 
                     if (advertencia == DialogResult.No)
                     {
-                        TCuilCuit.Focus();
+                        TBCuilCuit.Focus();
                         return false;
                     }
                 }
             }
 
                 // Nombre
-                if (string.IsNullOrWhiteSpace(TNombreRazonSocial.Text.Trim()))
+                if (string.IsNullOrWhiteSpace(TBNombreRazonSocial.Text.Trim()))
             {
                 mensajeError = "Debe ingresar el Nombre o Razón Social del cliente.";
-                TNombreRazonSocial.Focus();
+                TBNombreRazonSocial.Focus();
                 return false;
             }
 
@@ -260,28 +258,28 @@ namespace CapaPresentacion
             }
 
             // Correo Electrónico: validación estricta de formato RFC
-            if (!string.IsNullOrWhiteSpace(TEmail.Text.Trim()))
+            if (!string.IsNullOrWhiteSpace(TBEmail.Text.Trim()))
             {
                 string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-                if (!Regex.IsMatch(TEmail.Text.Trim(), patronEmail))
+                if (!Regex.IsMatch(TBEmail.Text.Trim(), patronEmail))
                 {
                     mensajeError = "El formato del Correo Electrónico no es válido (ejemplo: usuario@dominio.com).";
-                    TEmail.Focus();
+                    TBEmail.Focus();
                     return false;
                 }
             }
             else
             {
                 mensajeError = "El Correo Electrónico es obligatorio.";
-                TEmail.Focus();
+                TBEmail.Focus();
                 return false;
             }
 
             // Calle (Domicilio)
-            if (string.IsNullOrWhiteSpace(TCalle.Text.Trim()))
+            if (string.IsNullOrWhiteSpace(TBCalle.Text.Trim()))
             {
                 mensajeError = "Debe ingresar el nombre de la Calle.";
-                TCalle.Focus();
+                TBCalle.Focus();
                 return false;
             }
 
@@ -313,14 +311,14 @@ namespace CapaPresentacion
             }
 
             // Extracción limpia lista para la Capa de Negocio
-            string dni = new string(TCodigoInterno.Text.Where(char.IsDigit).ToArray());
-            string cuil = TCuilCuit.Text.Trim();
-            string nombre = TNombreRazonSocial.Text.Trim();
+            string dni = new string(TBCodigoInterno.Text.Where(char.IsDigit).ToArray());
+            string cuil = TBCuilCuit.Text.Trim();
+            string nombre = TBNombreRazonSocial.Text.Trim();
             string apellido = TApellido.Text.Trim();
             string telefono = TTelefono.Text.Trim();
-            string email = TEmail.Text.Trim();
-            string calle = TCalle.Text.Trim();
-            string altura = string.IsNullOrWhiteSpace(TNro.Text) ? "S/N" : TNro.Text.Trim(); // Opcional
+            string email = TBEmail.Text.Trim();
+            string calle = TBCalle.Text.Trim();
+            string altura = string.IsNullOrWhiteSpace(TBNro.Text) ? "S/N" : TBNro.Text.Trim(); // Opcional
             int idLocalidad = Convert.ToInt32(CBLocalidad.SelectedValue);
             bool habilitado = ChBClienteHabilitado.Checked;
 
@@ -350,5 +348,6 @@ namespace CapaPresentacion
         {
             CargarProvincias();
         }
+
     }
 }
