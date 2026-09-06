@@ -1,0 +1,2 @@
+﻿Esta Carpeta contiene Clases que se comunican con servicios externos, es decir todo lo que llame a http o API
+ApiClient.cs: Es cliente HTTP que habla con la API REST	Es el "mensajero": manda requests (GET, POST, PUT, DELETE) a https://api.serverlabservices.bot.cd y recibe las respuestas
