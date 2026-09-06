@@ -1,0 +1,2 @@
+﻿Esta Carpeta contiene las Herramientas que usan varias partes del proyecto.
+TokenManager.cs: Guarda el token JWT en memoria durante toda la sesión	evitando la necesidad de loguear cada vez que llamás a la API; el token se reusa automáticamente
