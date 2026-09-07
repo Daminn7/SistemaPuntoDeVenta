@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 namespace CapaLogica
 {
     // ============================================================
-    // CAPA LÓGICA - CAJA
+    // CAPA LÓGICA - TELÉFONO
     // ============================================================
     // Esta clase es el intermediario entre la presentación (formularios)
     // y la capa de datos (ApiClient).
-    // Contiene la lógica de negocio para la gestión de caja.
+    // Contiene la lógica de negocio para la gestión de teléfonos.
     // ============================================================
 
-    public class CajaLogica
+    public class TelefonoLogica
     {
         private readonly ApiClient _apiClient;
 
@@ -24,7 +24,7 @@ namespace CapaLogica
         // Inicializa el cliente API con la URL base.
         // Si el usuario ya está autenticado, asigna el token automáticamente.
         // ============================================================
-        public CajaLogica()
+        public TelefonoLogica()
         {
             _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
             if (TokenManager.IsAuthenticated)
@@ -36,34 +36,36 @@ namespace CapaLogica
         // ============================================================
 
         /// <summary>
-        /// Obtiene todas las cajas registradas.
-        /// Se usa en: GET /api/caja
+        /// Obtiene todos los teléfonos registrados.
+        /// Se usa en: GET /api/telefonos
         /// </summary>
-        public async Task<List<CajaDto>> ObtenerTodos() => await _apiClient.GetCajasAsync();
+        public async Task<List<TelefonoDto>> ObtenerTodos() => await _apiClient.GetTelefonosAsync();
 
         /// <summary>
-        /// Obtiene una caja por su ID.
-        /// Se usa en: GET /api/caja/{id}
+        /// Obtiene un teléfono por su ID.
+        /// Se usa en: GET /api/telefonos/{id}
         /// </summary>
-        public async Task<CajaDto> ObtenerPorId(int id) => await _apiClient.GetCajaAsync(id);
+        public async Task<TelefonoDto> ObtenerPorId(int id) => await _apiClient.GetTelefonoAsync(id);
 
         /// <summary>
-        /// Obtiene la caja que está actualmente abierta.
-        /// Se usa en: GET /api/caja/activa
+        /// Crea un nuevo teléfono.
+        /// Se usa en: POST /api/telefonos
         /// </summary>
-        public async Task<CajaDto> ObtenerActiva() => await _apiClient.GetCajaActivaAsync();
+        /// <param name="t">Datos del teléfono a crear</param>
+        public async Task<TelefonoDto> Crear(CrearTelefonoDto t) => await _apiClient.CreateTelefonoAsync(t);
 
         /// <summary>
-        /// Abre una nueva caja con el personal y fondo inicial especificados.
-        /// Se usa en: POST /api/caja/apertura
+        /// Actualiza un teléfono existente.
+        /// Se usa en: PUT /api/telefonos/{id}
         /// </summary>
-        /// <param name="caja">Datos necesarios: PersonalId y FondoInicial</param>
-        public async Task<CajaDto> Abrir(CrearCajaDto caja) => await _apiClient.AbrirCajaAsync(caja);
+        /// <param name="id">ID del teléfono a actualizar</param>
+        /// <param name="t">Datos actualizados del teléfono</param>
+        public async Task<TelefonoDto> Actualizar(int id, ActualizarTelefonoDto t) => await _apiClient.UpdateTelefonoAsync(id, t);
 
         /// <summary>
-        /// Cierra una caja por su ID.
-        /// Se usa en: PUT /api/caja/{id}/cierre
+        /// Elimina (desactiva) un teléfono por su ID.
+        /// Se usa en: DELETE /api/telefonos/{id}
         /// </summary>
-        public async Task<dynamic> Cerrar(int id) => await _apiClient.CerrarCajaAsync(id);
+        public async Task Eliminar(int id) => await _apiClient.DeleteTelefonoAsync(id);
     }
 }

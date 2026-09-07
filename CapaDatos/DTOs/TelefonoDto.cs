@@ -3,34 +3,37 @@
 namespace CapaDatos.DTOs
 {
     // ============================================================
-    // 1. TIPO MOVIMIENTO DTO - PARA CONSULTAS (GET)
-    //    Se usa en: GET /api/tipomovimientos, GET /api/tipomovimientos/{id}
+    // 1. TELEFONO DTO - PARA CONSULTAS (GET)
+    //    Se usa en: GET /api/telefonos, GET /api/telefonos/{id}
     // ============================================================
-    public class TipoMovimientoDto
+    public class TelefonoDto
     {
         public int Id { get; set; }
-        public string Descripcion { get; set; }
+        public string Caracteristica { get; set; }
+        public int Numero { get; set; }
         public bool Estado { get; set; }
         public DateTime FechaAlta { get; set; }
         public DateTime? FechaModificacion { get; set; }
     }
 
     // ============================================================
-    // 2. CREAR TIPO MOVIMIENTO DTO - PARA CREACIÓN (POST)
-    //    Se usa en: POST /api/tipomovimientos
+    // 2. CREAR TELEFONO DTO - PARA CREACIÓN (POST)
+    //    Se usa en: POST /api/telefonos
     // ============================================================
-    public class CrearTipoMovimientoDto
+    public class CrearTelefonoDto
     {
-        public string Descripcion { get; set; }
+        public string Caracteristica { get; set; }
+        public int Numero { get; set; }
     }
 
     // ============================================================
-    // 3. ACTUALIZAR TIPO MOVIMIENTO DTO - PARA MODIFICACIÓN (PUT)
-    //    Se usa en: PUT /api/tipomovimientos/{id}
+    // 3. ACTUALIZAR TELEFONO DTO - PARA MODIFICACIÓN (PUT)
+    //    Se usa en: PUT /api/telefonos/{id}
     // ============================================================
-    public class ActualizarTipoMovimientoDto
+    public class ActualizarTelefonoDto
     {
-        public string Descripcion { get; set; }
+        public string Caracteristica { get; set; }
+        public int Numero { get; set; }
         public bool Estado { get; set; }
     }
 }

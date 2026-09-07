@@ -48,7 +48,13 @@
   <ItemGroup>
     <Compile Include="CajaLogica.cs" />
     <Compile Include="CategoriaLogica.cs" />
+    <Compile Include="DetalleVentaLogica.cs" />
+    <Compile Include="MovimientoCajaLogica.cs" />
+    <Compile Include="PersonalLogica.cs" />
+    <Compile Include="ProveedorLogica.cs" />
+    <Compile Include="TelefonoLogica.cs" />
     <Compile Include="ClienteLogica.cs" />
+    <Compile Include="DireccionLogica.cs" />
     <Compile Include="ProductoLogica.cs" />
     <Compile Include="ReporteLogica.cs" />
     <Compile Include="TablasMaestrasLogica.cs" />

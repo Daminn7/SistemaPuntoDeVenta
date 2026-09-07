@@ -51,9 +51,14 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="DTOs\NOTADROs.txt" />
+    <Compile Include="DTOs\AnularVentaDto.cs" />
     <Compile Include="DTOs\CajaDto.cs" />
     <Compile Include="DTOs\CategoriaDto.cs" />
+    <Compile Include="DTOs\DetalleOrdenDto.cs" />
+    <Compile Include="DTOs\MovimientoCajaDto.cs" />
+    <Compile Include="DTOs\TelefonoDto.cs" />
     <Compile Include="DTOs\ClienteDto.cs" />
+    <Compile Include="DTOs\DireccionDto.cs" />
     <Compile Include="DTOs\EstadoVentaDto.cs" />
     <Compile Include="DTOs\LocalidadDto.cs" />
     <Compile Include="DTOs\MedioPagoDto.cs" />

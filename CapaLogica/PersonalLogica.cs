@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 namespace CapaLogica
 {
     // ============================================================
-    // CAPA LÓGICA - CAJA
+    // CAPA LÓGICA - PERSONAL
     // ============================================================
     // Esta clase es el intermediario entre la presentación (formularios)
     // y la capa de datos (ApiClient).
-    // Contiene la lógica de negocio para la gestión de caja.
+    // Contiene la lógica de negocio para la gestión de personal (empleados).
     // ============================================================
 
-    public class CajaLogica
+    public class PersonalLogica
     {
         private readonly ApiClient _apiClient;
 
@@ -24,7 +24,7 @@ namespace CapaLogica
         // Inicializa el cliente API con la URL base.
         // Si el usuario ya está autenticado, asigna el token automáticamente.
         // ============================================================
-        public CajaLogica()
+        public PersonalLogica()
         {
             _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
             if (TokenManager.IsAuthenticated)
@@ -36,34 +36,36 @@ namespace CapaLogica
         // ============================================================
 
         /// <summary>
-        /// Obtiene todas las cajas registradas.
-        /// Se usa en: GET /api/caja
+        /// Obtiene todo el personal registrado.
+        /// Se usa en: GET /api/personal
         /// </summary>
-        public async Task<List<CajaDto>> ObtenerTodos() => await _apiClient.GetCajasAsync();
+        public async Task<List<PersonalDto>> ObtenerTodos() => await _apiClient.GetPersonalAsync();
 
         /// <summary>
-        /// Obtiene una caja por su ID.
-        /// Se usa en: GET /api/caja/{id}
+        /// Obtiene un empleado por su ID.
+        /// Se usa en: GET /api/personal/{id}
         /// </summary>
-        public async Task<CajaDto> ObtenerPorId(int id) => await _apiClient.GetCajaAsync(id);
+        public async Task<PersonalDto> ObtenerPorId(int id) => await _apiClient.GetPersonalByIdAsync(id);
 
         /// <summary>
-        /// Obtiene la caja que está actualmente abierta.
-        /// Se usa en: GET /api/caja/activa
+        /// Crea un nuevo empleado.
+        /// Se usa en: POST /api/personal
         /// </summary>
-        public async Task<CajaDto> ObtenerActiva() => await _apiClient.GetCajaActivaAsync();
+        /// <param name="p">Datos del empleado a crear</param>
+        public async Task<PersonalDto> Crear(CrearPersonalDto p) => await _apiClient.CreatePersonalAsync(p);
 
         /// <summary>
-        /// Abre una nueva caja con el personal y fondo inicial especificados.
-        /// Se usa en: POST /api/caja/apertura
+        /// Actualiza un empleado existente.
+        /// Se usa en: PUT /api/personal/{id}
         /// </summary>
-        /// <param name="caja">Datos necesarios: PersonalId y FondoInicial</param>
-        public async Task<CajaDto> Abrir(CrearCajaDto caja) => await _apiClient.AbrirCajaAsync(caja);
+        /// <param name="id">ID del empleado a actualizar</param>
+        /// <param name="p">Datos actualizados del empleado</param>
+        public async Task<PersonalDto> Actualizar(int id, ActualizarPersonalDto p) => await _apiClient.UpdatePersonalAsync(id, p);
 
         /// <summary>
-        /// Cierra una caja por su ID.
-        /// Se usa en: PUT /api/caja/{id}/cierre
+        /// Elimina (desactiva) un empleado por su ID.
+        /// Se usa en: DELETE /api/personal/{id}
         /// </summary>
-        public async Task<dynamic> Cerrar(int id) => await _apiClient.CerrarCajaAsync(id);
+        public async Task Eliminar(int id) => await _apiClient.DeletePersonalAsync(id);
     }
 }

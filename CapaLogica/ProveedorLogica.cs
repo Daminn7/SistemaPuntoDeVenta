@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 namespace CapaLogica
 {
     // ============================================================
-    // CAPA LÓGICA - CAJA
+    // CAPA LÓGICA - PROVEEDOR
     // ============================================================
     // Esta clase es el intermediario entre la presentación (formularios)
     // y la capa de datos (ApiClient).
-    // Contiene la lógica de negocio para la gestión de caja.
+    // Contiene la lógica de negocio para la gestión de proveedores.
     // ============================================================
 
-    public class CajaLogica
+    public class ProveedorLogica
     {
         private readonly ApiClient _apiClient;
 
@@ -24,7 +24,7 @@ namespace CapaLogica
         // Inicializa el cliente API con la URL base.
         // Si el usuario ya está autenticado, asigna el token automáticamente.
         // ============================================================
-        public CajaLogica()
+        public ProveedorLogica()
         {
             _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
             if (TokenManager.IsAuthenticated)
@@ -36,34 +36,36 @@ namespace CapaLogica
         // ============================================================
 
         /// <summary>
-        /// Obtiene todas las cajas registradas.
-        /// Se usa en: GET /api/caja
+        /// Obtiene todos los proveedores registrados.
+        /// Se usa en: GET /api/proveedores
         /// </summary>
-        public async Task<List<CajaDto>> ObtenerTodos() => await _apiClient.GetCajasAsync();
+        public async Task<List<ProveedorDto>> ObtenerTodos() => await _apiClient.GetProveedoresAsync();
 
         /// <summary>
-        /// Obtiene una caja por su ID.
-        /// Se usa en: GET /api/caja/{id}
+        /// Obtiene un proveedor por su ID.
+        /// Se usa en: GET /api/proveedores/{id}
         /// </summary>
-        public async Task<CajaDto> ObtenerPorId(int id) => await _apiClient.GetCajaAsync(id);
+        public async Task<ProveedorDto> ObtenerPorId(int id) => await _apiClient.GetProveedorAsync(id);
 
         /// <summary>
-        /// Obtiene la caja que está actualmente abierta.
-        /// Se usa en: GET /api/caja/activa
+        /// Crea un nuevo proveedor.
+        /// Se usa en: POST /api/proveedores
         /// </summary>
-        public async Task<CajaDto> ObtenerActiva() => await _apiClient.GetCajaActivaAsync();
+        /// <param name="p">Datos del proveedor a crear</param>
+        public async Task<ProveedorDto> Crear(CrearProveedorDto p) => await _apiClient.CreateProveedorAsync(p);
 
         /// <summary>
-        /// Abre una nueva caja con el personal y fondo inicial especificados.
-        /// Se usa en: POST /api/caja/apertura
+        /// Actualiza un proveedor existente.
+        /// Se usa en: PUT /api/proveedores/{id}
         /// </summary>
-        /// <param name="caja">Datos necesarios: PersonalId y FondoInicial</param>
-        public async Task<CajaDto> Abrir(CrearCajaDto caja) => await _apiClient.AbrirCajaAsync(caja);
+        /// <param name="id">ID del proveedor a actualizar</param>
+        /// <param name="p">Datos actualizados del proveedor</param>
+        public async Task<ProveedorDto> Actualizar(int id, ActualizarProveedorDto p) => await _apiClient.UpdateProveedorAsync(id, p);
 
         /// <summary>
-        /// Cierra una caja por su ID.
-        /// Se usa en: PUT /api/caja/{id}/cierre
+        /// Elimina (desactiva) un proveedor por su ID.
+        /// Se usa en: DELETE /api/proveedores/{id}
         /// </summary>
-        public async Task<dynamic> Cerrar(int id) => await _apiClient.CerrarCajaAsync(id);
+        public async Task Eliminar(int id) => await _apiClient.DeleteProveedorAsync(id);
     }
 }

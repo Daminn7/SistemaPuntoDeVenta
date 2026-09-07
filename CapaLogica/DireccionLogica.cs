@@ -7,14 +7,14 @@ using System.Threading.Tasks;
 namespace CapaLogica
 {
     // ============================================================
-    // CAPA LÓGICA - CAJA
+    // CAPA LÓGICA - DIRECCIÓN
     // ============================================================
     // Esta clase es el intermediario entre la presentación (formularios)
     // y la capa de datos (ApiClient).
-    // Contiene la lógica de negocio para la gestión de caja.
+    // Contiene la lógica de negocio para la gestión de direcciones.
     // ============================================================
 
-    public class CajaLogica
+    public class DireccionLogica
     {
         private readonly ApiClient _apiClient;
 
@@ -24,7 +24,7 @@ namespace CapaLogica
         // Inicializa el cliente API con la URL base.
         // Si el usuario ya está autenticado, asigna el token automáticamente.
         // ============================================================
-        public CajaLogica()
+        public DireccionLogica()
         {
             _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
             if (TokenManager.IsAuthenticated)
@@ -36,34 +36,36 @@ namespace CapaLogica
         // ============================================================
 
         /// <summary>
-        /// Obtiene todas las cajas registradas.
-        /// Se usa en: GET /api/caja
+        /// Obtiene todas las direcciones registradas.
+        /// Se usa en: GET /api/direcciones
         /// </summary>
-        public async Task<List<CajaDto>> ObtenerTodos() => await _apiClient.GetCajasAsync();
+        public async Task<List<DireccionDto>> ObtenerTodos() => await _apiClient.GetDireccionesAsync();
 
         /// <summary>
-        /// Obtiene una caja por su ID.
-        /// Se usa en: GET /api/caja/{id}
+        /// Obtiene una dirección por su ID.
+        /// Se usa en: GET /api/direcciones/{id}
         /// </summary>
-        public async Task<CajaDto> ObtenerPorId(int id) => await _apiClient.GetCajaAsync(id);
+        public async Task<DireccionDto> ObtenerPorId(int id) => await _apiClient.GetDireccionAsync(id);
 
         /// <summary>
-        /// Obtiene la caja que está actualmente abierta.
-        /// Se usa en: GET /api/caja/activa
+        /// Crea una nueva dirección.
+        /// Se usa en: POST /api/direcciones
         /// </summary>
-        public async Task<CajaDto> ObtenerActiva() => await _apiClient.GetCajaActivaAsync();
+        /// <param name="d">Datos de la dirección a crear</param>
+        public async Task<DireccionDto> Crear(CrearDireccionDto d) => await _apiClient.CreateDireccionAsync(d);
 
         /// <summary>
-        /// Abre una nueva caja con el personal y fondo inicial especificados.
-        /// Se usa en: POST /api/caja/apertura
+        /// Actualiza una dirección existente.
+        /// Se usa en: PUT /api/direcciones/{id}
         /// </summary>
-        /// <param name="caja">Datos necesarios: PersonalId y FondoInicial</param>
-        public async Task<CajaDto> Abrir(CrearCajaDto caja) => await _apiClient.AbrirCajaAsync(caja);
+        /// <param name="id">ID de la dirección a actualizar</param>
+        /// <param name="d">Datos actualizados de la dirección</param>
+        public async Task<DireccionDto> Actualizar(int id, ActualizarDireccionDto d) => await _apiClient.UpdateDireccionAsync(id, d);
 
         /// <summary>
-        /// Cierra una caja por su ID.
-        /// Se usa en: PUT /api/caja/{id}/cierre
+        /// Elimina (desactiva) una dirección por su ID.
+        /// Se usa en: DELETE /api/direcciones/{id}
         /// </summary>
-        public async Task<dynamic> Cerrar(int id) => await _apiClient.CerrarCajaAsync(id);
+        public async Task Eliminar(int id) => await _apiClient.DeleteDireccionAsync(id);
     }
 }

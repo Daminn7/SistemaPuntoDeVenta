@@ -15,7 +15,7 @@ namespace CapaPresentacion
 {
     public partial class FormClientes : Form
     {
-        private readonly UsuarioLogica _usuarioLogica = new UsuarioLogica();
+        private readonly ClienteLogica _clienteLogica = new ClienteLogica();
         private bool _actualizandoCuil = false;
         public FormClientes()
         {
