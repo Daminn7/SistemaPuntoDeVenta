@@ -3,28 +3,18 @@ using CapaDatos.Services;
 using CapaDatos.Helpers;
 using System.Collections.Generic;
 using System.Threading.Tasks;
+using System.Windows.Forms;
 
 namespace CapaLogica
 {
     // ============================================================
     // CAPA LÓGICA - TABLAS MAESTRAS
     // ============================================================
-    // Esta clase es el intermediario entre la presentación (formularios)
-    // y la capa de datos (ApiClient).
-    // Contiene la lógica de negocio para la obtención de tablas maestras
-    // (datos de referencia utilizados en toda la aplicación).
-    // ============================================================
 
     public class TablasMaestrasLogica
     {
         private readonly ApiClient _apiClient;
 
-        // ============================================================
-        // CONSTRUCTOR
-        // ============================================================
-        // Inicializa el cliente API con la URL base.
-        // Si el usuario ya está autenticado, asigna el token automáticamente.
-        // ============================================================
         public TablasMaestrasLogica()
         {
             _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
@@ -43,10 +33,11 @@ namespace CapaLogica
         public async Task<List<ProvinciaDto>> GetProvincias() => await _apiClient.GetProvinciasAsync();
 
         /// <summary>
-        /// Obtiene todas las localidades.
-        /// Se usa en: GET /api/localidades
+        /// Obtiene localidades filtradas por provincia.
+        /// Se usa en: GET /api/localidades/provincia/{idProvincia}
         /// </summary>
-        public async Task<List<LocalidadDto>> GetLocalidades() => await _apiClient.GetLocalidadesAsync();
+        public async Task<List<LocalidadDto>> GetLocalidadesByProvincia(int provinciaId)
+            => await _apiClient.GetLocalidadesByProvinciaAsync(provinciaId);
 
         /// <summary>
         /// Obtiene todos los perfiles de usuario.

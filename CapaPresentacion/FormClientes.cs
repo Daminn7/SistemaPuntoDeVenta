@@ -1,109 +1,190 @@
 ﻿using CapaLogica;
+using CapaDatos.DTOs;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Linq;
-using System.Text;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using static System.Windows.Forms.VisualStyles.VisualStyleElement.ListView;
 
 namespace CapaPresentacion
 {
     public partial class FormClientes : Form
     {
+        // ============================================================
+        // DECLARACIÓN DE VARIABLES
+        // ============================================================
+        private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
         private readonly ClienteLogica _clienteLogica = new ClienteLogica();
         private bool _actualizandoCuil = false;
+        private List<ProvinciaDto> _provincias;
+        private List<LocalidadDto> _localidades;
+
+        // ============================================================
+        // CONSTRUCTOR
+        // ============================================================
         public FormClientes()
         {
             InitializeComponent();
             InicializarComportamiento();
+
+            // Conectar eventos de botones
+            this.BLimpiar.Click += BLimpiar_Click;
+            this.BNuevo.Click += BNuevo_Click;
         }
+
+        // ============================================================
+        // INICIALIZACIÓN
+        // ============================================================
         private void InicializarComportamiento()
-        {   
+        {
             AsignarEstiloEIconos();
             ConfigurarRestriccionesTeclado();
             ConfigurarFormateoCuilEnVivo();
             ConfigurarCascadaProvincias();
             ConfigurarValidacionEmailEnVivo();
         }
-        // 1. RESTRICCIONES DE TECLADO (KeyPress)
+
+        // ============================================================
+        // CARGA DEL FORMULARIO
+        // ============================================================
+        private async void FormClientes_Load(object sender, EventArgs e)
+        {
+            await CargarProvinciasAsync();
+            await CargarClientesAsync();
+        }
+
+        // ============================================================
+        // CARGA DE CLIENTES
+        // ============================================================
+        private async Task CargarClientesAsync()
+        {
+            try
+            {
+                var clientes = await _clienteLogica.ObtenerTodos();
+
+                if (clientes == null || clientes.Count == 0)
+                {
+                    DGVClientes.Rows.Clear();
+                    return;
+                }
+
+                DGVClientes.Rows.Clear();
+
+                foreach (var cliente in clientes)
+                {
+                    string direccion = cliente.Direccion ?? "";
+                    string localidad = "";
+
+                    if (cliente.DireccionCompleta != null)
+                    {
+                        try
+                        {
+                            var direccionObj = cliente.DireccionCompleta as dynamic;
+                            if (direccionObj != null)
+                            {
+                                localidad = direccionObj.Localidad?.ToString() ?? "";
+                            }
+                        }
+                        catch
+                        {
+                            localidad = "";
+                        }
+                    }
+
+                    DGVClientes.Rows.Add(
+                        cliente.IdCliente,
+                        cliente.Dni ?? "",
+                        cliente.CuilCuit ?? "",
+                        $"{cliente.Nombre ?? ""} {cliente.Apellido ?? ""}".Trim(),
+                        cliente.Telefono ?? "",
+                        cliente.Email ?? "",
+                        localidad,
+                        direccion,
+                        cliente.Estado ? "Activo" : "Inactivo"
+                    );
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar clientes: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // 1. RESTRICCIONES DE TECLADO
+        // ============================================================
         private void ConfigurarRestriccionesTeclado()
         {
-            // DNI: 8 dígitos continuos puros
             TBCodigoInterno.MaxLength = 8;
             TBCodigoInterno.KeyPress += SoloNumeros_KeyPress;
 
-            // CUIL/CUIT: hasta 13 caracteres con los dos guiones (XX-XXXXXXXX-X)
             TBCuilCuit.MaxLength = 13;
             TBCuilCuit.KeyPress += SoloNumeros_KeyPress;
 
-            // Teléfono: solo números, sin guiones ni caracteres
             TTelefono.MaxLength = 15;
             TTelefono.KeyPress += SoloNumeros_KeyPress;
 
-            // N° / Altura: solo números
             TBNro.MaxLength = 6;
             TBNro.KeyPress += SoloNumeros_KeyPress;
 
-            // Solo letras y espacios en Nombre y Apellido
             TBNombreRazonSocial.KeyPress += SoloLetrasYEspacios_KeyPress;
             TApellido.KeyPress += SoloLetrasYEspacios_KeyPress;
         }
+
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
                 e.Handled = true;
         }
+
         private void SoloLetrasYEspacios_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
                 e.Handled = true;
         }
-        // 2. FORMATEO EN TIEMPO REAL DEL DNI (Ej: 42-123-456)
+
+        // ============================================================
+        // 2. FORMATEO CUIL EN VIVO
+        // ============================================================
         private void ConfigurarFormateoCuilEnVivo()
         {
             TBCuilCuit.TextChanged += (s, e) =>
             {
                 if (_actualizandoCuil) return;
 
-                // Extraer únicamente los dígitos numéricos
                 string digitos = new string(TBCuilCuit.Text.Where(char.IsDigit).ToArray());
 
-                // Límite de 11 dígitos reales
                 if (digitos.Length > 11)
                     digitos = digitos.Substring(0, 11);
 
                 string textoFormateado = digitos;
 
-                // Inserción progresiva de guiones: XX-XXXXXXXX-X
                 if (digitos.Length > 10)
                 {
-                    // Tiene los 11 dígitos: XX-XXXXXXXX-X
                     textoFormateado = $"{digitos.Substring(0, 2)}-{digitos.Substring(2, 8)}-{digitos.Substring(10, 1)}";
                 }
                 else if (digitos.Length > 2)
                 {
-                    // Entre 3 y 10 dígitos: XX-XXXXXXXX...
                     textoFormateado = $"{digitos.Substring(0, 2)}-{digitos.Substring(2)}";
                 }
 
                 _actualizandoCuil = true;
                 TBCuilCuit.Text = textoFormateado;
-                TBCuilCuit.SelectionStart = TBCuilCuit.Text.Length; // Mantiene el cursor al final
+                TBCuilCuit.SelectionStart = TBCuilCuit.Text.Length;
                 _actualizandoCuil = false;
             };
         }
-        // VALIDACIÓN DE CORREO ELECTRÓNICO EN TIEMPO REAL
+
+        // ============================================================
+        // 3. VALIDACIÓN EMAIL EN VIVO
+        // ============================================================
         private void ConfigurarValidacionEmailEnVivo()
         {
-            // Patrón estándar RFC para correos electrónicos
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
 
-            // 1. Mientras tipea: confirmación sutil
             TBEmail.TextChanged += (s, e) =>
             {
                 string email = TBEmail.Text.Trim();
@@ -114,46 +195,40 @@ namespace CapaPresentacion
                     return;
                 }
 
-                // Si ya completó una estructura válida mientras escribe, le damos feedback positivo
                 if (Regex.IsMatch(email, patronEmail))
                 {
-                    TBEmail.ForeColor = Color.FromArgb(39, 174, 96); // Verde éxito
+                    TBEmail.ForeColor = Color.FromArgb(39, 174, 96);
                 }
                 else
                 {
-                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44); // Vuelve al color estándar mientras tipea
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
                 }
             };
 
-            // 2. Al perder el foco (el usuario terminó de escribir y pasó a otro campo)
             TBEmail.Leave += (s, e) =>
             {
                 string email = TBEmail.Text.Trim();
 
                 if (string.IsNullOrWhiteSpace(email))
                 {
-                    // Si es campo obligatorio
-                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43); // Rojo alerta
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43);
                     LEmail.Text = "Correo Electrónico * (Obligatorio)";
                     LEmail.ForeColor = Color.FromArgb(192, 57, 43);
                 }
                 else if (!Regex.IsMatch(email, patronEmail))
                 {
-                    // Formato inválido al salir
-                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43); // Rojo alerta
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43);
                     LEmail.Text = "Correo Electrónico (Formato inválido: ej@dominio.com)";
                     LEmail.ForeColor = Color.FromArgb(192, 57, 43);
                 }
                 else
                 {
-                    // Válido
                     TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
                     LEmail.Text = "Correo Electrónico";
                     LEmail.ForeColor = Color.FromArgb(70, 70, 70);
                 }
             };
 
-            // 3. Al reingresar al campo, restablece la etiqueta
             TBEmail.Enter += (s, e) =>
             {
                 LEmail.Text = "Correo Electrónico";
@@ -161,169 +236,137 @@ namespace CapaPresentacion
                 TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             };
         }
-        // 3. CASCADA PROVINCIAS -> LOCALIDADES
+
+        // ============================================================
+        // 4. CASCADA PROVINCIAS -> LOCALIDADES (ASYNC)
+        // ============================================================
+        private async Task CargarProvinciasAsync()
+        {
+            try
+            {
+                _provincias = await _tablasLogica.GetProvincias();
+
+                if (_provincias == null || _provincias.Count == 0)
+                {
+                    MessageBox.Show("No se cargaron provincias", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                CBProvincia.DataSource = _provincias;
+                CBProvincia.DisplayMember = "Descripcion";
+                CBProvincia.ValueMember = "Id";
+                CBProvincia.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar provincias: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void ConfigurarCascadaProvincias()
         {
-            // Evento de selección de Provincia
-            CBProvincia.SelectedIndexChanged += (s, e) =>
+            CBProvincia.SelectedIndexChanged += async (s, e) =>
             {
-                if (CBProvincia.SelectedValue != null && int.TryParse(CBProvincia.SelectedValue.ToString(), out int idProvincia))
+                try
                 {
-                    CargarLocalidadesPorProvincia(idProvincia);
+                    if (CBProvincia.SelectedItem == null)
+                    {
+                        CBLocalidad.DataSource = null;
+                        CBLocalidad.Items.Clear();
+                        return;
+                    }
+
+                    // ✅ CORREGIDO: Usar pattern matching en lugar de 'as'
+                    if (CBProvincia.SelectedItem is ProvinciaDto provincia)
+                    {
+                        await CargarLocalidadesPorProvinciaAsync(provincia.Id);
+                    }
+                    else
+                    {
+                        MessageBox.Show("Error: El elemento seleccionado no es una provincia válida",
+                            "Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    CBLocalidad.DataSource = null;
-                    CBLocalidad.Items.Clear();
+                    MessageBox.Show($"Error en cascada: {ex.Message}",
+                        "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
         }
-        private void CargarProvincias()
-        {
-            // Consumo de tu Capa Lógica / Datos
-            //var listaProvincias = _usuarioLogica.ObtenerProvincias();
-            //CBProvincia.DataSource = listaProvincias;
-            CBProvincia.DisplayMember = "Nombre";
-            CBProvincia.ValueMember = "IdProvincia";
-            CBProvincia.SelectedIndex = -1; // Sin selección inicial
-        }
 
-        private void CargarLocalidadesPorProvincia(int idProvincia)
+        private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia)
         {
-            //var listaLocalidades = _usuarioLogica.ObtenerLocalidadesPorProvincia(idProvincia);
-            //CBLocalidad.DataSource = listaLocalidades;
-            CBLocalidad.DisplayMember = "Nombre";
-            CBLocalidad.ValueMember = "IdLocalidad";
-            CBLocalidad.SelectedIndex = -1;
-        }
-        // 4. VALIDACIÓN INTEGRAL AL GUARDAR / EDITAR
-        private bool ValidarCamposCliente(out string mensajeError)
-        {
-            mensajeError = string.Empty;
-
-            // DNI: obligatorio, exactamente 8 dígitos puros
-            string dni = TBCodigoInterno.Text.Trim();
-            if (string.IsNullOrWhiteSpace(dni) || dni.Length != 8 || !dni.All(char.IsDigit))
+            try
             {
-                mensajeError = "El DNI es obligatorio y debe contener exactamente 8 números.";
-                TBCodigoInterno.Focus();
-                return false;
-            }
+                _localidades = await _tablasLogica.GetLocalidadesByProvincia(idProvincia);
 
-            // CUIL/CUIT: si se ingresó, debe tener exactamente 11 dígitos numéricos (XX-XXXXXXXX-X)
-            string cuilDigitos = new string(TBCuilCuit.Text.Where(char.IsDigit).ToArray());
-            if (!string.IsNullOrWhiteSpace(cuilDigitos))
-            {
-                if (cuilDigitos.Length != 11)
+                if (_localidades == null || _localidades.Count == 0)
                 {
-                    mensajeError = "El CUIL/CUIT debe contener 11 dígitos numéricos con el formato XX-XXXXXXXX-X.";
-                    TBCuilCuit.Focus();
-                    return false;
+                    MessageBox.Show("No se encontraron localidades para esta provincia",
+                        "Información", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    CBLocalidad.DataSource = null;
+                    CBLocalidad.Items.Clear();
+                    return;
                 }
 
-                // Comprobación de coherencia, los 8 dígitos del medio suelen ser el DNI
-                string cuilDniCentro = cuilDigitos.Substring(2, 8);
-                string prefijo = cuilDigitos.Substring(0, 2);
-                if ((prefijo == "20" || prefijo == "27" || prefijo == "23" || prefijo == "24") && cuilDniCentro != dni)
-                {
-                    DialogResult advertencia = MessageBox.Show(
-                        "El número de DNI no coincide con los dígitos centrales del CUIL ingresado.\n\n¿Desea continuar de todos modos?",
-                        "Verificación de Identidad",
-                        MessageBoxButtons.YesNo,
-                        MessageBoxIcon.Question
-                    );
-
-                    if (advertencia == DialogResult.No)
-                    {
-                        TBCuilCuit.Focus();
-                        return false;
-                    }
-                }
+                CBLocalidad.DataSource = _localidades;
+                CBLocalidad.DisplayMember = "Descripcion";
+                CBLocalidad.ValueMember = "Id";
+                CBLocalidad.SelectedIndex = -1;
             }
-
-                // Nombre
-                if (string.IsNullOrWhiteSpace(TBNombreRazonSocial.Text.Trim()))
+            catch (Exception ex)
             {
-                mensajeError = "Debe ingresar el Nombre o Razón Social del cliente.";
-                TBNombreRazonSocial.Focus();
-                return false;
+                MessageBox.Show($"Error al cargar localidades: {ex.Message}",
+                    "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
-            // Teléfono: obligatorio, solo números
-            if (string.IsNullOrWhiteSpace(TTelefono.Text.Trim()) || TTelefono.Text.Length < 7)
-            {
-                mensajeError = "Debe ingresar un número de teléfono válido (solo números, mínimo 7 dígitos).";
-                TTelefono.Focus();
-                return false;
-            }
-
-            // Correo Electrónico: validación estricta de formato RFC
-            if (!string.IsNullOrWhiteSpace(TBEmail.Text.Trim()))
-            {
-                string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
-                if (!Regex.IsMatch(TBEmail.Text.Trim(), patronEmail))
-                {
-                    mensajeError = "El formato del Correo Electrónico no es válido (ejemplo: usuario@dominio.com).";
-                    TBEmail.Focus();
-                    return false;
-                }
-            }
-            else
-            {
-                mensajeError = "El Correo Electrónico es obligatorio.";
-                TBEmail.Focus();
-                return false;
-            }
-
-            // Calle (Domicilio)
-            if (string.IsNullOrWhiteSpace(TBCalle.Text.Trim()))
-            {
-                mensajeError = "Debe ingresar el nombre de la Calle.";
-                TBCalle.Focus();
-                return false;
-            }
-
-            // Altura / Nro es opcional: si está vacío se guardará como nulo o "S/N"
-            // Provincia y Localidad
-            if (CBProvincia.SelectedIndex == -1)
-            {
-                mensajeError = "Debe seleccionar una Provincia de la lista.";
-                CBProvincia.Focus();
-                return false;
-            }
-
-            if (CBLocalidad.SelectedIndex == -1)
-            {
-                mensajeError = "Debe seleccionar una Localidad.";
-                CBLocalidad.Focus();
-                return false;
-            }
-
-            return true;
         }
-        // 5. ACCIÓN DE GUARDAR
-        private void BGuardar_Click(object sender, EventArgs e)
+
+        // ============================================================
+        // 5. BOTÓN LIMPIAR CAMPOS
+        // ============================================================
+        private void BLimpiar_Click(object sender, EventArgs e)
         {
-            if (!ValidarCamposCliente(out string error))
-            {
-                MessageBox.Show(error, "Validación de Datos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                return;
-            }
-
-            // Extracción limpia lista para la Capa de Negocio
-            string dni = new string(TBCodigoInterno.Text.Where(char.IsDigit).ToArray());
-            string cuil = TBCuilCuit.Text.Trim();
-            string nombre = TBNombreRazonSocial.Text.Trim();
-            string apellido = TApellido.Text.Trim();
-            string telefono = TTelefono.Text.Trim();
-            string email = TBEmail.Text.Trim();
-            string calle = TBCalle.Text.Trim();
-            string altura = string.IsNullOrWhiteSpace(TBNro.Text) ? "S/N" : TBNro.Text.Trim(); // Opcional
-            int idLocalidad = Convert.ToInt32(CBLocalidad.SelectedValue);
-            bool habilitado = ChBClienteHabilitado.Checked;
-
-            // Procesar guardado en capa lógica...
+            LimpiarCampos();
         }
+
+        // ============================================================
+        // 6. BOTÓN NUEVO
+        // ============================================================
+        private void BNuevo_Click(object sender, EventArgs e)
+        {
+            LimpiarCampos();
+            TBCodigoInterno.Focus();
+        }
+
+        // ============================================================
+        // 7. LIMPIAR CAMPOS
+        // ============================================================
+        private void LimpiarCampos()
+        {
+            TBCodigoInterno.Clear();
+            TBCuilCuit.Clear();
+            TBNombreRazonSocial.Clear();
+            TApellido.Clear();
+            TTelefono.Clear();
+            TBEmail.Clear();
+            TBCalle.Clear();
+            TBNro.Clear();
+
+            CBProvincia.SelectedIndex = -1;
+            CBLocalidad.DataSource = null;
+            CBLocalidad.Items.Clear();
+
+            ChBClienteHabilitado.Checked = true;
+
+            Refresh();
+        }
+
+        // ============================================================
+        // 8. ICONOS
+        // ============================================================
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             Bitmap nuevoBitmap = new Bitmap(ancho, alto);
@@ -337,17 +380,11 @@ namespace CapaPresentacion
 
         private void AsignarEstiloEIconos()
         {
-            BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);;
+            BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
             BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
             BEditar.Image = EscalarIcono(Properties.Resources.boton_editar_blanco, 32, 32);
             BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
         }
-
-        private void FormClientes_Load(object sender, EventArgs e)
-        {
-            CargarProvincias();
-        }
-
     }
 }

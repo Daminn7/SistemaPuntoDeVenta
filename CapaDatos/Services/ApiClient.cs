@@ -5,6 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Collections.Generic;
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using CapaDatos.DTOs;
 using CapaDatos.Helpers;
 
@@ -557,22 +558,85 @@ namespace CapaDatos.Services
         }
 
         // ============================================================
-        // TABLAS MAESTRAS
+        // TABLAS MAESTRAS (CON MAPEO MANUAL - SIN DEPURACIÓN)
         // ============================================================
+
+        /// <summary>
+        /// Obtiene todas las provincias usando mapeo manual.
+        /// Se usa en: GET /api/provincias
+        /// </summary>
         public async Task<List<ProvinciaDto>> GetProvinciasAsync()
         {
             var response = await _httpClient.GetAsync("/api/provincias");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<List<ProvinciaDto>>(content);
+
+            var jsonArray = JArray.Parse(content);
+            var provincias = new List<ProvinciaDto>();
+
+            foreach (var item in jsonArray)
+            {
+                int id = item["idProvincia"]?.Value<int>() ?? 0;
+                if (id == 0)
+                    id = item["id"]?.Value<int>() ?? 0;
+
+                string descripcion = item["descripcion"]?.Value<string>() ?? "";
+                if (string.IsNullOrEmpty(descripcion))
+                    descripcion = item["nombre"]?.Value<string>() ?? "";
+
+                provincias.Add(new ProvinciaDto
+                {
+                    Id = id,
+                    Descripcion = descripcion,
+                    Estado = item["estado"]?.Value<bool>() ?? true,
+                    FechaAlta = item["fechaAlta"]?.Value<DateTime>() ?? DateTime.Now,
+                    FechaModificacion = item["fechaModificacion"]?.Value<DateTime?>()
+                });
+            }
+
+            return provincias;
         }
 
-        public async Task<List<LocalidadDto>> GetLocalidadesAsync()
+        /// <summary>
+        /// Obtiene localidades filtradas por provincia.
+        /// Se usa en: GET /api/localidades/provincia/{id}
+        /// </summary>
+        public async Task<List<LocalidadDto>> GetLocalidadesByProvinciaAsync(int provinciaId)
         {
-            var response = await _httpClient.GetAsync("/api/localidades");
+            var response = await _httpClient.GetAsync($"/api/localidades/provincia/{provinciaId}");
             response.EnsureSuccessStatusCode();
             var content = await response.Content.ReadAsStringAsync();
-            return JsonConvert.DeserializeObject<List<LocalidadDto>>(content);
+
+            var jsonArray = JArray.Parse(content);
+            var localidades = new List<LocalidadDto>();
+
+            foreach (var item in jsonArray)
+            {
+                int id = item["idLocalidad"]?.Value<int>() ?? 0;
+                if (id == 0)
+                    id = item["id"]?.Value<int>() ?? 0;
+
+                string descripcion = item["descripcion"]?.Value<string>() ?? "";
+                if (string.IsNullOrEmpty(descripcion))
+                    descripcion = item["nombre"]?.Value<string>() ?? "";
+
+                int provinciaIdValue = item["provinciaId"]?.Value<int>() ?? 0;
+                if (provinciaIdValue == 0)
+                    provinciaIdValue = item["idProvincia"]?.Value<int>() ?? 0;
+
+                localidades.Add(new LocalidadDto
+                {
+                    Id = id,
+                    Descripcion = descripcion,
+                    ProvinciaId = provinciaIdValue,
+                    CodPostal = item["codPostal"]?.Value<int>() ?? item["codigoPostal"]?.Value<int>() ?? 0,
+                    Estado = item["estado"]?.Value<bool>() ?? true,
+                    FechaAlta = item["fechaAlta"]?.Value<DateTime>() ?? DateTime.Now,
+                    FechaModificacion = item["fechaModificacion"]?.Value<DateTime?>()
+                });
+            }
+
+            return localidades;
         }
 
         public async Task<List<PerfilDto>> GetPerfilesAsync()

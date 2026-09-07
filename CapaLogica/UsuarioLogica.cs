@@ -1,6 +1,10 @@
 ﻿using CapaDatos;
+using CapaDatos.DTOs;
+using CapaDatos.Services;
+using CapaDatos.Helpers;
 using System;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 
 namespace CapaLogica
 {
@@ -8,13 +12,24 @@ namespace CapaLogica
     // CAPA LÓGICA - USUARIO
     // ============================================================
     // Esta clase es el intermediario entre la presentación (formularios)
-    // y la capa de datos (UsuarioDatos).
-    // Contiene la lógica de negocio para la autenticación de usuarios.
+    // y la capa de datos.
+    // Contiene la lógica de negocio para la autenticación y gestión de usuarios.
     // ============================================================
 
     public class UsuarioLogica
     {
         private readonly UsuarioDatos _usuarioDatos = new UsuarioDatos();
+        private readonly ApiClient _apiClient;
+
+        // ============================================================
+        // CONSTRUCTOR
+        // ============================================================
+        public UsuarioLogica()
+        {
+            _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
+            if (TokenManager.IsAuthenticated)
+                _apiClient.SetToken(TokenManager.Token);
+        }
 
         // ============================================================
         // MÉTODOS PÚBLICOS
@@ -30,52 +45,67 @@ namespace CapaLogica
         /// <returns>String vacío si es exitoso, mensaje de error si falla</returns>
         public string ValidarLogin(string usuario, string password, out string rol, out string nombreCompleto)
         {
-            // ============================================================
-            // INICIALIZACIÓN DE PARÁMETROS DE SALIDA
-            // ============================================================
             rol = string.Empty;
             nombreCompleto = string.Empty;
 
-            // ============================================================
-            // VALIDACIONES DE ENTRADA
-            // ============================================================
-
-            // 1. Validar que el usuario no esté vacío
             if (string.IsNullOrWhiteSpace(usuario))
                 return "Debe ingresar su código de usuario.";
 
-            // 2. Validar que la contraseña no esté vacía
             if (string.IsNullOrWhiteSpace(password))
                 return "Debe ingresar su contraseña.";
 
-            // 3. Validar que el usuario solo contenga letras y números
             if (!Regex.IsMatch(usuario, @"^[a-zA-Z0-9]+$"))
                 return "El código solo puede contener letras y números.";
 
-            // 4. Validar que la contraseña solo contenga caracteres permitidos
             if (!Regex.IsMatch(password, @"^[a-zA-Z0-9@#$%*!_\-\.]+$"))
                 return "La contraseña contiene caracteres no permitidos. Solo se aceptan letras, números y los símbolos: @ # $ % * ! _ - .";
 
-            // ============================================================
-            // AUTENTICACIÓN CONTRA LA API
-            // ============================================================
             try
             {
-                // Intentar autenticar contra la API
                 bool autenticado = _usuarioDatos.Autenticar(usuario, password, out rol, out nombreCompleto);
 
-                // Si no se autentica, devolver mensaje de error
                 if (!autenticado)
                     return "Código de usuario o contraseña incorrectos.";
 
-                // Autenticación exitosa
                 return string.Empty;
             }
             catch (Exception ex)
             {
-                // Error de conexión o excepción no controlada
                 return $"Error de conexión con el servidor: {ex.Message}";
             }
+        }
+
+        /// <summary>
+        /// Crea un nuevo usuario (cliente, personal o proveedor).
+        /// Se usa en: POST /api/usuarios
+        /// </summary>
+        /// <param name="usuario">Datos del usuario a crear</param>
+        /// <returns>Usuario creado con su ID</returns>
+        public async Task<UsuarioDto> CrearUsuario(CrearUsuarioDto usuario)
+        {
+            // Validaciones de negocio
+            if (string.IsNullOrWhiteSpace(usuario.Nombre))
+                throw new Exception("El nombre es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(usuario.Apellido))
+                throw new Exception("El apellido es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(usuario.Email))
+                throw new Exception("El email es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(usuario.Dni))
+                throw new Exception("El DNI es obligatorio.");
+
+            // Para clientes: codUsuario y contrasena van vacíos
+            if (usuario.EsCliente)
+            {
+                usuario.CodUsuario = null;
+                usuario.Contrasena = null;
+                usuario.PerfilId = null;
+            }
+
+            // Llamar a la API
+            return await _apiClient.CreateUsuarioAsync(usuario);
         }
     }
 }

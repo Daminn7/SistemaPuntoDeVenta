@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace CapaDatos.DTOs
 {
@@ -8,10 +9,19 @@ namespace CapaDatos.DTOs
     // ============================================================
     public class ProvinciaDto
     {
+        [JsonProperty("id")]
         public int Id { get; set; }
+
+        [JsonProperty("descripcion")]
         public string Descripcion { get; set; }
+
+        [JsonProperty("estado")]
         public bool Estado { get; set; }
+
+        [JsonProperty("fechaAlta")]
         public DateTime FechaAlta { get; set; }
+
+        [JsonProperty("fechaModificacion")]
         public DateTime? FechaModificacion { get; set; }
     }
 
@@ -21,6 +31,7 @@ namespace CapaDatos.DTOs
     // ============================================================
     public class CrearProvinciaDto
     {
+        [JsonProperty("descripcion")]
         public string Descripcion { get; set; }
     }
 
@@ -30,7 +41,10 @@ namespace CapaDatos.DTOs
     // ============================================================
     public class ActualizarProvinciaDto
     {
+        [JsonProperty("descripcion")]
         public string Descripcion { get; set; }
+
+        [JsonProperty("estado")]
         public bool Estado { get; set; }
     }
 }
