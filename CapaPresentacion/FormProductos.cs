@@ -7,15 +7,40 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CapaLogica;
+using CapaDatos.DTOs;
 
 namespace CapaPresentacion
 {
     public partial class FormProductos : Form
     {
+        // ============================================================
+        // DECLARACIÓN DE VARIABLES
+        // ============================================================
+        private readonly ProductoLogica _productoLogica = new ProductoLogica();
+        private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();
+        private bool _esEdicion = false;
+        private int _productoId = 0;
+        private List<CategoriaDto> _categorias;
+        private List<ProductoDto> _productosOriginales;
+
         public FormProductos()
         {
             InitializeComponent();
             AsignarEstiloEIconos();
+
+            // ✅ Asignar evento Load
+            this.Load += FormProductos_Load;
+
+            // ✅ Conectar eventos de botones
+            this.BGuardar.Click += BGuardar_Click;
+            this.BLimpiar.Click += BLimpiar_Click;
+            this.BNuevo.Click += BNuevo_Click;
+            this.BEditar.Click += BEditar_Click;
+            this.BDesactivar.Click += BDesactivar_Click;
+
+            // ✅ Conectar evento de selección en DataGridView
+            this.DGVProductos.CellClick += DGVProductos_CellClick;
         }
 
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
@@ -31,25 +56,187 @@ namespace CapaPresentacion
 
         private void AsignarEstiloEIconos()
         {
-            BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);;
+            BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
             BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
             BEditar.Image = EscalarIcono(Properties.Resources.boton_editar_blanco, 32, 32);
             BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
         }
 
+        // ============================================================
+        // CARGA DEL FORMULARIO
+        // ============================================================
+        private async void FormProductos_Load(object sender, EventArgs e)
+        {
+            await CargarCategoriasAsync();
+            await CargarProductosAsync();
+            ConfigurarEstiloDataGridView();
+        }
+
+        // ============================================================
+        // CARGA DE CATEGORÍAS
+        // ============================================================
+        private async Task CargarCategoriasAsync()
+        {
+            try
+            {
+                _categorias = await _categoriaLogica.ObtenerTodos();
+                if (_categorias == null || _categorias.Count == 0) return;
+                CBCategoria.DataSource = _categorias;
+                CBCategoria.DisplayMember = "Descripcion";
+                CBCategoria.ValueMember = "Id";
+                CBCategoria.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar categorías: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // CARGA DE PRODUCTOS
+        // ============================================================
+        private async Task CargarProductosAsync()
+        {
+            try
+            {
+                _productosOriginales = await _productoLogica.ObtenerTodos();
+
+                if (_productosOriginales == null || _productosOriginales.Count == 0)
+                {
+                    DGVProductos.Rows.Clear();
+                    return;
+                }
+
+                MostrarProductos(_productosOriginales);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // MOSTRAR PRODUCTOS EN EL DATAGRIDVIEW
+        // ============================================================
+        private void MostrarProductos(List<ProductoDto> productos)
+        {
+            DGVProductos.Rows.Clear();
+
+            foreach (var producto in productos)
+            {
+                DGVProductos.Rows.Add(
+                    producto.Id,
+                    producto.CodigoInterno ?? "",
+                    producto.CodBarras ?? "",
+                    producto.Nombre ?? "",
+                    producto.CategoriaNombre ?? "",
+                    producto.ProveedorNombre ?? "",
+                    producto.StockActual,
+                    producto.StockMinimo,
+                    producto.PrecioMinorista.ToString("0.00"),
+                    producto.PrecioMayorista?.ToString("0.00") ?? "",
+                    producto.Estado ? "Activo" : "Inactivo"
+                );
+            }
+        }
+
+        // ============================================================
+        // ESTILO DEL DATAGRIDVIEW
+        // ============================================================
+        private void ConfigurarEstiloDataGridView()
+        {
+            DGVProductos.DefaultCellStyle.ForeColor = Color.Black;
+            DGVProductos.DefaultCellStyle.BackColor = Color.White;
+            DGVProductos.DefaultCellStyle.SelectionBackColor = Color.FromArgb(212, 131, 53);
+            DGVProductos.DefaultCellStyle.SelectionForeColor = Color.White;
+            DGVProductos.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            DGVProductos.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
+            DGVProductos.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
+        }
+
+        // ============================================================
+        // SELECCIÓN DE PRODUCTO EN EL DATAGRIDVIEW (CORREGIDO)
+        // ============================================================
+        private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            // ✅ Verificar que se haya hecho clic en una fila válida
+            if (e.RowIndex < 0) return;
+
+            try
+            {
+                // ✅ Obtener el ID de la primera columna (índice 0)
+                var idValue = DGVProductos.Rows[e.RowIndex].Cells[0].Value;
+
+                if (idValue == null || idValue == DBNull.Value)
+                {
+                    MessageBox.Show("No se pudo obtener el ID del producto.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                int id = Convert.ToInt32(idValue);
+
+                _productoId = id;
+                _esEdicion = true;
+                CargarProductoEnFormulario(id);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al seleccionar producto: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // CARGAR PRODUCTO EN EL FORMULARIO PARA EDITAR
+        // ============================================================
+        private async void CargarProductoEnFormulario(int id)
+        {
+            try
+            {
+                var producto = await _productoLogica.ObtenerPorId(id);
+
+                if (producto == null)
+                {
+                    MessageBox.Show("Producto no encontrado", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    return;
+                }
+
+                TCodigoInterno.Text = producto.CodigoInterno ?? "";
+                TCodBarras.Text = producto.CodBarras ?? "";
+                TNombreProducto.Text = producto.Nombre ?? "";
+                TDescripcion.Text = producto.Descripcion ?? "";
+                TPrecioMinorista.Text = producto.PrecioMinorista.ToString("0.00");
+                TPrecioMayorista.Text = producto.PrecioMayorista?.ToString("0.00") ?? "";
+
+                if (producto.CategoriaId > 0)
+                    CBCategoria.SelectedValue = producto.CategoriaId;
+
+                NUDStockActual.Value = producto.StockActual;
+                NUDStockMinimo.Value = producto.StockMinimo;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar producto: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // VALIDACIONES
+        // ============================================================
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
-            // Permite números (0-9) y teclas de control como Backspace o Delete
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
             {
-                e.Handled = true; // Cancela la tecla pulsada
+                e.Handled = true;
             }
         }
 
         private bool ValidarCamposProducto()
         {
-            // 1. Código Interno
             if (string.IsNullOrWhiteSpace(TCodigoInterno.Text) || !long.TryParse(TCodigoInterno.Text.Trim(), out _))
             {
                 MessageBox.Show("El Código Interno es obligatorio y debe ser exclusivamente numérico.",
@@ -58,7 +245,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // 2. Código de Barras (si se ingresó algo)
             if (!string.IsNullOrWhiteSpace(TCodBarras.Text) && !long.TryParse(TCodBarras.Text.Trim(), out _))
             {
                 MessageBox.Show("El Código de Barras debe ser numérico.",
@@ -67,7 +253,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // 3. Nombre del Producto
             if (string.IsNullOrWhiteSpace(TNombreProducto.Text) || TNombreProducto.Text.Trim().Length < 3)
             {
                 MessageBox.Show("Debe ingresar un Nombre de Producto válido (mínimo 3 caracteres).",
@@ -76,7 +261,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // 4. Categoría
             if (CBCategoria.SelectedIndex == -1)
             {
                 MessageBox.Show("Debe seleccionar una Categoría.",
@@ -85,7 +269,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // 5. Precios (Decimales)
             if (!IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista) || precioMinorista <= 0)
             {
                 MessageBox.Show("Ingrese un Precio Minorista válido mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -100,15 +283,14 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // Regla comercial estricta: No permite guardar (CONVERSAR)
             if (precioMayorista > precioMinorista)
             {
                 MessageBox.Show("El precio mayorista no puede superar al precio minorista.",
                                 "Error de Precios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 TPrecioMayorista.Focus();
-                return false; 
+                return false;
             }
-            // 6. Reglas de Stock (Coherencia operativa)
+
             if (NUDStockMinimo.Value <= 0)
             {
                 MessageBox.Show("El Stock Mínimo debe ser de al menos 1 unidad para activar alertas de reposición.",
@@ -117,7 +299,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // Advertencia informativa si se crea el producto con stock por debajo del mínimo
             if (NUDStockActual.Value < NUDStockMinimo.Value)
             {
                 DialogResult res = MessageBox.Show(
@@ -134,7 +315,6 @@ namespace CapaPresentacion
                 }
             }
 
-            // 7. Descripción que no supere una longitud establecida
             if (TDescripcion.Text.Trim().Length > 300)
             {
                 MessageBox.Show("La descripción no puede exceder los 300 caracteres.",
@@ -150,23 +330,19 @@ namespace CapaPresentacion
             TextBox txt = sender as TextBox;
             if (txt == null) return;
 
-            // Permitir teclas de control 
             if (char.IsControl(e.KeyChar))
             {
                 return;
             }
 
-            // Si escribe '.' o ',', normalizamos permitiendo solo un separador decimal
             if (e.KeyChar == '.' || e.KeyChar == ',')
             {
-                // Si ya contiene un punto o una coma, bloqueamos el ingreso
                 if (txt.Text.Contains(",") || txt.Text.Contains("."))
                 {
                     e.Handled = true;
                     return;
                 }
 
-                // Si es el primer carácter, colocamos "0," automáticamente
                 if (txt.Text.Length == 0)
                 {
                     txt.Text = "0,";
@@ -175,26 +351,20 @@ namespace CapaPresentacion
                     return;
                 }
 
-                //Estandarizar la tecla a coma ',' para que siempre se vea igual
                 e.KeyChar = ',';
                 return;
             }
 
-            // Manejo de dígitos (0-9)
             if (char.IsDigit(e.KeyChar))
             {
-                // Buscamos si ya hay separador en el texto
                 int indexSeparador = txt.Text.IndexOfAny(new char[] { ',', '.' });
 
                 if (indexSeparador != -1)
                 {
-                    // Solo restringimos si el cursor está escribiendo a la derecha de la coma
-                    // y no hay texto seleccionado (si hay texto marcado, se reemplaza)
                     if (txt.SelectionStart > indexSeparador && txt.SelectionLength == 0)
                     {
                         string parteDecimal = txt.Text.Substring(indexSeparador + 1);
 
-                        // Si ya tiene 2 decimales, no permitir más dígitos
                         if (parteDecimal.Length >= 2)
                         {
                             e.Handled = true;
@@ -205,7 +375,6 @@ namespace CapaPresentacion
                 return;
             }
 
-            // Bloquear cualquier otra tecla (letras, símbolos, espacios)
             e.Handled = true;
         }
 
@@ -214,7 +383,6 @@ namespace CapaPresentacion
             valor = 0;
             if (string.IsNullOrWhiteSpace(texto)) return false;
 
-            // Reemplazamos coma por punto para trabajar con formato invariante estándar
             string textoNormalizado = texto.Trim().Replace(',', '.');
 
             return decimal.TryParse(
@@ -232,10 +400,179 @@ namespace CapaPresentacion
 
             if (IntentarConvertirDecimal(txt.Text, out decimal valor))
             {
-                // Formatea siempre con 2 decimales exactos
                 txt.Text = valor.ToString("0.00");
             }
         }
 
+        // ============================================================
+        // BOTONES
+        // ============================================================
+
+        private async void BGuardar_Click(object sender, EventArgs e)
+        {
+            if (!ValidarCamposProducto())
+                return;
+
+            try
+            {
+                var producto = new CrearProductoDto
+                {
+                    CodigoInterno = TCodigoInterno.Text.Trim(),
+                    CodBarras = string.IsNullOrWhiteSpace(TCodBarras.Text) ? null : TCodBarras.Text.Trim(),
+                    Nombre = TNombreProducto.Text.Trim(),
+                    Descripcion = TDescripcion.Text.Trim(),
+                    CategoriaId = (int)CBCategoria.SelectedValue,
+                    ProveedorId = null,
+                    StockActual = (int)NUDStockActual.Value,
+                    StockMinimo = (int)NUDStockMinimo.Value,
+                    StockMaximo = 1000,
+                    Costo = 0,
+                    PrecioMinorista = decimal.Parse(TPrecioMinorista.Text.Replace(',', '.'),
+                        System.Globalization.CultureInfo.InvariantCulture),
+                    PrecioMayorista = string.IsNullOrWhiteSpace(TPrecioMayorista.Text) ? (decimal?)null :
+                        decimal.Parse(TPrecioMayorista.Text.Replace(',', '.'),
+                        System.Globalization.CultureInfo.InvariantCulture)
+                };
+
+                if (_esEdicion)
+                {
+                    var actualizarProducto = new ActualizarProductoDto
+                    {
+                        Nombre = producto.Nombre,
+                        CodBarras = producto.CodBarras,
+                        CodigoInterno = producto.CodigoInterno,
+                        Descripcion = producto.Descripcion,
+                        Costo = producto.Costo,
+                        PrecioMinorista = producto.PrecioMinorista,
+                        PrecioMayorista = producto.PrecioMayorista,
+                        StockActual = producto.StockActual,
+                        StockMinimo = producto.StockMinimo,
+                        StockMaximo = producto.StockMaximo,
+                        ProveedorId = producto.ProveedorId,
+                        CategoriaId = producto.CategoriaId,
+                        Estado = true
+                    };
+                    await _productoLogica.Actualizar(_productoId, actualizarProducto);
+                    MessageBox.Show("Producto actualizado exitosamente", "Éxito",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    await _productoLogica.Crear(producto);
+                    MessageBox.Show("Producto creado exitosamente", "Éxito",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
+                await CargarProductosAsync();
+                LimpiarCampos();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void BLimpiar_Click(object sender, EventArgs e)
+        {
+            LimpiarCampos();
+        }
+
+        private void BNuevo_Click(object sender, EventArgs e)
+        {
+            LimpiarCampos();
+        }
+
+        private void BEditar_Click(object sender, EventArgs e)
+        {
+            if (DGVProductos.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Seleccione un producto para editar", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                var idValue = DGVProductos.SelectedRows[0].Cells[0].Value;
+                if (idValue != null && idValue != DBNull.Value)
+                {
+                    _productoId = Convert.ToInt32(idValue);
+                    _esEdicion = true;
+                    CargarProductoEnFormulario(_productoId);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar producto: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void BDesactivar_Click(object sender, EventArgs e)
+        {
+            if (DGVProductos.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Seleccione un producto para desactivar", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            try
+            {
+                var idValue = DGVProductos.SelectedRows[0].Cells[0].Value;
+                if (idValue == null || idValue == DBNull.Value)
+                {
+                    MessageBox.Show("No se pudo obtener el ID del producto.", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                int id = Convert.ToInt32(idValue);
+                string nombre = DGVProductos.SelectedRows[0].Cells[3].Value?.ToString() ?? "";
+
+                if (MessageBox.Show($"¿Desea desactivar el producto '{nombre}'?",
+                    "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+                {
+                    await _productoLogica.Eliminar(id);
+                    MessageBox.Show("Producto desactivado exitosamente", "Éxito",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await CargarProductosAsync();
+                    LimpiarCampos();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al desactivar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // LIMPIAR CAMPOS
+        // ============================================================
+        private void LimpiarCampos()
+        {
+            TCodigoInterno.Clear();
+            TCodBarras.Clear();
+            TNombreProducto.Clear();
+            TDescripcion.Clear();
+            TPrecioMinorista.Clear();
+            TPrecioMayorista.Clear();
+            CBCategoria.SelectedIndex = -1;
+            NUDStockActual.Value = 0;
+            NUDStockMinimo.Value = 1;
+            _esEdicion = false;
+            _productoId = 0;
+            TCodigoInterno.Focus();
+        }
+
+        private void DGVProductos_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0)
+            {
+                DGVProductos.Rows[e.RowIndex].Selected = true;
+            }
+        }
     }
 }

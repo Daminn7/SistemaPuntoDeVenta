@@ -51,8 +51,23 @@ namespace CapaPresentacion
         // ============================================================
         private async void FormClientes_Load(object sender, EventArgs e)
         {
+            ConfigurarEstiloDataGridView();
             await CargarProvinciasAsync();
             await CargarClientesAsync();
+        }
+
+        // ============================================================
+        // ESTILO DEL DATAGRIDVIEW
+        // ============================================================
+        private void ConfigurarEstiloDataGridView()
+        {
+            DGVClientes.DefaultCellStyle.ForeColor = Color.Black;
+            DGVClientes.DefaultCellStyle.BackColor = Color.White;
+            DGVClientes.DefaultCellStyle.SelectionBackColor = Color.FromArgb(212, 131, 53);
+            DGVClientes.DefaultCellStyle.SelectionForeColor = Color.White;
+            DGVClientes.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            DGVClientes.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
+            DGVClientes.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
         }
 
         // ============================================================
@@ -278,7 +293,6 @@ namespace CapaPresentacion
                         return;
                     }
 
-                    // ✅ CORREGIDO: Usar pattern matching en lugar de 'as'
                     if (CBProvincia.SelectedItem is ProvinciaDto provincia)
                     {
                         await CargarLocalidadesPorProvinciaAsync(provincia.Id);
