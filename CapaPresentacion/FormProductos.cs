@@ -64,13 +64,24 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // CARGA DEL FORMULARIO
+        // CARGA DEL FORMULARIO (UNIFICADO)
         // ============================================================
         private async void FormProductos_Load(object sender, EventArgs e)
         {
+            // ✅ Cargar datos desde la API
             await CargarCategoriasAsync();
             await CargarProductosAsync();
             ConfigurarEstiloDataGridView();
+
+            // ✅ Lógica de visibilidad por rol (comentada hasta que SesionUsuario esté disponible)
+            /*
+            if (SesionUsuario.Rol == "Vendedor")
+            {
+                PTarjetaLateral.Visible = false;
+                TLPContenido.ColumnStyles[0].Width = 100F;
+                TLPContenido.ColumnStyles[1].Width = 0F;
+            }
+            */
         }
 
         // ============================================================
@@ -156,16 +167,14 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // SELECCIÓN DE PRODUCTO EN EL DATAGRIDVIEW (CORREGIDO)
+        // SELECCIÓN DE PRODUCTO EN EL DATAGRIDVIEW
         // ============================================================
         private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            // ✅ Verificar que se haya hecho clic en una fila válida
             if (e.RowIndex < 0) return;
 
             try
             {
-                // ✅ Obtener el ID de la primera columna (índice 0)
                 var idValue = DGVProductos.Rows[e.RowIndex].Cells[0].Value;
 
                 if (idValue == null || idValue == DBNull.Value)

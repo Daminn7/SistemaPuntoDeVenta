@@ -46,6 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormCompras.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCompras.Designer.cs">
+      <DependentUpon>FormCompras.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormDashboard.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -58,6 +64,12 @@
     <Compile Include="FormHistorialVentas.Designer.cs">
       <DependentUpon>FormHistorialVentas.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormInformes.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormInformes.Designer.cs">
+      <DependentUpon>FormInformes.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormLogin.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -69,6 +81,18 @@
     </Compile>
     <Compile Include="FormMovimientosCaja.Designer.cs">
       <DependentUpon>FormMovimientosCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormPersonal.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPersonal.Designer.cs">
+      <DependentUpon>FormPersonal.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormPreVenta.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormPreVenta.Designer.cs">
+      <DependentUpon>FormPreVenta.cs</DependentUpon>
     </Compile>
     <Compile Include="FormPrincipal.cs">
       <SubType>Form</SubType>
@@ -88,8 +112,17 @@
     <Compile Include="FormProductos.Designer.cs">
       <DependentUpon>FormProductos.cs</DependentUpon>
     </Compile>
+    <Compile Include="FormProveedores.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormProveedores.Designer.cs">
+      <DependentUpon>FormProveedores.cs</DependentUpon>
+    </Compile>
     <Compile Include="Program.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <EmbeddedResource Include="FormCompras.resx">
+      <DependentUpon>FormCompras.cs</DependentUpon>
+    </EmbeddedResource>
     <EmbeddedResource Include="FormHistorialVentas.resx">
       <DependentUpon>FormHistorialVentas.cs</DependentUpon>
     </EmbeddedResource>
