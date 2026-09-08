@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
@@ -17,139 +18,209 @@ namespace CapaPresentacion
         private readonly string _rolUsuario;
         private Form _formularioActivo = null;
         private Timer _timerReloj;
+        private Button _botonMenuActivo = null;
+        private bool _cierreConfirmado = false;
+        // Paleta de colores
+        private readonly Color ColorOcre = Color.FromArgb(212, 131, 53);
+        private readonly Color ColorGrafito = Color.FromArgb(38, 40, 44);
+        private readonly Color ColorHover = Color.FromArgb(55, 58, 64);
+        private readonly Color ColorBotonActivo = Color.FromArgb(48, 51, 57);
+
         public FormPrincipal(string nombreUsuario, string rolUsuario)
         {
             InitializeComponent();
             _nombreUsuario = nombreUsuario;
             _rolUsuario = rolUsuario;
+            // Intercepta el cierre de la ventana 'X'
+            this.FormClosing += FormPrincipal_FormClosing;
         }
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
-            /*// Evaluamos el rol del usuario autenticado
-            switch (UsuarioSesion.Rol.ToUpper())
+            this.Bounds = Screen.FromHandle(this.Handle).Bounds;
+            ConfigurarBotonLogoInicio();
+            GenerarIconosMenu();
+            ConfigurarSesion();
+            IniciarReloj();
+            AplicarPermisosPorRol();
+            // Carga inicial en el Dashboard
+            //IrAlDashboard();
+        }
+        private void ConfigurarSesion()
+        {
+            if (LUsuarioInfo != null)
+                LUsuarioInfo.Text = $"Usuario: {_nombreUsuario} | Rol: {_rolUsuario.ToUpper()}";
+        }
+        // Transforma el título HIERRO Y FORJA en un botón de acceso al Dashboard
+        private void ConfigurarBotonLogoInicio()
+        {
+            // Asume que el label o picturebox se llama LTitulo o PBLogo en el designer
+            Control[] posiblesLogos = this.Controls.Find("LTitulo", true);
+            if (posiblesLogos.Length > 0)
             {
-                case "COBRANZA":
-                case "CAJERO":
-                    AbrirFormHijo(new FormCobroCaja());
-                    ResaltarBotonActivo(btnCaja);
+                Control lblLogo = posiblesLogos[0];
+                lblLogo.Cursor = Cursors.Hand;
+                lblLogo.Click += (s, e) => IrAlDashboard();
+            }
+            Control[] posiblesPanelesLogo = this.Controls.Find("PLogo", true);
+            if (posiblesPanelesLogo.Length > 0)
+            {
+                posiblesPanelesLogo[0].Cursor = Cursors.Hand;
+                posiblesPanelesLogo[0].Click += (s, e) => IrAlDashboard();
+            }
+        }
+        private void IrAlDashboard()
+        {
+            ResaltarBotonActivo(null); // Desmarca cualquier botón de módulo
+            AbrirFormularioEnContenedor<FormDashboard>();
+        }
+        // Permisos por rol
+        private void AplicarPermisosPorRol()
+        {
+            // Supongamos que la clase estática de sesión almacena los datos del usuario logueado
+            string rolActual = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            string nombreUsuario = SesionUsuario.Nombre ?? "Usuario Activo";
+
+            LUsuarioInfo.Text = $"Operador: {nombreUsuario}  |  Rol: {rolActual}";
+
+            // Actualiza el indicador visual del usuario en el encabezado
+            if (LUsuarioInfo != null)
+            {
+                LUsuarioInfo.Text = $"Operador: {nombreUsuario}  |  Rol: {rolActual}";
+            }
+            // 1. Ocultar todos los botones inicialmente para evitar estados inconsistentes
+            OcultarTodosLosBotonesMenu();
+            // 2. Activar y configurar accesos según el nivel de privilegios
+            switch (rolActual)
+            {
+                case "VENDEDOR":
+                    ConfigurarMenuVendedor();
                     break;
 
-                case "VENDEDOR":
-                    AbrirFormHijo(new FormNuevaPreVenta());
-                    ResaltarBotonActivo(btnVentas);
+                case "CAJERO":
+                case "CAJERO / OPERADOR":
+                case "OPERADOR":
+                    ConfigurarMenuCajero();
                     break;
 
                 case "ADMINISTRADOR":
                 default:
-                    // Si ya tienes FormDashboard usas ese; si no, FormHistorialVentas
-                    AbrirFormHijo(new FormDashboard());
-                    ResaltarBotonActivo(btnInicio); // o btnVentas / btnDashboard
-                    break;
-            }*/
-
-            // 1. Genera los PNGs en la carpeta bin/Debug si aún no existen
-            GenerarIconosMenu();
-
-            ConfigurarSesion();
-            AplicarPermisosPorRol();   
-            IniciarReloj();
-            // 5. Abre la pantalla correspondiente sin dejar el contenedor vacío
-            //CargarPantallaInicial();
-            // Carga inicial automática de la pantalla principal
-            BMenuDashboard_Click(null, EventArgs.Empty);
-
-        }
-        private void ConfigurarSesion()
-        {
-            LUsuarioInfo.Text = $"Usuario: {_nombreUsuario} | Rol: {_rolUsuario.ToUpper()}";
-        }
-
-        // Restringe el acceso a módulos según el perfil (RF-SEG#01)
-        private void AplicarPermisosPorRol()
-        {
-            switch (_rolUsuario.Trim().ToLower())
-            {
-                case "vendedor":
-                    // Solo consulta catálogo, alta clientes y órdenes
-                    BMenuVentas.Visible = true;
-                    BMenuClientes.Visible = true;
-                    BMenuProductos.Visible = false; // O solo consulta
-                    BMenuCaja.Visible = false;
-                    BMenuUsuarios.Visible = false;
-                    BMenuReportes.Visible = false;
-                    break;
-
-                case "cobranza":
-                    // Operativo de Caja y Cobranza
-                    BMenuVentas.Visible = false;
-                    BMenuClientes.Visible = true;
-                    BMenuProductos.Visible = false;
-                    BMenuCaja.Visible = true;
-                    BMenuUsuarios.Visible = false;
-                    BMenuReportes.Visible = false;
-                    break;
-
-                case "administrador":
-                    // Acceso total a todos los módulos
-                    BMenuVentas.Visible = true;
-                    BMenuClientes.Visible = true;
-                    BMenuProductos.Visible = true;
-                    BMenuCaja.Visible = true;
-                    BMenuUsuarios.Visible = true;
-                    BMenuReportes.Visible = true;
+                    ConfigurarMenuAdministrador();
                     break;
             }
         }
+        // Rutinas de configuración de menú
+        private void OcultarTodosLosBotonesMenu()
+        {
+            // Asegura que no queden botones visibles residuales
+            if (BMenuVentas != null) BMenuVentas.Visible = false;
+            if (BMenuClientes != null) BMenuClientes.Visible = false;
+            if (BMenuProductos != null) BMenuProductos.Visible = false;
+            if (BMenuCaja != null) BMenuCaja.Visible = false;
+            if (BMenuCompras != null) BMenuCompras.Visible = false;
+            if (BMenuProveedores != null) BMenuProveedores.Visible = false;
+            if (BMenuUsuarios != null) BMenuUsuarios.Visible = false;
+            if (BMenuReportes != null) BMenuReportes.Visible = false;
+            if (BMenuMisVentas != null) BMenuMisVentas.Visible = false;
+        }
+        private void ConfigurarMenuVendedor()
+        {
+            // 1. PreVenta (Presupuestos / Pedidos Mostrador)
+            if (BMenuVentas != null)
+            {
+                BMenuVentas.Text = "PreVenta";
+                BMenuVentas.Visible = true;
+            }
+            // 2. Clientes (Consulta y alta de clientes)
+            if (BMenuClientes != null)
+            {
+                BMenuClientes.Text = "Clientes";
+                BMenuClientes.Visible = true;
+            }
+            // 3. Ver Productos (Catálogo en modo consulta/stock)
+            if (BMenuProductos != null)
+            {
+                BMenuProductos.Text = "Ver Productos";
+                BMenuProductos.Visible = true;
+            }
+            // 4. Mis Ventas (Historial y comisiones del vendedor logueado)
+            if (BMenuMisVentas != null)
+            {
+                BMenuMisVentas.Text = "Mis Ventas";
+                BMenuMisVentas.Visible = true;
+            }
+            // Pantalla por defecto al iniciar sesión: PreVenta
+            BMenuVentas_Click(null, EventArgs.Empty);
+        }
+        private void ConfigurarMenuCajero()
+        {
+            // 1. Caja (Aperturas, Cierres de caja y arqueo diario)
+            if (BMenuCaja != null)
+            {
+                BMenuCaja.Text = "Caja";
+                BMenuCaja.Visible = true;
+            }
+            // 2. Ventas / Cobranza (Facturación y cobro de pedidos emitidos por preventa)
+            if (BMenuVentas != null)
+            {
+                BMenuVentas.Text = "Cobro / Ventas";
+                BMenuVentas.Visible = true;
+            }
+            // 3. Clientes (Para asociar comprobantes fiscales o consultar saldo de cuenta)
+            if (BMenuClientes != null)
+            {
+                BMenuClientes.Text = "Clientes";
+                BMenuClientes.Visible = true;
+            }
+            // 4. Ver Productos (Consulta rápida de precios de caja)
+            if (BMenuProductos != null)
+            {
+                BMenuProductos.Text = "Ver Productos";
+                BMenuProductos.Visible = true;
+            }
+            // Pantalla por defecto al iniciar sesión: Módulo Caja
+            BMenuCaja_Click(null, EventArgs.Empty);
+        }
+        private void ConfigurarMenuAdministrador()
+        {
+            // Restaura textos originales y hace visibles todos los módulos
+            if (BMenuVentas != null) { BMenuVentas.Text = "Ventas"; BMenuVentas.Visible = true; }
+            if (BMenuClientes != null) { BMenuClientes.Text = "Clientes"; BMenuClientes.Visible = true; }
+            if (BMenuProductos != null) { BMenuProductos.Text = "Productos"; BMenuProductos.Visible = true; }
+            if (BMenuCaja != null) { BMenuCaja.Text = "Caja"; BMenuCaja.Visible = true; }
+            if (BMenuCompras != null) { BMenuCompras.Text = "Compras"; BMenuCompras.Visible = true; }
+            if (BMenuProveedores != null) { BMenuProveedores.Text = "Proveedores"; BMenuProveedores.Visible = true; }
+            if (BMenuUsuarios != null) { BMenuUsuarios.Text = "Personal"; BMenuUsuarios.Visible = true; }
+            if (BMenuReportes != null) { BMenuReportes.Text = "Informes"; BMenuReportes.Visible = true; }
+            // Pantalla por defecto para Administrador: Dashboard o Catálogo
+            BMenuDashboard_Click(null, EventArgs.Empty);
+        }
+        // Simulación usuario
+        public static class SesionUsuario
+        {
+            public static int IdUsuario { get; set; } = 1;
+            public static string Nombre { get; set; } = "Gastón";
 
+            // Cambia este valor aquí para probar los diferentes perfiles:
+            // Opciones: "ADMINISTRADOR", "VENDEDOR", "CAJERO"
+            public static string Rol { get; set; } = "Vendedor";
+        }
+        //
         private void IniciarReloj()
         {
-            _timerReloj = new Timer();
-            _timerReloj.Interval = 1000;
+            _timerReloj = new Timer { Interval = 1000 };
             _timerReloj.Tick += (s, e) =>
             {
                 if (LFechaHora != null)
-                {
-                    LFechaHora.Text = $"🕒 {DateTime.Now.ToString("HH:mm:ss")}  •  {DateTime.Now.ToString("dd/MM/yyyy")}";
-                }
+                    LFechaHora.Text = $"🕒 {DateTime.Now:HH:mm:ss}  •  {DateTime.Now:dd/MM/yyyy}";
             };
             _timerReloj.Start();
 
-            // Carga inicial
             if (LFechaHora != null)
-            {
-                LFechaHora.Text = $"🕒 {DateTime.Now.ToString("HH:mm:ss")}  •  {DateTime.Now.ToString("dd/MM/yyyy")}";
-            }
+                LFechaHora.Text = $"🕒 {DateTime.Now:HH:mm:ss}  •  {DateTime.Now:dd/MM/yyyy}";
         }
-
-        // Carga la primera pantalla al entrar sin dejar el panel gris vacío
-        private void CargarPantallaInicial()
-        {
-            switch (_rolUsuario.Trim().ToLower())
-            {
-                case "vendedor":
-                    // Cuando crees FormNuevaPreVenta lo activas aquí:
-                    // AbrirFormularioEnContenedor<FormNuevaPreVenta>();
-                    AbrirFormularioEnContenedor<FormClientes>();
-                    break;
-
-                case "cobranza":
-                    // Cuando crees FormCobroCaja lo activas aquí:
-                    // AbrirFormularioEnContenedor<FormCobroCaja>();
-                    AbrirFormularioEnContenedor<FormClientes>();
-                    break;
-
-                case "administrador":
-                default:
-                    // Mientras no exista FormDashboard, arranca en Catálogo
-                    AbrirFormularioEnContenedor<FormProductos>();
-                    break;
-            }
-        }
-
-        // Método maestro para abrir cualquier formulario dentro del PContenedor
+        // Navegación y apertura de formularios hijos
         public void AbrirFormularioEnContenedor<T>() where T : Form, new()
         {
-            // Si ya está abierto el mismo formulario, no lo recreamos
             if (_formularioActivo is T) return;
 
             if (_formularioActivo != null)
@@ -157,117 +228,176 @@ namespace CapaPresentacion
                 _formularioActivo.Close();
                 _formularioActivo.Dispose();
             }
-
             _formularioActivo = new T
             {
                 TopLevel = false,
                 FormBorderStyle = FormBorderStyle.None,
                 Dock = DockStyle.Fill
             };
-
             PContenedor.Controls.Clear();
             PContenedor.Controls.Add(_formularioActivo);
             PContenedor.Tag = _formularioActivo;
             _formularioActivo.Show();
         }
-
-        //Generador de Iconos para no exportar una por una cada imagen
+        private void ResaltarBotonActivo(Button botonSeleccionado)
+        {
+            Button[] botones = {
+                BMenuVentas, BMenuClientes, BMenuProductos, BMenuCaja,
+                BMenuCompras, BMenuProveedores, BMenuUsuarios, BMenuReportes,
+                BMenuMisVentas
+            };
+            foreach (var btn in botones)
+            {
+                if (btn == null) continue;
+                btn.BackColor = ColorGrafito;
+            }
+            if (botonSeleccionado != null)
+            {
+                botonSeleccionado.BackColor = ColorBotonActivo;
+            }
+            _botonMenuActivo = botonSeleccionado;
+        }        
+        // Generación de botones e iconos vectoriales
         private void GenerarIconosMenu()
         {
-            Color colorIcono = Color.FromArgb(212, 131, 53); // Ocre/Dorado
-            Color colorFondo = Color.FromArgb(38, 40, 44);   // Mismo fondo de la barra
-            Color colorHover = Color.FromArgb(55, 58, 64);   // Resalte suave
-
             var listaBotones = new (Button boton, string texto, Image icono)[]
-            {
-                (BMenuVentas, "Ventas", DibujarIconoVentas(colorIcono)),
-                (BMenuClientes, "Clientes", DibujarIconoClientes(colorIcono)),
-                (BMenuProductos, "Catálogo", DibujarIconoCatalogo(colorIcono)),
-                (BMenuCaja, "Caja", DibujarIconoCaja(colorIcono)),
-                (BMenuUsuarios, "Personal", DibujarIconoPersonal(colorIcono)),
-                (BMenuReportes, "Informes", DibujarIconoInformes(colorIcono))
-            };
-
-            int posicionX = 20;  // Margen inicial izquierdo
-            int anchoBoton = 160; // Ancho suficiente para que ninguna palabra se corte
-            int altoBoton = 60;   // Altura adaptada al panel de 90px
-            // Centrado vertical dinámico respecto al panel contenedor (PMenu)
-            int posicionY = (PMenu.Height - altoBoton) / 2; // (90 - 70) / 2 = 10
+        {
+            (BMenuVentas, "Ventas", DibujarIconoVentas(ColorOcre)),
+            (BMenuClientes, "Clientes", DibujarIconoClientes(ColorOcre)),
+            (BMenuProductos, "Catálogo", DibujarIconoCatalogo(ColorOcre)),
+            (BMenuCaja, "Caja", DibujarIconoCaja(ColorOcre)),
+            (BMenuCompras, "Compras", DibujarIconoCompras(ColorOcre)),
+            (BMenuProveedores, "Proveedores", DibujarIconoProveedores(ColorOcre)),
+            (BMenuUsuarios, "Personal", DibujarIconoPersonal(ColorOcre)),
+            (BMenuReportes, "Informes", DibujarIconoInformes(ColorOcre)),
+            (BMenuMisVentas, "Mis Ventas", DibujarIconoMisVentas(ColorOcre))
+        };
+            int altoBoton = 56;
+            int anchoEstandar = 145;
             foreach (var item in listaBotones)
             {
                 if (item.boton == null) continue;
 
-                // Dimensiones y posición centrada verticalmente en el panel
-                item.boton.Size = new Size(anchoBoton, altoBoton);
-                item.boton.Location = new Point(posicionX, posicionY);
-                posicionX += anchoBoton + 12; // 12px de separación entre botones
+                // Si es Proveedores le damos más ancho para que nunca se quiebre el texto
+                int anchoActual = (item.boton == BMenuProveedores) ? 170 : anchoEstandar;
 
-                // Quitamos el Padding lateral que apretaba el texto
-                item.boton.Padding = new Padding(12, 0, 8, 0);
+                item.boton.Size = new Size(anchoActual, altoBoton);
+                item.boton.Margin = new Padding(2, 0, 4, 0);
+                item.boton.Padding = new Padding(6, 0, 6, 0);
 
-                // Estilos
                 item.boton.Text = item.texto;
                 item.boton.Image = item.icono;
-                item.boton.BackColor = colorFondo;
+                item.boton.BackColor = ColorGrafito;
                 item.boton.ForeColor = Color.White;
-                item.boton.Font = new Font("Segoe UI", 12.0f, FontStyle.Bold);
+                item.boton.Font = new Font("Segoe UI", 10F, FontStyle.Bold);
                 item.boton.FlatStyle = FlatStyle.Flat;
                 item.boton.FlatAppearance.BorderSize = 0;
                 item.boton.Cursor = Cursors.Hand;
-                item.boton.TextImageRelation = TextImageRelation.ImageAboveText;
+                item.boton.ImageAlign = ContentAlignment.MiddleLeft;
+                item.boton.TextAlign = ContentAlignment.MiddleRight;
+                item.boton.TextImageRelation = TextImageRelation.ImageBeforeText;
 
-                // Hover
-                item.boton.MouseEnter += (s, e) => ((Button)s).BackColor = colorHover;
-                item.boton.MouseLeave += (s, e) => ((Button)s).BackColor = colorFondo;
+                item.boton.MouseEnter += (s, e) =>
+                {
+                    Button b = (Button)s;
+                    if (b != _botonMenuActivo) b.BackColor = ColorHover;
+                };
 
-                //3.Ajusta la alineación visual(icono a la izquierda del texto)
-                Button[] botones = { BMenuVentas, BMenuClientes, BMenuProductos, BMenuCaja, BMenuUsuarios, BMenuReportes }; 
-                foreach (var btn in botones) { 
-                    if (btn != null) { 
-                        btn.ImageAlign = ContentAlignment.MiddleLeft; 
-                        btn.TextAlign = ContentAlignment.MiddleRight; 
-                        btn.TextImageRelation = TextImageRelation.ImageBeforeText; } 
-                }
+                item.boton.MouseLeave += (s, e) =>
+                {
+                    Button b = (Button)s;
+                    if (b != _botonMenuActivo) b.BackColor = ColorGrafito;
+                };
             }
         }
-
-        //Generación de iconos
+        // Icono Compras: Carrito con flecha hacia abajo
+        private Image DibujarIconoCompras(Color color)
+        {
+            Bitmap bmp = new Bitmap(44, 44);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 2.8f))
+                using (Brush brush = new SolidBrush(color))
+                {
+                    // Canasta
+                    g.DrawLines(pen, new[] {
+                        new Point(6, 12),
+                        new Point(12, 12),
+                        new Point(16, 30),
+                        new Point(34, 30),
+                        new Point(38, 16),
+                        new Point(14, 16)
+                    });
+                    g.FillEllipse(brush, 17, 33, 4.5f, 4.5f);
+                    g.FillEllipse(brush, 31, 33, 4.5f, 4.5f);
+                    // Flecha de entrada / compra
+                    g.DrawLine(pen, 25, 6, 25, 22);
+                    g.DrawLine(pen, 21, 18, 25, 22);
+                    g.DrawLine(pen, 29, 18, 25, 22);
+                }
+            }
+            return bmp;
+        }
+        // Icono Proveedores: Camión de suministros / Fábrica
+        private Image DibujarIconoProveedores(Color color)
+        {
+            Bitmap bmp = new Bitmap(44, 44);
+            using (Graphics g = Graphics.FromImage(bmp))
+            {
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 2.8f))
+                using (Brush brush = new SolidBrush(color))
+                {
+                    // Chasis caja de carga
+                    g.DrawRectangle(pen, 5, 12, 20, 18);
+                    // Cabina
+                    Point[] cabina = {
+                        new Point(25, 18),
+                        new Point(33, 18),
+                        new Point(38, 23),
+                        new Point(38, 30),
+                        new Point(25, 30)
+                    };
+                    g.DrawPolygon(pen, cabina);
+                    // Ruedas
+                    g.FillEllipse(brush, 10, 30, 6, 6);
+                    g.FillEllipse(brush, 30, 30, 6, 6);
+                }
+            }
+            return bmp;
+        }
         private Image DibujarIconoVentas(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 3.2f))
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 3f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    g.DrawLines(pen, new[] { 
-                        new Point(4, 8), 
-                        new Point(11, 8), 
-                        new Point(17, 28), 
-                        new Point(35, 28), 
-                        new Point(39, 14), 
-                        new Point(13, 14) });
-                    g.FillEllipse(brush, 17, 32, 5.5f, 5.5f);
-                    g.FillEllipse(brush, 32, 32, 5.5f, 5.5f);
+                    g.DrawLines(pen, new[] {
+                        new Point(4, 10), new Point(11, 10), new Point(17, 28),
+                        new Point(34, 28), new Point(38, 15), new Point(13, 15)
+                    });
+                    g.FillEllipse(brush, 17, 31, 5f, 5f);
+                    g.FillEllipse(brush, 31, 31, 5f, 5f);
                 }
             }
             return bmp;
         }
-
         private Image DibujarIconoClientes(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
                 using (Brush brush = new SolidBrush(color))
-                using (Pen pen = new Pen(color, 3.0f))
                 {
-                    g.FillEllipse(brush, 15, 4, 14, 14); // Cabeza
-                    using (var p = new System.Drawing.Drawing2D.GraphicsPath())
+                    g.FillEllipse(brush, 15, 6, 14, 14);
+                    using (var p = new GraphicsPath())
                     {
-                        p.AddArc(7, 22, 30, 30, 180, 180);
+                        p.AddArc(7, 23, 30, 26, 180, 180);
                         p.CloseFigure();
                         g.FillPath(brush, p);
                     }
@@ -275,16 +405,18 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoCatalogo(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 3.0f))
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 2.8f))
                 {
-                    g.DrawPolygon(pen, new[] { new Point(22, 5), new Point(38, 14), new Point(38, 30), new Point(22, 39), new Point(6, 30), new Point(6, 14) });
+                    g.DrawPolygon(pen, new[] {
+                        new Point(22, 5), new Point(38, 14), new Point(38, 30),
+                        new Point(22, 39), new Point(6, 30), new Point(6, 14)
+                    });
                     g.DrawLine(pen, 22, 5, 22, 39);
                     g.DrawLine(pen, 6, 14, 22, 22);
                     g.DrawLine(pen, 38, 14, 22, 22);
@@ -297,93 +429,243 @@ namespace CapaPresentacion
             Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 3.2f))
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 3f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    g.DrawRectangle(pen, 5, 11, 34, 22);
-                    g.FillEllipse(brush, 18, 18, 8, 8);
+                    g.DrawRectangle(pen, 5, 12, 34, 21);
+                    g.FillEllipse(brush, 18, 19, 8, 8);
                 }
             }
             return bmp;
         }
-
         private Image DibujarIconoPersonal(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                using (Pen pen = new Pen(color, 3.0f))
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 2.8f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    g.DrawRectangle(pen, 7, 5, 30, 34);
-                    g.FillEllipse(brush, 17, 11, 10, 10);
-                    g.DrawLine(pen, 13, 30, 31, 30);
+                    g.DrawRectangle(pen, 8, 6, 28, 32);
+                    g.FillEllipse(brush, 17, 12, 10, 10);
+                    g.DrawLine(pen, 13, 29, 31, 29);
                 }
             }
             return bmp;
         }
-
         private Image DibujarIconoInformes(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
             using (Graphics g = Graphics.FromImage(bmp))
             {
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
                 using (Brush brush = new SolidBrush(color))
-                using (Pen pen = new Pen(color, 3.2f))
+                using (Pen pen = new Pen(color, 3f))
                 {
-                    g.DrawLine(pen, 5, 37, 39, 37);
-                    g.FillRectangle(brush, 9, 22, 6, 15);
-                    g.FillRectangle(brush, 19, 15, 6, 22);
-                    g.FillRectangle(brush, 29, 7, 6, 30);
+                    g.DrawLine(pen, 5, 36, 39, 36);
+                    g.FillRectangle(brush, 9, 22, 6, 14);
+                    g.FillRectangle(brush, 19, 15, 6, 21);
+                    g.FillRectangle(brush, 29, 8, 6, 28);
                 }
             }
             return bmp;
         }
-        private void BCerrarSesion_Click(object sender, EventArgs e)
+        private Image DibujarIconoMisVentas(Color color)
         {
-            DialogResult resultado = MessageBox.Show(
-                "¿Está seguro de que desea cerrar la sesión actual?",
-                "Cerrar Sesión",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-
-            if (resultado == DialogResult.Yes)
+            Bitmap bmp = new Bitmap(44, 44);
+            using (Graphics g = Graphics.FromImage(bmp))
             {
+                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                using (Pen pen = new Pen(color, 2.8f))
+                using (Brush brush = new SolidBrush(color))
+                {
+                    // Libreta / Factura de ventas
+                    g.DrawRectangle(pen, 8, 6, 28, 32);
+                    // Líneas del documento
+                    g.DrawLine(pen, 14, 14, 26, 14);
+                    g.DrawLine(pen, 14, 20, 30, 20);
+                    // Tilde de venta completada en la esquina inferior
+                    PointF[] check = new PointF[]
+                    {
+                        new PointF(14, 28),
+                        new PointF(19, 32),
+                        new PointF(29, 24)
+                    };
+                    g.DrawLines(pen, check);
+                }
+            }
+            return bmp;
+        }
+        // Diálogo personalizado de confirmación de salida
+        private bool ConfirmarCierreSesion()
+        {
+            using (Form modal = new Form())
+            {
+                modal.FormBorderStyle = FormBorderStyle.None;
+                modal.StartPosition = FormStartPosition.CenterParent;
+                modal.Size = new Size(420, 160);
+                modal.BackColor = Color.FromArgb(34, 36, 40); // color del negocio
+                modal.ShowInTaskbar = false;
+                // Marco exterior y franja Ocre lateral
+                modal.Paint += (s, e) =>
+                {
+                    e.Graphics.SmoothingMode = SmoothingMode.AntiAlias;
+                    // Marco perimetral
+                    using (Pen penBorde = new Pen(Color.FromArgb(65, 68, 74), 1))
+                    {
+                        e.Graphics.DrawRectangle(penBorde, 0, 0, modal.Width - 1, modal.Height - 1);
+                    }
+                    // Acento lateral izquierdo ocre
+                    using (Brush brushOcre = new SolidBrush(ColorOcre))
+                    {
+                        e.Graphics.FillRectangle(brushOcre, 0, 0, 5, modal.Height);
+                    }
+                    // Icono interrogación circular en Ocre
+                    using (Pen penCirculo = new Pen(ColorOcre, 2.2f))
+                    {
+                        e.Graphics.DrawEllipse(penCirculo, 24, 40, 42, 42);
+                    }
+                    using (Font fontSigno = new Font("Segoe UI", 18F, FontStyle.Bold))
+                    using (Brush brushBlanco = new SolidBrush(Color.White))
+                    {
+                        e.Graphics.DrawString("?", fontSigno, brushBlanco, 34, 43);
+                    }
+                };
+                Label lblTitulo = new Label
+                {
+                    Text = "CERRAR SESIÓN",
+                    Font = new Font("Segoe UI", 11.5F, FontStyle.Bold),
+                    ForeColor = ColorOcre,
+                    Location = new Point(82, 24),
+                    AutoSize = true
+                };
+                Label lblMensaje = new Label
+                {
+                    Text = "¿Desea cerrar la sesión actual y salir del sistema?",
+                    Font = new Font("Segoe UI", 9.5F, FontStyle.Regular),
+                    ForeColor = Color.FromArgb(230, 230, 230),
+                    Location = new Point(83, 50),
+                    Size = new Size(315, 40)
+                };
+                Button btnSi = new Button
+                {
+                    Text = "Sí, Salir",
+                    Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                    BackColor = Color.FromArgb(192, 57, 43), // Rojo discreto
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(100, 34),
+                    Location = new Point(190, 105),
+                    Cursor = Cursors.Hand,
+                    DialogResult = DialogResult.Yes
+                };
+                btnSi.FlatAppearance.BorderSize = 0;
+                Button btnNo = new Button
+                {
+                    Text = "Cancelar",
+                    Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                    BackColor = Color.FromArgb(60, 63, 69),
+                    ForeColor = Color.White,
+                    FlatStyle = FlatStyle.Flat,
+                    Size = new Size(100, 34),
+                    Location = new Point(300, 105),
+                    Cursor = Cursors.Hand,
+                    DialogResult = DialogResult.No
+                };
+                btnNo.FlatAppearance.BorderSize = 0;
+                modal.Controls.Add(lblTitulo);
+                modal.Controls.Add(lblMensaje);
+                modal.Controls.Add(btnSi);
+                modal.Controls.Add(btnNo);
+                modal.AcceptButton = btnSi;
+                modal.CancelButton = btnNo;
+
+                return modal.ShowDialog(this) == DialogResult.Yes;
+            }
+        }
+        // Intercepta tanto el botón 'X' de Windows como llamadas directas
+        private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (_cierreConfirmado) return;
+
+            if (ConfirmarCierreSesion())
+            {
+                _cierreConfirmado = true;
                 if (_timerReloj != null)
                 {
                     _timerReloj.Stop();
                     _timerReloj.Dispose();
                 }
-                this.Close();
+            }
+            else
+            {
+                e.Cancel = true; // Cancela el cierre de la ventana
             }
         }
-        // Eventos de los botones de navegación
+        private void BCerrarSesion_Click(object sender, EventArgs e)
+        {
+            this.Close(); // Dispara automáticamente FormPrincipal_FormClosing
+        }
+        // Eventos de click de navegación
         private void BMenuProductos_Click(object sender, EventArgs e)
         {
+            ResaltarBotonActivo(BMenuProductos);
             AbrirFormularioEnContenedor<FormProductos>();
         }
-
         private void BMenuClientes_Click(object sender, EventArgs e)
         {
+            ResaltarBotonActivo(BMenuClientes);
             AbrirFormularioEnContenedor<FormClientes>();
         }
-
         private void BMenuVentas_Click(object sender, EventArgs e)
         {
-            AbrirFormularioEnContenedor<FormHistorialVentas>();
+            ResaltarBotonActivo(BMenuVentas);
+            if (SesionUsuario.Rol == "Vendedor")
+            {
+                AbrirFormularioEnContenedor<FormPreVenta>();
+            }
+            else
+            {
+                AbrirFormularioEnContenedor<FormHistorialVentas>();
+            }
         }
-
         private void BMenuCaja_Click(object sender, EventArgs e)
         {
+            ResaltarBotonActivo(BMenuCaja);
             AbrirFormularioEnContenedor<FormMovimientosCaja>();
+        }
+        private void BMenuCompras_Click(object sender, EventArgs e)
+        {
+            ResaltarBotonActivo(BMenuCompras);
+            AbrirFormularioEnContenedor<FormCompras>();
+        }
+        private void BMenuProveedores_Click(object sender, EventArgs e)
+        {
+            ResaltarBotonActivo(BMenuProveedores);
+            AbrirFormularioEnContenedor<FormProveedores>();
+        }
+        private void BMenuUsuarios_Click(object sender, EventArgs e)
+        {
+            ResaltarBotonActivo(BMenuUsuarios);
+            AbrirFormularioEnContenedor<FormPersonal>();
+        }
+        private void BMenuReportes_Click(object sender, EventArgs e)
+        {
+            ResaltarBotonActivo(BMenuReportes);
+            AbrirFormularioEnContenedor<FormInformes>();
         }
         private void BMenuDashboard_Click(object sender, EventArgs e)
         {
-            AbrirFormularioEnContenedor<FormDashboard>();
+            IrAlDashboard();
+        }
+        private void BMenuMisVentas_Click(object sender, EventArgs e)
+        {
+            ResaltarBotonActivo(BMenuMisVentas);
+            // Cuando creemos FormMisVentas:
+            // AbrirFormularioEnContenedor<FormMisVentas>();
+            MessageBox.Show("Abriendo módulo: Mis Ventas", "Navegación", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
     }
 }
