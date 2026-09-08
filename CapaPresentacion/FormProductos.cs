@@ -7,6 +7,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using static CapaPresentacion.FormPrincipal;
 
 namespace CapaPresentacion
 {
@@ -17,7 +18,6 @@ namespace CapaPresentacion
             InitializeComponent();
             AsignarEstiloEIconos();
         }
-
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             Bitmap nuevoBitmap = new Bitmap(ancho, alto);
@@ -28,7 +28,6 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private void AsignarEstiloEIconos()
         {
             BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);;
@@ -37,7 +36,6 @@ namespace CapaPresentacion
             BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
         }
-
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
             // Permite números (0-9) y teclas de control como Backspace o Delete
@@ -46,7 +44,6 @@ namespace CapaPresentacion
                 e.Handled = true; // Cancela la tecla pulsada
             }
         }
-
         private bool ValidarCamposProducto()
         {
             // 1. Código Interno
@@ -57,8 +54,7 @@ namespace CapaPresentacion
                 TCodigoInterno.Focus();
                 return false;
             }
-
-            // 2. Código de Barras (si se ingresó algo)
+            // 2. Código de Barras
             if (!string.IsNullOrWhiteSpace(TCodBarras.Text) && !long.TryParse(TCodBarras.Text.Trim(), out _))
             {
                 MessageBox.Show("El Código de Barras debe ser numérico.",
@@ -66,7 +62,6 @@ namespace CapaPresentacion
                 TCodBarras.Focus();
                 return false;
             }
-
             // 3. Nombre del Producto
             if (string.IsNullOrWhiteSpace(TNombreProducto.Text) || TNombreProducto.Text.Trim().Length < 3)
             {
@@ -75,7 +70,6 @@ namespace CapaPresentacion
                 TNombreProducto.Focus();
                 return false;
             }
-
             // 4. Categoría
             if (CBCategoria.SelectedIndex == -1)
             {
@@ -84,7 +78,6 @@ namespace CapaPresentacion
                 CBCategoria.Focus();
                 return false;
             }
-
             // 5. Precios (Decimales)
             if (!IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista) || precioMinorista <= 0)
             {
@@ -92,14 +85,12 @@ namespace CapaPresentacion
                 TPrecioMinorista.Focus();
                 return false;
             }
-
             if (!IntentarConvertirDecimal(TPrecioMayorista.Text, out decimal precioMayorista) || precioMayorista <= 0)
             {
                 MessageBox.Show("Ingrese un Precio Mayorista válido mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 TPrecioMayorista.Focus();
                 return false;
             }
-
             // Regla comercial estricta: No permite guardar (CONVERSAR)
             if (precioMayorista > precioMinorista)
             {
@@ -116,7 +107,6 @@ namespace CapaPresentacion
                 NUDStockMinimo.Focus();
                 return false;
             }
-
             // Advertencia informativa si se crea el producto con stock por debajo del mínimo
             if (NUDStockActual.Value < NUDStockMinimo.Value)
             {
@@ -126,14 +116,12 @@ namespace CapaPresentacion
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Question
                 );
-
                 if (res == DialogResult.No)
                 {
                     NUDStockActual.Focus();
                     return false;
                 }
             }
-
             // 7. Descripción que no supere una longitud establecida
             if (TDescripcion.Text.Trim().Length > 300)
             {
@@ -144,18 +132,15 @@ namespace CapaPresentacion
             }
             return true;
         }
-
         private void ValidarDecimal_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox txt = sender as TextBox;
             if (txt == null) return;
-
             // Permitir teclas de control 
             if (char.IsControl(e.KeyChar))
             {
                 return;
             }
-
             // Si escribe '.' o ',', normalizamos permitiendo solo un separador decimal
             if (e.KeyChar == '.' || e.KeyChar == ',')
             {
@@ -165,7 +150,6 @@ namespace CapaPresentacion
                     e.Handled = true;
                     return;
                 }
-
                 // Si es el primer carácter, colocamos "0," automáticamente
                 if (txt.Text.Length == 0)
                 {
@@ -174,12 +158,10 @@ namespace CapaPresentacion
                     e.Handled = true;
                     return;
                 }
-
                 //Estandarizar la tecla a coma ',' para que siempre se vea igual
                 e.KeyChar = ',';
                 return;
             }
-
             // Manejo de dígitos (0-9)
             if (char.IsDigit(e.KeyChar))
             {
@@ -193,7 +175,6 @@ namespace CapaPresentacion
                     if (txt.SelectionStart > indexSeparador && txt.SelectionLength == 0)
                     {
                         string parteDecimal = txt.Text.Substring(indexSeparador + 1);
-
                         // Si ya tiene 2 decimales, no permitir más dígitos
                         if (parteDecimal.Length >= 2)
                         {
@@ -204,16 +185,13 @@ namespace CapaPresentacion
                 }
                 return;
             }
-
             // Bloquear cualquier otra tecla (letras, símbolos, espacios)
             e.Handled = true;
         }
-
         public static bool IntentarConvertirDecimal(string texto, out decimal valor)
         {
             valor = 0;
             if (string.IsNullOrWhiteSpace(texto)) return false;
-
             // Reemplazamos coma por punto para trabajar con formato invariante estándar
             string textoNormalizado = texto.Trim().Replace(',', '.');
 
@@ -224,7 +202,6 @@ namespace CapaPresentacion
                 out valor
             );
         }
-
         private void FormatearMoneda_Leave(object sender, EventArgs e)
         {
             TextBox txt = sender as TextBox;
@@ -236,6 +213,15 @@ namespace CapaPresentacion
                 txt.Text = valor.ToString("0.00");
             }
         }
-
+        private void FormProductos_Load(object sender, EventArgs e)
+        {
+            if (SesionUsuario.Rol == "Vendedor")
+            {
+                // Ocultar tarjeta de edición y expandir la grilla
+                PTarjetaLateral.Visible = false;
+                TLPContenido.ColumnStyles[0].Width = 100F;
+                TLPContenido.ColumnStyles[1].Width = 0F;
+            }
+        }
     }
 }
