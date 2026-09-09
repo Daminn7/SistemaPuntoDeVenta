@@ -41,9 +41,21 @@ namespace CapaDatos
 
                 return false;
             }
+            catch (AggregateException ex) when (ex.InnerException is System.Net.Http.HttpRequestException)
+            {
+                // ✅ Error de conexión a la API
+                System.Diagnostics.Debug.WriteLine($"Error de conexión en autenticación: {ex.InnerException.Message}");
+                throw new System.Net.Http.HttpRequestException("No se pudo conectar con el servidor. Verifique su conexión.");
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                // ✅ Error de conexión a la API
+                System.Diagnostics.Debug.WriteLine("Error de conexión en autenticación");
+                throw;
+            }
             catch (Exception ex)
             {
-                // Si la API falla, podemos loguear el error
+                // Otros errores
                 System.Diagnostics.Debug.WriteLine($"Error en autenticacion API: {ex.Message}");
                 return false;
             }

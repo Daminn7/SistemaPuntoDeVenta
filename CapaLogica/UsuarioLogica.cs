@@ -43,6 +43,7 @@ namespace CapaLogica
             rol = string.Empty;
             nombreCompleto = string.Empty;
 
+            // Validaciones de entrada
             if (string.IsNullOrWhiteSpace(usuario))
                 return "Debe ingresar su código de usuario.";
 
@@ -63,6 +64,11 @@ namespace CapaLogica
                     return "Código de usuario o contraseña incorrectos.";
 
                 return string.Empty;
+            }
+            catch (System.Net.Http.HttpRequestException)
+            {
+                // ✅ Error de conexión a la API
+                return "Error de conexión con el servidor. No se pudo contactar con la API.";
             }
             catch (Exception ex)
             {
@@ -97,8 +103,19 @@ namespace CapaLogica
                 usuario.PerfilId = null;
             }
 
-            // Llamar a la API
-            return await _apiClient.CreateUsuarioAsync(usuario);
+            try
+            {
+                // Llamar a la API
+                return await _apiClient.CreateUsuarioAsync(usuario);
+            }
+            catch (System.Net.Http.HttpRequestException ex)
+            {
+                throw new Exception($"Error de conexión al crear usuario: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al crear usuario: {ex.Message}");
+            }
         }
 
         /// <summary>
@@ -123,8 +140,19 @@ namespace CapaLogica
             if (string.IsNullOrWhiteSpace(usuario.Dni))
                 throw new Exception("El DNI es obligatorio.");
 
-            // Llamar a la API
-            return await _apiClient.UpdateUsuarioAsync(id, usuario);
+            try
+            {
+                // Llamar a la API
+                return await _apiClient.UpdateUsuarioAsync(id, usuario);
+            }
+            catch (System.Net.Http.HttpRequestException ex)
+            {
+                throw new Exception($"Error de conexión al actualizar usuario: {ex.Message}");
+            }
+            catch (Exception ex)
+            {
+                throw new Exception($"Error al actualizar usuario: {ex.Message}");
+            }
         }
     }
 }

@@ -192,7 +192,8 @@ namespace CapaPresentacion
             string clave = (TPassword.Text == "Contraseña") ? "" : TPassword.Text;
 
             bool hayError = false;
-            //Validación individual previa antes de procesar
+
+            // Validación individual previa antes de procesar
             if (string.IsNullOrWhiteSpace(usuario))
             {
                 LErrorUsuario.Visible = true;
@@ -211,39 +212,67 @@ namespace CapaPresentacion
                 else TPassword.Focus();
                 return;
             }
-            //Validación estricta a través de la Capa Lógica
-            string error = _usuarioLogica.ValidarLogin(usuario, clave, out string rol, out string nombreCompleto);
 
-            if (string.IsNullOrEmpty(error))
+            try
             {
-                // Notificación con la paleta que se desvanece o dura 1 segundo
-                MostrarBienvenidaFlotante(nombreCompleto, rol);
+                // Validación estricta a través de la Capa Lógica
+                string error = _usuarioLogica.ValidarLogin(usuario, clave, out string rol, out string nombreCompleto);
 
-                this.Hide();
-
-                // Abrimos el FormPrincipal con los datos de sesión
-                using (FormPrincipal frmPrincipal = new FormPrincipal(nombreCompleto, rol))
+                if (string.IsNullOrEmpty(error))
                 {
-                    frmPrincipal.ShowDialog();
-                }
-                // Al cerrar el FormPrincipal, cerramos la aplicación
-                this.Close();
-            }
-            else
-            {
-                // Alerta al usuario
-                MessageBox.Show(error, "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MostrarBienvenidaFlotante(nombreCompleto, rol);
 
-                // Limpiamos ambos campos y restablecemos sus placeholders
+                    this.Hide();
+
+                    using (FormPrincipal frmPrincipal = new FormPrincipal(nombreCompleto, rol))
+                    {
+                        frmPrincipal.ShowDialog();
+                    }
+                    this.Close();
+                }
+                else
+                {
+                    MessageBox.Show(error, "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    RestablecerCampos();
+                    ValidarCamposEnTiempoReal();
+                    TUsuario.Focus();
+                    LErrorUsuario.Visible = false;
+                    LErrorPassword.Visible = false;
+                }
+            }
+            catch (System.Net.Http.HttpRequestException ex)
+            {
+                // ✅ Error de conexión a la API
+                MessageBox.Show(
+                    "No se pudo conectar con el servidor.\n\n" +
+                    "Por favor, verifique:\n" +
+                    "• Su conexión a internet\n" +
+                    "• Que el servidor esté funcionando\n" +
+                    "• La URL de la API sea correcta\n\n" +
+                    $"Detalle técnico: {ex.Message}",
+                    "Error de Conexión",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
+
+                // Restablecer campos después del error
                 RestablecerCampos();
                 ValidarCamposEnTiempoReal();
-
-                // Devolvemos el foco al campo de usuario
                 TUsuario.Focus();
+            }
+            catch (Exception ex)
+            {
+                // ✅ Otros errores inesperados
+                MessageBox.Show(
+                    $"Ocurrió un error inesperado:\n\n{ex.Message}",
+                    "Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error
+                );
 
-                //Ocultamos las advertencias
-                LErrorUsuario.Visible = false;
-                LErrorPassword.Visible = false;
+                RestablecerCampos();
+                ValidarCamposEnTiempoReal();
+                TUsuario.Focus();
             }
         }
         private void MostrarBienvenidaFlotante(string nombre, string rol)
