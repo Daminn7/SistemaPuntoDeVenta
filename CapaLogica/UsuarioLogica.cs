@@ -38,11 +38,6 @@ namespace CapaLogica
         /// <summary>
         /// Valida las credenciales de un usuario contra la API.
         /// </summary>
-        /// <param name="usuario">Código de usuario</param>
-        /// <param name="password">Contraseña</param>
-        /// <param name="rol">Perfil del usuario (Administrador, Vendedor, etc.)</param>
-        /// <param name="nombreCompleto">Nombre completo del usuario</param>
-        /// <returns>String vacío si es exitoso, mensaje de error si falla</returns>
         public string ValidarLogin(string usuario, string password, out string rol, out string nombreCompleto)
         {
             rol = string.Empty;
@@ -79,8 +74,6 @@ namespace CapaLogica
         /// Crea un nuevo usuario (cliente, personal o proveedor).
         /// Se usa en: POST /api/usuarios
         /// </summary>
-        /// <param name="usuario">Datos del usuario a crear</param>
-        /// <returns>Usuario creado con su ID</returns>
         public async Task<UsuarioDto> CrearUsuario(CrearUsuarioDto usuario)
         {
             // Validaciones de negocio
@@ -106,6 +99,32 @@ namespace CapaLogica
 
             // Llamar a la API
             return await _apiClient.CreateUsuarioAsync(usuario);
+        }
+
+        /// <summary>
+        /// Actualiza un usuario existente.
+        /// Se usa en: PUT /api/usuarios/{id}
+        /// </summary>
+        /// <param name="id">ID del usuario a actualizar</param>
+        /// <param name="usuario">Datos actualizados del usuario</param>
+        /// <returns>Usuario actualizado</returns>
+        public async Task<UsuarioDto> ActualizarUsuario(int id, ActualizarUsuarioDto usuario)
+        {
+            // Validaciones de negocio
+            if (string.IsNullOrWhiteSpace(usuario.Nombre))
+                throw new Exception("El nombre es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(usuario.Apellido))
+                throw new Exception("El apellido es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(usuario.Email))
+                throw new Exception("El email es obligatorio.");
+
+            if (string.IsNullOrWhiteSpace(usuario.Dni))
+                throw new Exception("El DNI es obligatorio.");
+
+            // Llamar a la API
+            return await _apiClient.UpdateUsuarioAsync(id, usuario);
         }
     }
 }

@@ -255,13 +255,27 @@ namespace CapaDatos.Services
             var content = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<DireccionDto>(content);
         }
-
         public async Task<DireccionDto> CreateDireccionAsync(CrearDireccionDto direccion)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(direccion), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(direccion);
+
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/direcciones: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/direcciones", content);
-            response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
+
+            // ✅ Mostrar más detalles
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: '{responseContent}'");
+            System.Diagnostics.Debug.WriteLine($"Headers: {response.Headers}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
             return JsonConvert.DeserializeObject<DireccionDto>(responseContent);
         }
 
@@ -301,9 +315,13 @@ namespace CapaDatos.Services
 
         public async Task<TelefonoDto> CreateTelefonoAsync(CrearTelefonoDto telefono)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(telefono), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(telefono);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/telefonos: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/telefonos", content);
             response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<TelefonoDto>(responseContent);
         }

@@ -1,4 +1,5 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace CapaDatos.DTOs
 {
@@ -10,7 +11,7 @@ namespace CapaDatos.DTOs
     {
         public int Id { get; set; }
         public string Caracteristica { get; set; }
-        public int Numero { get; set; }
+        public long Numero { get; set; }
         public bool Estado { get; set; }
         public DateTime FechaAlta { get; set; }
         public DateTime? FechaModificacion { get; set; }
@@ -22,8 +23,11 @@ namespace CapaDatos.DTOs
     // ============================================================
     public class CrearTelefonoDto
     {
+        [JsonProperty("caracteristica")]
         public string Caracteristica { get; set; }
-        public int Numero { get; set; }
+
+        [JsonProperty("numero")]
+        public long Numero { get; set; }
     }
 
     // ============================================================
@@ -32,8 +36,13 @@ namespace CapaDatos.DTOs
     // ============================================================
     public class ActualizarTelefonoDto
     {
+        [JsonProperty("caracteristica")]
         public string Caracteristica { get; set; }
-        public int Numero { get; set; }
+
+        [JsonProperty("numero")]
+        public long Numero { get; set; }
+
+        [JsonProperty("estado")]
         public bool Estado { get; set; }
     }
 }

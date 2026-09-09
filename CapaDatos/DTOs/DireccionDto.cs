@@ -1,53 +1,15 @@
 ﻿using System;
+using Newtonsoft.Json;  // ← AGREGAR ESTE USING
 
 namespace CapaDatos.DTOs
 {
     // ============================================================
     // 1. DIRECCION DTO - PARA CONSULTAS (GET)
-    //    Devuelve TODOS los datos de la dirección incluyendo
-    //    el nombre de la localidad y provincia.
     //    Se usa en: GET /api/direcciones, GET /api/direcciones/{id}
     // ============================================================
     public class DireccionDto
     {
-        public int Id { get; set; }                    // ID de la dirección
-        public string Calle { get; set; }              // Nombre de la calle
-        public int? Numero { get; set; }               // Número de la calle (opcional)
-        public int? Edificio { get; set; }             // Edificio (opcional)
-        public int? Piso { get; set; }                 // Piso (opcional)
-        public string Departamento { get; set; }       // Departamento (opcional)
-        public string Descripcion { get; set; }        // Descripción adicional (opcional)
-        public int LocalidadId { get; set; }           // ID de la localidad
-        public string LocalidadNombre { get; set; }    // Nombre de la localidad (para mostrar)
-        public string ProvinciaNombre { get; set; }    // Nombre de la provincia (para mostrar)
-        public bool Estado { get; set; }               // True = Activa, False = Inactiva
-        public DateTime FechaAlta { get; set; }        // Fecha de creación
-        public DateTime? FechaModificacion { get; set; } // Última modificación
-    }
-
-    // ============================================================
-    // 2. CREAR DIRECCION DTO - PARA CREACIÓN (POST)
-    //    Solo los campos necesarios para crear una dirección.
-    //    Se usa en: POST /api/direcciones
-    // ============================================================
-    public class CrearDireccionDto
-    {
-        public string Calle { get; set; }              // Obligatorio
-        public int? Numero { get; set; }               // Opcional
-        public int? Edificio { get; set; }             // Opcional
-        public int? Piso { get; set; }                 // Opcional
-        public string Departamento { get; set; }       // Opcional
-        public string Descripcion { get; set; }        // Opcional
-        public int LocalidadId { get; set; }           // Obligatorio
-    }
-
-    // ============================================================
-    // 3. ACTUALIZAR DIRECCION DTO - PARA MODIFICACIÓN (PUT)
-    //    Campos que se pueden modificar de una dirección.
-    //    Se usa en: PUT /api/direcciones/{id}
-    // ============================================================
-    public class ActualizarDireccionDto
-    {
+        public int Id { get; set; }
         public string Calle { get; set; }
         public int? Numero { get; set; }
         public int? Edificio { get; set; }
@@ -55,6 +17,69 @@ namespace CapaDatos.DTOs
         public string Departamento { get; set; }
         public string Descripcion { get; set; }
         public int LocalidadId { get; set; }
+        public string LocalidadNombre { get; set; }
+        public string ProvinciaNombre { get; set; }
+        public bool Estado { get; set; }
+        public DateTime FechaAlta { get; set; }
+        public DateTime? FechaModificacion { get; set; }
+    }
+
+    // ============================================================
+    // 2. CREAR DIRECCION DTO - PARA CREACIÓN (POST)
+    //    Se usa en: POST /api/direcciones
+    // ============================================================
+    public class CrearDireccionDto
+    {
+        [JsonProperty("calle")]         // ← AGREGAR
+        public string Calle { get; set; }
+
+        [JsonProperty("numero")]        // ← AGREGAR
+        public int? Numero { get; set; }
+
+        [JsonProperty("edificio")]      // ← AGREGAR
+        public int? Edificio { get; set; }
+
+        [JsonProperty("piso")]          // ← AGREGAR
+        public int? Piso { get; set; }
+
+        [JsonProperty("departamento")]  // ← AGREGAR
+        public string Departamento { get; set; }
+
+        [JsonProperty("descripcion")]   // ← AGREGAR
+        public string Descripcion { get; set; }
+
+        [JsonProperty("localidadId")]   // ← AGREGAR
+        public int LocalidadId { get; set; }
+    }
+
+    // ============================================================
+    // 3. ACTUALIZAR DIRECCION DTO - PARA MODIFICACIÓN (PUT)
+    //    Se usa en: PUT /api/direcciones/{id}
+    // ============================================================
+    public class ActualizarDireccionDto
+    {
+        [JsonProperty("calle")]
+        public string Calle { get; set; }
+
+        [JsonProperty("numero")]
+        public int? Numero { get; set; }
+
+        [JsonProperty("edificio")]
+        public int? Edificio { get; set; }
+
+        [JsonProperty("piso")]
+        public int? Piso { get; set; }
+
+        [JsonProperty("departamento")]
+        public string Departamento { get; set; }
+
+        [JsonProperty("descripcion")]
+        public string Descripcion { get; set; }
+
+        [JsonProperty("localidadId")]
+        public int LocalidadId { get; set; }
+
+        [JsonProperty("estado")]
         public bool Estado { get; set; }
     }
 }

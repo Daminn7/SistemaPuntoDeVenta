@@ -11,7 +11,7 @@ namespace CapaPresentacion
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             // Inicia con el login (descomentado)
-            Application.Run(new FormPrincipal("Gastón", "Administrador")); //FormLogin()
+            Application.Run(new FormLogin()); //FormLogin()
         }
     }
 }

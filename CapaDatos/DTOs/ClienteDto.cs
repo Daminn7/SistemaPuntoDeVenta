@@ -3,9 +3,8 @@
 namespace CapaDatos.DTOs
 {
     // ============================================================
-    // 1. CLIENTE DTO - PARA CONSULTAS (GET)
+    // 1. CLIENTE DTO - PARA CONSULTAS BASICAS (GET)
     //    Se usa en: GET /api/clientes, GET /api/clientes/{id}
-    //    Coincide con la respuesta de la API
     // ============================================================
     public class ClienteDto
     {
@@ -48,6 +47,7 @@ namespace CapaDatos.DTOs
     // ============================================================
     // 4. CLIENTE RESPONSE DTO - PARA CONSULTAS (GET) COMPLETAS
     //    Se usa en: GET /api/clientes, GET /api/clientes/{id}
+    //    ✅ INCLUYE CAMPOS DIRECTOS DE LOCALIDAD Y PROVINCIA
     // ============================================================
     public class ClienteResponseDto
     {
@@ -65,5 +65,12 @@ namespace CapaDatos.DTOs
         public DateTime FechaAlta { get; set; }
         public DateTime? FechaBaja { get; set; }
         public bool Estado { get; set; }
+
+        // ✅ NUEVOS CAMPOS DIRECTOS (vienen de la API)
+        public int? LocalidadId { get; set; }
+        public string Localidad { get; set; }
+        public int? LocalidadCodigoPostal { get; set; }
+        public int? ProvinciaId { get; set; }
+        public string Provincia { get; set; }
     }
 }
