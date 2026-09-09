@@ -162,7 +162,7 @@ namespace CapaPresentacion
             // 2. Ventas / Cobranza (Facturación y cobro de pedidos emitidos por preventa)
             if (BMenuVentas != null)
             {
-                BMenuVentas.Text = "Cobro / Ventas";
+                BMenuVentas.Text = "Cobro";
                 BMenuVentas.Visible = true;
             }
             // 3. Clientes (Para asociar comprobantes fiscales o consultar saldo de cuenta)
@@ -177,8 +177,8 @@ namespace CapaPresentacion
                 BMenuProductos.Text = "Ver Productos";
                 BMenuProductos.Visible = true;
             }
-            // Pantalla por defecto al iniciar sesión: Módulo Caja
-            BMenuCaja_Click(null, EventArgs.Empty);
+            // Al iniciar sesión como Cajero, aterriza directamente en Cobro
+            BMenuVentas_Click(BMenuVentas, EventArgs.Empty);
         }
         private void ConfigurarMenuAdministrador()
         {
@@ -199,10 +199,7 @@ namespace CapaPresentacion
         {
             public static int IdUsuario { get; set; } = 1;
             public static string Nombre { get; set; } = "Gastón";
-
-            // Cambia este valor aquí para probar los diferentes perfiles:
-            // Opciones: "ADMINISTRADOR", "VENDEDOR", "CAJERO"
-            public static string Rol { get; set; } = "Vendedor";
+            public static string Rol { get; set; } = "Cajero";
         }
         //
         private void IniciarReloj()
@@ -622,19 +619,40 @@ namespace CapaPresentacion
         private void BMenuVentas_Click(object sender, EventArgs e)
         {
             ResaltarBotonActivo(BMenuVentas);
-            if (SesionUsuario.Rol == "Vendedor")
+
+            string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+
+            switch (rol)
             {
-                AbrirFormularioEnContenedor<FormPreVenta>();
-            }
-            else
-            {
-                AbrirFormularioEnContenedor<FormHistorialVentas>();
+                case "VENDEDOR":
+                    AbrirFormularioEnContenedor<FormPreVenta>();
+                    break;
+
+                case "CAJERO":
+                case "CAJERO / OPERADOR":
+                case "OPERADOR":
+                    AbrirFormularioEnContenedor<FormCobroVenta>(); // Terminal de cobro solo para Cajero
+                    break;
+
+                case "ADMINISTRADOR":
+                default:
+                    AbrirFormularioEnContenedor<FormHistorialVentas>(); // Historial para Administrador
+                    break;
             }
         }
         private void BMenuCaja_Click(object sender, EventArgs e)
         {
             ResaltarBotonActivo(BMenuCaja);
-            AbrirFormularioEnContenedor<FormMovimientosCaja>();
+
+            // Si el rol es Cajero, podés enviarlo a la caja del día o a movimientos:
+            if (SesionUsuario.Rol == "CAJERO" || SesionUsuario.Rol == " CAJERO / OPERADOR" || SesionUsuario.Rol == "OPERADOR")
+            {
+                AbrirFormularioEnContenedor<FormMovimientosCaja>();
+            }
+            else // ADMINISTRADOR
+            {
+                AbrirFormularioEnContenedor<FormMovimientosCaja>();
+            }
         }
         private void BMenuCompras_Click(object sender, EventArgs e)
         {
@@ -663,9 +681,7 @@ namespace CapaPresentacion
         private void BMenuMisVentas_Click(object sender, EventArgs e)
         {
             ResaltarBotonActivo(BMenuMisVentas);
-            // Cuando creemos FormMisVentas:
-            // AbrirFormularioEnContenedor<FormMisVentas>();
-            MessageBox.Show("Abriendo módulo: Mis Ventas", "Navegación", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            AbrirFormularioEnContenedor<FormMisVentas>();
         }
     }
 }
