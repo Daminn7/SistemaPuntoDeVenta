@@ -50,13 +50,36 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="DTOs\NOTADROs.txt" />
+    <Compile Include="DTOs\AnularVentaDto.cs" />
+    <Compile Include="DTOs\CajaDto.cs" />
+    <Compile Include="DTOs\CategoriaDto.cs" />
+    <Compile Include="DTOs\DetalleOrdenDto.cs" />
+    <Compile Include="DTOs\MovimientoCajaDto.cs" />
+    <Compile Include="DTOs\TelefonoDto.cs" />
+    <Compile Include="DTOs\ClienteDto.cs" />
+    <Compile Include="DTOs\DireccionDto.cs" />
+    <Compile Include="DTOs\EstadoVentaDto.cs" />
+    <Compile Include="DTOs\LocalidadDto.cs" />
+    <Compile Include="DTOs\MedioPagoDto.cs" />
+    <Compile Include="DTOs\PerfilDto.cs" />
+    <Compile Include="DTOs\PersonalDto.cs" />
+    <Compile Include="DTOs\ProductoStockBajoDto.cs" />
+    <Compile Include="DTOs\ProveedorDto.cs" />
+    <Compile Include="DTOs\ProvinciaDto.cs" />
+    <Compile Include="DTOs\TipoDocumentoDto.cs" />
+    <Compile Include="DTOs\TipoMovimientoDto.cs" />
+    <Compile Include="DTOs\UsuarioDto.cs" />
     <Compile Include="DTOs\LoginDto.cs" />
     <Compile Include="DTOs\LoginResponseDto.cs" />
     <Compile Include="DTOs\ProductoDto.cs" />
+    <Compile Include="DTOs\VentaDto.cs" />
     <Compile Include="Helpers\TokenManager.cs" />
     <Compile Include="Services\ApiClient.cs" />
     <Compile Include="UsuarioDatos.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Content Include="Helpers\NOTAHelpers.txt" />
+    <Content Include="Services\NOTAServices.txt" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
@@ -81,7 +104,7 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json">
-      <Version>13.0.3</Version>
+      <Version>13.0.4</Version>
     </PackageReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

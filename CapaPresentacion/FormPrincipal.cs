@@ -31,6 +31,9 @@ namespace CapaPresentacion
             InitializeComponent();
             _nombreUsuario = nombreUsuario;
             _rolUsuario = rolUsuario;
+            // Guardar en la sesión global
+            SesionUsuario.Nombre = nombreUsuario;
+            SesionUsuario.Rol = rolUsuario?.ToUpper() ?? "ADMINISTRADOR";
             // Intercepta el cierre de la ventana 'X'
             this.FormClosing += FormPrincipal_FormClosing;
         }
@@ -197,9 +200,12 @@ namespace CapaPresentacion
         // Simulación usuario
         public static class SesionUsuario
         {
-            public static int IdUsuario { get; set; } = 1;
-            public static string Nombre { get; set; } = "Gastón";
-            public static string Rol { get; set; } = "Cajero";
+            public static int IdUsuario { get; set; }
+            public static string Nombre { get; set; }
+
+            // Cambia este valor aquí para probar los diferentes perfiles:
+            // Opciones: "ADMINISTRADOR", "VENDEDOR", "CAJERO"
+            public static string Rol { get; set; }
         }
         //
         private void IniciarReloj()

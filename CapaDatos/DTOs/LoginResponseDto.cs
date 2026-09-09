@@ -2,6 +2,11 @@
 
 namespace CapaDatos.DTOs
 {
+    // ============================================================
+    // 2. LOGIN RESPONSE DTO - RESPUESTA DEL LOGIN (RESPONSE)
+    //    Devuelve el token y datos del usuario autenticado.
+    //    Se usa en: POST /api/auth/login (Response)
+    // ============================================================
     public class LoginResponseDto
     {
         public bool Success { get; set; }
