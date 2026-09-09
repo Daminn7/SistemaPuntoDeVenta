@@ -28,19 +28,6 @@ namespace CapaPresentacion
         {
             InitializeComponent();
             AsignarEstiloEIconos();
-
-            // ✅ Asignar evento Load
-            this.Load += FormProductos_Load;
-
-            // ✅ Conectar eventos de botones
-            this.BGuardar.Click += BGuardar_Click;
-            this.BLimpiar.Click += BLimpiar_Click;
-            this.BNuevo.Click += BNuevo_Click;
-            this.BEditar.Click += BEditar_Click;
-            this.BDesactivar.Click += BDesactivar_Click;
-
-            // ✅ Conectar evento de selección en DataGridView
-            this.DGVProductos.CellClick += DGVProductos_CellClick;
         }
 
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
@@ -67,7 +54,8 @@ namespace CapaPresentacion
         // CARGA DEL FORMULARIO (UNIFICADO)
         // ============================================================
         private async void FormProductos_Load(object sender, EventArgs e)
-        {
+        {   
+            AplicarRestriccionesPorRol();
             // ✅ Cargar datos desde la API
             await CargarCategoriasAsync();
             await CargarProductosAsync();
@@ -83,7 +71,41 @@ namespace CapaPresentacion
             }
             */
         }
+        private void AplicarRestriccionesPorRol()
+        {
+            // Accedemos a la clase estática de sesión declarada en FormPrincipal
+            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
 
+            if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
+            {
+                // Ocultar tarjeta lateral de carga / modificación
+                PTarjetaLateral.Visible = false;
+
+                // Expandir grilla al 100% del ancho del TableLayoutPanel
+                TLPContenido.ColumnStyles[0].SizeType = SizeType.Percent;
+                TLPContenido.ColumnStyles[0].Width = 100F;
+                TLPContenido.ColumnStyles[1].SizeType = SizeType.Percent;
+                TLPContenido.ColumnStyles[1].Width = 0F;
+
+                // Bloquear edición en la grilla (solo consulta)
+                DGVProductos.ReadOnly = true;
+                DGVProductos.AllowUserToAddRows = false;
+                DGVProductos.AllowUserToDeleteRows = false;
+                DGVProductos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                DGVProductos.MultiSelect = false;
+
+                // Quitar la selección inicial para que no quede una fila marcada en azul
+                DGVProductos.ClearSelection();
+                DGVProductos.CurrentCell = null;
+
+                // Cambiar título si el control existe en el diseñador
+                Control[] lblTitulo = this.Controls.Find("LTituloPrincipal", true);
+                if (lblTitulo.Length > 0)
+                {
+                    lblTitulo[0].Text = "CATÁLOGO DE PRODUCTOS";
+                }
+            }
+        }
         // ============================================================
         // CARGA DE CATEGORÍAS
         // ============================================================
@@ -172,6 +194,13 @@ namespace CapaPresentacion
         private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
+            // Si es Vendedor o Cajero, solo permitimos navegar y visualizar la grilla
+            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
+            {
+                return;
+            }
 
             try
             {

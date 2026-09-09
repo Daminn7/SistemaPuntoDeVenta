@@ -198,6 +198,7 @@
             this.DGVProductos.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.DGVProductos.Size = new System.Drawing.Size(707, 465);
             this.DGVProductos.TabIndex = 0;
+            this.DGVProductos.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DGVProductos_CellClick);
             // 
             // ColId
             // 
@@ -730,6 +731,7 @@
             this.BLimpiar.Text = "Limpiar Campos";
             this.BLimpiar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BLimpiar.UseVisualStyleBackColor = false;
+            this.BLimpiar.Click += new System.EventHandler(this.BLimpiar_Click);
             // 
             // imgListaIconos
             // 
@@ -776,6 +778,7 @@
             this.BEditar.Text = "Editar";
             this.BEditar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BEditar.UseVisualStyleBackColor = false;
+            this.BEditar.Click += new System.EventHandler(this.BEditar_Click);
             // 
             // BDesactivar
             // 
@@ -797,6 +800,7 @@
             this.BDesactivar.Text = "Dar de Baja";
             this.BDesactivar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BDesactivar.UseVisualStyleBackColor = false;
+            this.BDesactivar.Click += new System.EventHandler(this.BDesactivar_Click);
             // 
             // TLPBotonesSup
             // 
@@ -833,6 +837,7 @@
             this.BNuevo.Text = "Nuevo";
             this.BNuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BNuevo.UseVisualStyleBackColor = false;
+            this.BNuevo.Click += new System.EventHandler(this.BNuevo_Click);
             // 
             // BGuardar
             // 
@@ -854,6 +859,7 @@
             this.BGuardar.Text = "Guardar";
             this.BGuardar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BGuardar.UseVisualStyleBackColor = false;
+            this.BGuardar.Click += new System.EventHandler(this.BGuardar_Click);
             // 
             // LSubtituloTarjeta
             // 
