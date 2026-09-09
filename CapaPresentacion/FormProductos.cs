@@ -54,7 +54,8 @@ namespace CapaPresentacion
         // CARGA DEL FORMULARIO (UNIFICADO)
         // ============================================================
         private async void FormProductos_Load(object sender, EventArgs e)
-        {
+        {   
+            AplicarRestriccionesPorRol();
             // ✅ Cargar datos desde la API
             await CargarCategoriasAsync();
             await CargarProductosAsync();
@@ -69,7 +70,6 @@ namespace CapaPresentacion
                 TLPContenido.ColumnStyles[1].Width = 0F;
             }
             */
-            AplicarRestriccionesPorRol();
         }
         private void AplicarRestriccionesPorRol()
         {
@@ -102,7 +102,7 @@ namespace CapaPresentacion
                 Control[] lblTitulo = this.Controls.Find("LTituloPrincipal", true);
                 if (lblTitulo.Length > 0)
                 {
-                    lblTitulo[0].Text = "CATÁLOGO DE PRODUCTOS (SOLO CONSULTA)";
+                    lblTitulo[0].Text = "CATÁLOGO DE PRODUCTOS";
                 }
             }
         }

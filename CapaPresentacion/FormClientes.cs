@@ -56,11 +56,69 @@ namespace CapaPresentacion
         // ============================================================
         private async void FormClientes_Load(object sender, EventArgs e)
         {
+            AplicarPermisosPorRol();
             ConfigurarEstiloDataGridView();
             await CargarProvinciasAsync();
             await CargarClientesAsync();
         }
+        private void AplicarPermisosPorRol()
+        {
+            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
 
+            if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
+            {
+                // 1. Ocultar la tarjeta lateral de edición completa para el cajero
+                if (PTarjetaLateral != null)
+                {
+                    PTarjetaLateral.Visible = false;
+                }
+
+                // 2. Expandir la grilla de clientes al 100% del formulario
+                if (TLPContenido != null && TLPContenido.ColumnCount >= 2)
+                {
+                    TLPContenido.ColumnStyles[0].SizeType = SizeType.Percent;
+                    TLPContenido.ColumnStyles[0].Width = 100F;
+
+                    TLPContenido.ColumnStyles[1].SizeType = SizeType.Percent;
+                    TLPContenido.ColumnStyles[1].Width = 0F;
+                }
+
+                // 3. Grilla en modo estricto de solo lectura
+                DGVClientes.ReadOnly = true;
+                DGVClientes.AllowUserToAddRows = false;
+                DGVClientes.AllowUserToDeleteRows = false;
+                DGVClientes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+                DGVClientes.MultiSelect = false;
+
+                // 4. Actualizar título para reflejar consulta
+                if (LTituloPrincipal != null)
+                {
+                    LTituloPrincipal.Text = "CONSULTA Y VALIDACIÓN DE CLIENTES";
+                }
+            }
+            else if (rol == "VENDEDOR")
+            {
+                // El vendedor puede dar de alta o actualizar datos de contacto,
+                // pero NO tiene permiso para dar de baja clientes
+                if (BDesactivar != null)
+                {
+                    BDesactivar.Visible = false;
+                }
+
+                // Ajustamos BActualizar para que ocupe todo el ancho disponible en su fila
+                if (TLPBotonesMed != null && TLPBotonesMed.ColumnCount >= 2)
+                {
+                    TLPBotonesMed.ColumnStyles[0].SizeType = SizeType.Percent;
+                    TLPBotonesMed.ColumnStyles[0].Width = 100F;
+
+                    TLPBotonesMed.ColumnStyles[1].SizeType = SizeType.Percent;
+                    TLPBotonesMed.ColumnStyles[1].Width = 0F;
+                }
+
+                // Centrado de BActualizar al ocupar el ancho completo (388 px)
+                BActualizar.Padding = new Padding(125, 0, 0, 0);
+            }
+        }
         // ============================================================
         // ESTILO DEL DATAGRIDVIEW
         // ============================================================
@@ -74,7 +132,7 @@ namespace CapaPresentacion
             DGVClientes.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
             DGVClientes.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
         }
-
+        
         // ============================================================
         // CARGA DE CLIENTES
         // ============================================================
@@ -131,6 +189,13 @@ namespace CapaPresentacion
         private void DGVClientes_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
+            // Si es Cajero, solo navega y consulta la grilla, no carga la ficha de edición
+            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
+            {
+                return;
+            }
 
             try
             {
