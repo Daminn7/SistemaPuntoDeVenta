@@ -14,46 +14,67 @@ namespace CapaPresentacion
 {
     public partial class FormCompras : Form
     {
-        private DataTable _dtCompras = new DataTable();
-        private int _idCompraSeleccionada = 0;
+        private DataTable _dtDetalle = new DataTable();
         private bool _actualizandoNroFactura = false;
-        private bool _calculandoTotales = false;
+
+        // Catálogo simulado (reemplazable por llamadas a _productoLogica y _proveedorLogica)
+        private class ItemCatalogo
+        {
+            public int Id { get; set; }
+            public string Codigo { get; set; }
+            public string Nombre { get; set; }
+            public decimal UltimoCosto { get; set; }
+            public string ProveedorAsociado { get; set; }
+        }
+
+        private List<ItemCatalogo> _catalogoDisponible = new List<ItemCatalogo>();
 
         public FormCompras()
         {
             InitializeComponent();
-            InicializarComportamiento();
         }
 
         private void FormCompras_Load(object sender, EventArgs e)
         {
             if (PBIconoTitulo != null)
-            {
-                // Color Ocre (#D48335) para mantener la identidad visual del título
                 PBIconoTitulo.Image = GenerarIconoCompras(Color.FromArgb(212, 131, 53));
-            }
+
             AsignarEstiloEIconos();
-            CargarDesplegablesSimulados();
-            CargarHistorialComprasSimulado();
-
-            // 1. Limpia los campos del panel lateral para que arranque listo para una nueva carga
-            LimpiarFormulario();
-
-            // 2. Desmarca cualquier fila para que no se pinte la franja naranja al abrir
-            DGVCompras.ClearSelection();
-            DGVCompras.CurrentCell = null;
-        }
-
-        private void InicializarComportamiento()
-        {
             ConfigurarRestriccionesTeclado();
-            ConfigurarFechaEmision();
-            ConfigurarCalculoTotalesEnVivo();
-            ConfigurarFiltrosDinamicos();
+            ConfigurarFormatoNroComprobante();
+            InicializarEstructuraDetalle();
+            CargarDesplegables();
+            CargarCatalogoSimulado();
+            LimpiarFormularioCompleto();
         }
-        // =========================================================================
-        // ÍCONO VECTORIAL: COMPRAS (Carro / Canasta de compras comercial)
-        // =========================================================================
+
+        private void AsignarEstiloEIconos()
+        {
+            try
+            {
+                BGuardarCompra.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
+                BCancelar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
+            }
+            catch
+            {
+                // Fallback silencioso
+            }
+        }
+
+        private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
+        {
+            if (imagenOriginal == null) return null;
+
+            Bitmap nuevoBitmap = new Bitmap(ancho, alto);
+            using (Graphics g = Graphics.FromImage(nuevoBitmap))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.DrawImage(imagenOriginal, 0, 0, ancho, alto);
+            }
+            return nuevoBitmap;
+        }
+
         private Image GenerarIconoCompras(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -64,23 +85,18 @@ namespace CapaPresentacion
                 using (Pen pen = new Pen(color, 2.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    // Canasta / canasto del carro
                     PointF[] canasta = new PointF[]
                     {
-                new PointF(4.5f, 7.5f),   // Manija / Inicio
-                new PointF(7.5f, 7.5f),   // Quiebre manija
-                new PointF(10.5f, 19.5f), // Bajada frontal
-                new PointF(25.5f, 19.5f), // Base inferior
-                new PointF(27.5f, 10.5f), // Subida trasera
-                new PointF(8.5f, 10.5f)   // Línea superior del canasto
+                        new PointF(4.5f, 7.5f),
+                        new PointF(7.5f, 7.5f),
+                        new PointF(10.5f, 19.5f),
+                        new PointF(25.5f, 19.5f),
+                        new PointF(27.5f, 10.5f),
+                        new PointF(8.5f, 10.5f)
                     };
                     g.DrawLines(pen, canasta);
-
-                    // Rejilla interna vertical del carro
                     g.DrawLine(pen, 15.5f, 11.5f, 14.5f, 18.5f);
                     g.DrawLine(pen, 21.5f, 11.5f, 20.5f, 18.5f);
-
-                    // Ruedas del carro (círculos rellenos)
                     g.FillEllipse(brush, 10f, 22f, 4.5f, 4.5f);
                     g.FillEllipse(brush, 22f, 22f, 4.5f, 4.5f);
                 }
@@ -88,106 +104,64 @@ namespace CapaPresentacion
             return bmp;
         }
 
-
-        // Método para reescalar las imágenes sin que pierdan nitidez
-        private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
+        private void InicializarEstructuraDetalle()
         {
-            if (imagenOriginal == null) return null;
-
-            Bitmap nuevoBitmap = new Bitmap(ancho, alto);
-            using (Graphics g = Graphics.FromImage(nuevoBitmap))
+            if (_dtDetalle.Columns.Count == 0)
             {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
-                g.DrawImage(imagenOriginal, 0, 0, ancho, alto);
+                _dtDetalle.Columns.Add("ColIdProducto", typeof(int));
+                _dtDetalle.Columns.Add("ColCodigo", typeof(string));
+                _dtDetalle.Columns.Add("ColDescripcion", typeof(string));
+                _dtDetalle.Columns.Add("ColCantidad", typeof(int));
+                _dtDetalle.Columns.Add("ColCostoUnitario", typeof(string));
+                _dtDetalle.Columns.Add("ColSubtotal", typeof(string));
             }
-            return nuevoBitmap;
+
+            DGVDetalleCompra.AutoGenerateColumns = false;
+            ColIdProducto.DataPropertyName = "ColIdProducto";
+            ColCodigo.DataPropertyName = "ColCodigo";
+            ColDescripcion.DataPropertyName = "ColDescripcion";
+            ColCantidad.DataPropertyName = "ColCantidad";
+            ColCostoUnitario.DataPropertyName = "ColCostoUnitario";
+            ColSubtotal.DataPropertyName = "ColSubtotal";
+
+            DGVDetalleCompra.DataSource = _dtDetalle;
         }
 
-        // Asignación de iconos con los nombres exactos de Properties.Resources
-        private void AsignarEstiloEIconos()
-        {
-                 BNuevaCompra.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
-                BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-                BVerDetalle.Image = EscalarIcono(Properties.Resources.boton_editar_blanco, 32, 32);
-                BAnular.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
-                BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
-        }
         private void ConfigurarRestriccionesTeclado()
         {
-            TBNroComprobante.MaxLength = 20; 
-            
-            TBSubtotal.KeyPress += PermitirDecimales_KeyPress;
-            TBIva.KeyPress += PermitirDecimales_KeyPress;
-
-            TBTotalCompra.ReadOnly = true;
+            TBNroComprobante.MaxLength = 20;
+            TBCostoUnitario.KeyPress += PermitirDecimales_KeyPress;
+            TBCostoUnitario.Leave += (s, e) =>
+            {
+                if (decimal.TryParse(TBCostoUnitario.Text.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal valor))
+                {
+                    TBCostoUnitario.Text = valor.ToString("0.00");
+                }
+            };
         }
 
         private void PermitirDecimales_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox txt = (TextBox)sender;
-            char separador = CultureInfo.CurrentCulture.NumberFormat.NumberDecimalSeparator[0];
+            char sep = ',';
 
-            // Permite teclas de control (BackSpace, Delete, etc.)
-            if (char.IsControl(e.KeyChar))
-                return;
+            if (char.IsControl(e.KeyChar)) return;
 
-            // Convierte punto a coma si la cultura lo requiere
             if (e.KeyChar == '.' || e.KeyChar == ',')
-                e.KeyChar = separador;
-
-            // Si es dígito, se acepta
-            if (char.IsDigit(e.KeyChar))
-                return;
-
-            // Validación estricta del separador decimal:
-            // 1. Solo se permite un separador decimal
-            // 2. No se permite como primer carácter (ej: ",50" inválido)
-            if (e.KeyChar == separador)
             {
-                if (txt.Text.Contains(separador.ToString()) || txt.SelectionStart == 0)
+                if (txt.Text.Contains(",") || txt.Text.Contains("."))
                 {
                     e.Handled = true;
                     return;
                 }
+                e.KeyChar = sep;
                 return;
             }
 
-            // Cualquier otro carácter queda bloqueado
-            e.Handled = true;
-        }
-        // =========================================================================
-        // 1. CONFIGURACIÓN DEL DATETIMEPICKER PARA QUE INICIE EN BLANCO
-        // =========================================================================
-        private bool _fechaSeleccionada = false;
-
-        private void ConfigurarFechaEmision()
-        {
-            // Al iniciar, se muestra en blanco
-            ResetearFechaEmision();
-
-            // Cuando el usuario interactúa con el calendario, se activa el formato de fecha normal
-            DTPFechaEmision.DropDown += (s, e) => ActivarFechaEmision();
-            DTPFechaEmision.ValueChanged += (s, e) => ActivarFechaEmision();
+            if (!char.IsDigit(e.KeyChar))
+                e.Handled = true;
         }
 
-        private void ResetearFechaEmision()
-        {
-            _fechaSeleccionada = false;
-            DTPFechaEmision.Format = DateTimePickerFormat.Custom;
-            DTPFechaEmision.CustomFormat = " "; // Se muestra visualmente vacío
-        }
-
-        private void ActivarFechaEmision()
-        {
-            if (!_fechaSeleccionada)
-            {
-                _fechaSeleccionada = true;
-                DTPFechaEmision.Format = DateTimePickerFormat.Short;
-                DTPFechaEmision.CustomFormat = null;
-                DTPFechaEmision.Value = DateTime.Now;
-            }
-        }
         private void ConfigurarFormatoNroComprobante()
         {
             TBNroComprobante.TextChanged += (s, e) =>
@@ -210,270 +184,240 @@ namespace CapaPresentacion
             };
         }
 
-        private void ConfigurarCalculoTotalesEnVivo()
-        {
-            TBSubtotal.TextChanged += (s, e) => RecalcularTotal();
-            TBIva.TextChanged += (s, e) => RecalcularTotal();
-        }
-
-        private void RecalcularTotal()
-        {
-            if (_calculandoTotales) return;
-
-            decimal subtotal = ParsearDecimalSeguro(TBSubtotal.Text);
-            decimal iva = ParsearDecimalSeguro(TBIva.Text);
-            decimal total = subtotal + iva;
-
-            _calculandoTotales = true;
-            TBTotalCompra.Text = total.ToString("N2");
-            _calculandoTotales = false;
-        }
-
-        private decimal ParsearDecimalSeguro(string texto)
-        {
-            if (string.IsNullOrWhiteSpace(texto)) return 0m;
-            string limpio = texto.Trim().Replace("$", "").Trim();
-            if (decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.CurrentCulture, out decimal res))
-                return res;
-            if (decimal.TryParse(limpio, NumberStyles.Any, CultureInfo.InvariantCulture, out res))
-                return res;
-            return 0m;
-        }
-
-        private void CargarDesplegablesSimulados()
+        private void CargarDesplegables()
         {
             CBTipoComprobante.Items.Clear();
-            CBTipoComprobante.Items.AddRange(new object[] { "Factura A", "Factura B", "Factura C", "Remito", "Nota de Crédito" });
+            CBTipoComprobante.Items.AddRange(new object[] { "Factura A", "Factura B", "Factura C", "Remito de Compra" });
             CBTipoComprobante.SelectedIndex = 0;
 
             CBFormaPago.Items.Clear();
-            CBFormaPago.Items.AddRange(new object[] { "Efectivo", "Transferencia / Débito", "Cuenta Corriente (30 días)", "Cheque" });
+            CBFormaPago.Items.AddRange(new object[] { "Efectivo", "Transferencia / Débito", "Cuenta Corriente (30 días)", "Cheque Propio" });
             CBFormaPago.SelectedIndex = 0;
 
             string[] proveedores = { "Acindar S.A.", "Siderca Techint", "Distribuidora Metalúrgica S.R.L.", "Ferretería Industrial Mayorista" };
-
             CBProveedor.Items.Clear();
             CBProveedor.Items.AddRange(proveedores);
             CBProveedor.SelectedIndex = -1;
-
-            CBFiltroProveedor.Items.Clear();
-            CBFiltroProveedor.Items.AddRange(proveedores);
-            CBFiltroProveedor.SelectedIndex = -1;
         }
 
-        private void CargarHistorialComprasSimulado()
+        private void CargarCatalogoSimulado()
         {
-            if (_dtCompras.Columns.Count == 0)
+            _catalogoDisponible = new List<ItemCatalogo>
             {
-                _dtCompras.Columns.Add("ColIdCompra", typeof(int));
-                _dtCompras.Columns.Add("ColFecha", typeof(string));
-                _dtCompras.Columns.Add("ColTipoComprobante", typeof(string));
-                _dtCompras.Columns.Add("ColNroComprobante", typeof(string));
-                _dtCompras.Columns.Add("ColProveedor", typeof(string));
-                _dtCompras.Columns.Add("ColFormaPago", typeof(string));
-                _dtCompras.Columns.Add("ColTotal", typeof(string));
-                _dtCompras.Columns.Add("ColEstado", typeof(string));
-
-                _dtCompras.Rows.Add(1, "05/09/2026", "Factura A", "0001-00045120", "Acindar S.A.", "Transferencia", "$ 450.200,00", "Recibida");
-                _dtCompras.Rows.Add(2, "04/09/2026", "Factura A", "0002-00012890", "Distribuidora Metalúrgica S.R.L.", "Cuenta Corriente", "$ 185.000,00", "Recibida");
-                _dtCompras.Rows.Add(3, "02/09/2026", "Remito", "0001-00000841", "Siderca Techint", "Efectivo", "$ 92.400,00", "Pendiente");
-            }
-
-            DGVCompras.AutoGenerateColumns = false;
-            ColIdCompra.DataPropertyName = "ColIdCompra";
-            ColFecha.DataPropertyName = "ColFecha";
-            ColTipoComprobante.DataPropertyName = "ColTipoComprobante";
-            ColNroComprobante.DataPropertyName = "ColNroComprobante";
-            ColProveedor.DataPropertyName = "ColProveedor";
-            ColFormaPago.DataPropertyName = "ColFormaPago";
-            ColTotal.DataPropertyName = "ColTotal";
-            ColEstado.DataPropertyName = "ColEstado";
-
-            DGVCompras.DataSource = _dtCompras;
-        }
-
-        private void ConfigurarFiltrosDinamicos()
-        {
-            TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
-            CBFiltroProveedor.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
-            BLimpiarFiltros.Click += (s, e) =>
-            {
-                TBBuscar.Clear();
-                CBFiltroProveedor.SelectedIndex = -1;
-                AplicarFiltroGrilla();
+                new ItemCatalogo { Id = 1, Codigo = "AC-001", Nombre = "Hierro del 8 Nervado (Barra 12m)", UltimoCosto = 12500m, ProveedorAsociado = "Acindar S.A." },
+                new ItemCatalogo { Id = 2, Codigo = "AC-002", Nombre = "Hierro del 10 Nervado (Barra 12m)", UltimoCosto = 19200m, ProveedorAsociado = "Acindar S.A." },
+                new ItemCatalogo { Id = 3, Codigo = "TB-101", Nombre = "Caño Estructural 40x40x1.6mm", UltimoCosto = 15800m, ProveedorAsociado = "Siderca Techint" },
+                new ItemCatalogo { Id = 4, Codigo = "TB-102", Nombre = "Caño Redondo 2 Pulgadas Calibre 16", UltimoCosto = 21400m, ProveedorAsociado = "Siderca Techint" },
+                new ItemCatalogo { Id = 5, Codigo = "CH-501", Nombre = "Chapa Galvanizada N° 25 (1.10 x 3.00)", UltimoCosto = 34500m, ProveedorAsociado = "Distribuidora Metalúrgica S.R.L." },
+                new ItemCatalogo { Id = 6, Codigo = "EL-009", Nombre = "Electrodos Punta Azul 2.5mm (Caja 5kg)", UltimoCosto = 28900m, ProveedorAsociado = "Ferretería Industrial Mayorista" },
+                new ItemCatalogo { Id = 7, Codigo = "DC-045", Nombre = "Disco de Corte 115x1.0mm (Pack x 25)", UltimoCosto = 11200m, ProveedorAsociado = "Ferretería Industrial Mayorista" }
             };
         }
-        private void AplicarFiltroGrilla()
+
+        private void CBProveedor_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (_dtCompras == null || _dtCompras.DefaultView == null) return;
+            CBProducto.DataSource = null;
+            CBProducto.Items.Clear();
 
-            string texto = TBBuscar.Text.Trim().Replace("'", "''");
-            string filtro = "";
+            if (CBProveedor.SelectedIndex == -1) return;
 
-            if (!string.IsNullOrEmpty(texto))
-            {
-                filtro += $"(ColNroComprobante LIKE '%{texto}%' OR ColProveedor LIKE '%{texto}%')";
-            }
+            string proveedorSeleccionado = CBProveedor.Text;
+            var productosFiltrados = _catalogoDisponible
+                .Where(p => p.ProveedorAsociado == proveedorSeleccionado)
+                .ToList();
 
-            if (CBFiltroProveedor.SelectedIndex != -1 && !string.IsNullOrEmpty(CBFiltroProveedor.Text))
-            {
-                string prov = CBFiltroProveedor.Text.Replace("'", "''");
-                if (filtro.Length > 0) filtro += " AND ";
-                filtro += $"ColProveedor = '{prov}'";
-            }
+            if (productosFiltrados.Count == 0)
+                productosFiltrados = _catalogoDisponible;
 
-            _dtCompras.DefaultView.RowFilter = filtro;
+            CBProducto.DataSource = productosFiltrados;
+            CBProducto.DisplayMember = "Nombre";
+            CBProducto.ValueMember = "Id";
+            CBProducto.SelectedIndex = -1;
         }
 
-        private bool ValidarFormularioCompra(out string mensajeError)
+        private void CBProducto_SelectedIndexChanged(object sender, EventArgs e)
         {
-            mensajeError = string.Empty;
+            if (CBProducto.SelectedItem is ItemCatalogo item)
+            {
+                TBCostoUnitario.Text = item.UltimoCosto.ToString("0.00");
+                NUDCantidad.Value = 1;
+            }
+            else
+            {
+                TBCostoUnitario.Clear();
+            }
+        }
 
+        // =========================================================================
+        // ACCIONES DE DETALLE (AGREGAR / QUITAR RENGLÓN)
+        // =========================================================================
+        private void BAgregarItem_Click(object sender, EventArgs e)
+        {
+            if (CBProducto.SelectedItem == null || !(CBProducto.SelectedItem is ItemCatalogo item))
+            {
+                MessageBox.Show("Seleccione un producto para agregar a la compra.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CBProducto.Focus();
+                return;
+            }
+
+            if (!decimal.TryParse(TBCostoUnitario.Text.Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal costo) || costo <= 0)
+            {
+                MessageBox.Show("Ingrese un costo unitario válido mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                TBCostoUnitario.Focus();
+                return;
+            }
+
+            int cantidad = (int)NUDCantidad.Value;
+            if (cantidad <= 0)
+            {
+                MessageBox.Show("La cantidad debe ser mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            decimal subtotalRenglon = costo * cantidad;
+
+            // Si ya existe en la lista, acumulamos la cantidad
+            DataRow filaExistente = _dtDetalle.AsEnumerable()
+                .FirstOrDefault(r => Convert.ToInt32(r["ColIdProducto"]) == item.Id);
+
+            if (filaExistente != null)
+            {
+                int cantActual = Convert.ToInt32(filaExistente["ColCantidad"]);
+                int nuevaCantidad = cantActual + cantidad;
+                decimal nuevoSubtotal = nuevaCantidad * costo;
+
+                filaExistente["ColCantidad"] = nuevaCantidad;
+                filaExistente["ColCostoUnitario"] = costo.ToString("0.00");
+                filaExistente["ColSubtotal"] = nuevoSubtotal.ToString("0.00");
+            }
+            else
+            {
+                _dtDetalle.Rows.Add(
+                    item.Id,
+                    item.Codigo,
+                    item.Nombre,
+                    cantidad,
+                    costo.ToString("0.00"),
+                    subtotalRenglon.ToString("0.00")
+                );
+            }
+
+            RecalcularLiquidacion();
+
+            // Limpiamos los campos del ítem
+            CBProducto.SelectedIndex = -1;
+            TBCostoUnitario.Clear();
+            NUDCantidad.Value = 1;
+            CBProducto.Focus();
+        }
+
+        private void DGVDetalleCompra_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            // Clic en la columna "Quitar"
+            if (DGVDetalleCompra.Columns[e.ColumnIndex].Name == "ColAccionEliminar")
+            {
+                _dtDetalle.Rows.RemoveAt(e.RowIndex);
+                RecalcularLiquidacion();
+            }
+        }
+
+        private void RecalcularLiquidacion()
+        {
+            decimal sumaSubtotales = 0m;
+
+            foreach (DataRow row in _dtDetalle.Rows)
+            {
+                if (decimal.TryParse(row["ColSubtotal"].ToString().Replace(',', '.'), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal sub))
+                {
+                    sumaSubtotales += sub;
+                }
+            }
+
+            decimal iva = sumaSubtotales * 0.21m;
+            decimal totalFinal = sumaSubtotales + iva;
+
+            TBSubtotal.Text = sumaSubtotales.ToString("N2");
+            TBIva.Text = iva.ToString("N2");
+            TBTotalCompra.Text = totalFinal.ToString("N2");
+        }
+
+        // =========================================================================
+        // CONFIRMACIÓN Y CANCELACIÓN DEL COMPROBANTE
+        // =========================================================================
+        private void BGuardarCompra_Click(object sender, EventArgs e)
+        {
             if (CBProveedor.SelectedIndex == -1)
             {
-                mensajeError = "Debe seleccionar un Proveedor.";
+                MessageBox.Show("Debe seleccionar un Proveedor.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 CBProveedor.Focus();
-                return false;
+                return;
             }
 
             if (string.IsNullOrWhiteSpace(TBNroComprobante.Text) || TBNroComprobante.Text.Length < 6)
             {
-                mensajeError = "Debe ingresar un número de comprobante válido (formato ####-########).";
+                MessageBox.Show("Ingrese un número de comprobante válido (formato ####-########).", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 TBNroComprobante.Focus();
-                return false;
-            }
-
-            decimal total = ParsearDecimalSeguro(TBTotalCompra.Text);
-            if (total <= 0)
-            {
-                mensajeError = "El monto total de la factura debe ser mayor a cero.";
-                TBSubtotal.Focus();
-                return false;
-            }
-
-            return true;
-        }
-
-        private void BGuardar_Click(object sender, EventArgs e)
-        {
-            if (!ValidarFormularioCompra(out string error))
-            {
-                MessageBox.Show(error, "Validación de Compra", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            _dtCompras.Rows.Add(
-                _dtCompras.Rows.Count + 1,
-                DTPFechaEmision.Value.ToString("dd/MM/yyyy"),
-                CBTipoComprobante.Text,
-                TBNroComprobante.Text.Trim(),
-                CBProveedor.Text,
-                CBFormaPago.Text,
-                $"$ {TBTotalCompra.Text}",
-                "Recibida"
-            );
-
-            MessageBox.Show("Comprobante registrado con éxito en la vista previa.", "Compras", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LimpiarFormulario();
-        }
-
-        private void BNuevaCompra_Click(object sender, EventArgs e)
-        {
-            LimpiarFormulario();
-            CBProveedor.Focus();
-        }
-
-        private void BLimpiar_Click(object sender, EventArgs e)
-        {
-            LimpiarFormulario();
-        }
-
-        private void BAnular_Click(object sender, EventArgs e)
-        {
-            if (_idCompraSeleccionada <= 0)
+            if (_dtDetalle.Rows.Count == 0)
             {
-                MessageBox.Show("Seleccione una compra de la grilla para anular.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Debe ingresar al menos un insumo en el detalle de la compra.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CBProducto.Focus();
                 return;
             }
 
+            // Aquí se conecta con _compraLogica.RegistrarCompra(dto) cuando esté disponible
             DialogResult confirmacion = MessageBox.Show(
-                "¿Está seguro de anular el comprobante seleccionado?",
-                "Anular Compra",
+                $"¿Desea asentar la factura {TBNroComprobante.Text} por un total de $ {TBTotalCompra.Text}?\n\nLos {_dtDetalle.Rows.Count} artículos ingresarán inmediatamente al stock.",
+                "Confirmar Recepción de Compra",
                 MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning
+                MessageBoxIcon.Question
             );
 
             if (confirmacion == DialogResult.Yes)
             {
-                foreach (DataRow fila in _dtCompras.Rows)
+                MessageBox.Show("Compra registrada correctamente. El stock y los costos fueron actualizados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LimpiarFormularioCompleto();
+            }
+        }
+
+        private void BCancelar_Click(object sender, EventArgs e)
+        {
+            if (_dtDetalle.Rows.Count > 0)
+            {
+                if (MessageBox.Show("¿Está seguro de descartar la compra en curso y vaciar la lista?", "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.No)
                 {
-                    if (Convert.ToInt32(fila["ColIdCompra"]) == _idCompraSeleccionada)
-                    {
-                        fila["ColEstado"] = "Anulada";
-                        break;
-                    }
+                    return;
                 }
-                LimpiarFormulario();
             }
+
+            LimpiarFormularioCompleto();
         }
 
-        private void BVerDetalle_Click(object sender, EventArgs e)
+        private void LimpiarFormularioCompleto()
         {
-            if (DGVCompras.CurrentRow == null)
-            {
-                MessageBox.Show("Seleccione una compra de la grilla para ver sus detalles.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            MessageBox.Show($"Visualizando detalles del comprobante: {TBNroComprobante.Text}", "Detalle de Artículos", MessageBoxButtons.OK, MessageBoxIcon.Information);
-        }
-
-        private void DGVCompras_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            DataGridViewRow fila = DGVCompras.Rows[e.RowIndex];
-            _idCompraSeleccionada = Convert.ToInt32(fila.Cells["ColIdCompra"].Value ?? 0);
-
-            CBTipoComprobante.Text = fila.Cells["ColTipoComprobante"].Value?.ToString() ?? "";
-            TBNroComprobante.Text = fila.Cells["ColNroComprobante"].Value?.ToString() ?? "";
-            CBProveedor.Text = fila.Cells["ColProveedor"].Value?.ToString() ?? "";
-            CBFormaPago.Text = fila.Cells["ColFormaPago"].Value?.ToString() ?? "";
-            TBTotalCompra.Text = fila.Cells["ColTotal"].Value?.ToString()?.Replace("$", "").Trim() ?? "0,00";
-
-            if (DateTime.TryParse(fila.Cells["ColFecha"].Value?.ToString(), out DateTime f))
-            {
-                _fechaSeleccionada = true;
-                DTPFechaEmision.Format = DateTimePickerFormat.Short;
-                DTPFechaEmision.CustomFormat = null;
-                DTPFechaEmision.Value = f;
-            }
-            else
-            {
-                ResetearFechaEmision();
-            }
-        }
-
-        private void LimpiarFormulario()
-        {
-            _idCompraSeleccionada = 0;
             CBProveedor.SelectedIndex = -1;
-            CBTipoComprobante.SelectedIndex = -1;
+            CBTipoComprobante.SelectedIndex = 0;
             TBNroComprobante.Clear();
+            DTPFechaEmision.Value = DateTime.Now;
+            CBFormaPago.SelectedIndex = 0;
 
-            // Campo de fecha en blanco
-            ResetearFechaEmision();
+            CBProducto.DataSource = null;
+            CBProducto.Items.Clear();
+            TBCostoUnitario.Clear();
+            NUDCantidad.Value = 1;
 
-            CBFormaPago.SelectedIndex = -1;
-            TBSubtotal.Clear();
-            TBIva.Clear();
-            TBTotalCompra.Clear();
-            ChBCompraRegistrada.Checked = true;
+            _dtDetalle.Rows.Clear();
+            TBSubtotal.Text = "0,00";
+            TBIva.Text = "0,00";
+            TBTotalCompra.Text = "0,00";
 
-            // Deselección de grilla
-            DGVCompras.ClearSelection();
-            if (DGVCompras.CurrentCell != null)
-                DGVCompras.CurrentCell = null;
+            DGVDetalleCompra.ClearSelection();
+            if (DGVDetalleCompra.CurrentCell != null)
+                DGVDetalleCompra.CurrentCell = null;
         }
     }
 }

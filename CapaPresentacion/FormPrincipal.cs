@@ -653,7 +653,7 @@ namespace CapaPresentacion
             // Si el rol es Cajero, podés enviarlo a la caja del día o a movimientos:
             if (SesionUsuario.Rol == "CAJERO" || SesionUsuario.Rol == " CAJERO / OPERADOR" || SesionUsuario.Rol == "OPERADOR")
             {
-                AbrirFormularioEnContenedor<FormMovimientosCaja>();
+                AbrirFormularioEnContenedor<FormCierreCaja>();
             }
             else // ADMINISTRADOR
             {

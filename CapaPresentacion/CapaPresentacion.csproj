@@ -46,6 +46,12 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="FormCierreCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormCierreCaja.Designer.cs">
+      <DependentUpon>FormCierreCaja.cs</DependentUpon>
+    </Compile>
     <Compile Include="FormCobroVenta.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -87,6 +93,30 @@
     </Compile>
     <Compile Include="FormMisVentas.Designer.cs">
       <DependentUpon>FormMisVentas.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormModalAperturaCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormModalAperturaCaja.Designer.cs">
+      <DependentUpon>FormModalAperturaCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormModalArqueoCaja.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormModalArqueoCaja.Designer.cs">
+      <DependentUpon>FormModalArqueoCaja.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormModalCategoria.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormModalCategoria.Designer.cs">
+      <DependentUpon>FormModalCategoria.cs</DependentUpon>
+    </Compile>
+    <Compile Include="FormModalMovimientoMenor.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="FormModalMovimientoMenor.Designer.cs">
+      <DependentUpon>FormModalMovimientoMenor.cs</DependentUpon>
     </Compile>
     <Compile Include="FormMovimientosCaja.cs">
       <SubType>Form</SubType>

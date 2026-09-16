@@ -77,10 +77,8 @@
             this.PHabilitado = new System.Windows.Forms.Panel();
             this.ChBProductoHabilitado = new System.Windows.Forms.CheckBox();
             this.PBotonesAccion = new System.Windows.Forms.Panel();
-            this.BLimpiar = new System.Windows.Forms.Button();
-            this.imgListaIconos = new System.Windows.Forms.ImageList(this.components);
             this.TLPBotonesMed = new System.Windows.Forms.TableLayoutPanel();
-            this.BEditar = new System.Windows.Forms.Button();
+            this.BActualizar = new System.Windows.Forms.Button();
             this.BDesactivar = new System.Windows.Forms.Button();
             this.TLPBotonesSup = new System.Windows.Forms.TableLayoutPanel();
             this.BNuevo = new System.Windows.Forms.Button();
@@ -96,6 +94,10 @@
             this.PEncabezado = new System.Windows.Forms.Panel();
             this.LTituloPrincipal = new System.Windows.Forms.Label();
             this.PBIconoTitulo = new System.Windows.Forms.PictureBox();
+            this.PGrupoProveedor = new System.Windows.Forms.Panel();
+            this.CBProveedor = new System.Windows.Forms.ComboBox();
+            this.LProveedor = new System.Windows.Forms.Label();
+            this.BNuevaCategoria = new System.Windows.Forms.Button();
             this.PFondo.SuspendLayout();
             this.TLPContenido.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DGVProductos)).BeginInit();
@@ -317,6 +319,8 @@
             this.TLPFormularioEdicion.Controls.Add(this.PGrupoStockActual, 0, 6);
             this.TLPFormularioEdicion.Controls.Add(this.PGrupoStockMinimo, 1, 6);
             this.TLPFormularioEdicion.Controls.Add(this.PHabilitado, 0, 7);
+            this.TLPFormularioEdicion.Controls.Add(this.PGrupoCategoria, 0, 2);
+            this.TLPFormularioEdicion.Controls.Add(this.PGrupoProveedor, 1, 2);
             this.TLPFormularioEdicion.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TLPFormularioEdicion.Location = new System.Drawing.Point(10, 45);
             this.TLPFormularioEdicion.Margin = new System.Windows.Forms.Padding(2);
@@ -330,7 +334,7 @@
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.TLPFormularioEdicion.Size = new System.Drawing.Size(257, 266);
+            this.TLPFormularioEdicion.Size = new System.Drawing.Size(257, 310);
             this.TLPFormularioEdicion.TabIndex = 0;
             // 
             // PGrupoCodInterno
@@ -437,26 +441,41 @@
             // 
             // PGrupoCategoria
             // 
-            this.TLPFormularioEdicion.SetColumnSpan(this.PGrupoCategoria, 2);
+            this.PGrupoCategoria.Controls.Add(this.BNuevaCategoria);
             this.PGrupoCategoria.Controls.Add(this.CBCategoria);
             this.PGrupoCategoria.Controls.Add(this.LCategoria);
             this.PGrupoCategoria.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PGrupoCategoria.Location = new System.Drawing.Point(0, 82);
-            this.PGrupoCategoria.Margin = new System.Windows.Forms.Padding(0, 0, 0, 2);
+            this.PGrupoCategoria.Margin = new System.Windows.Forms.Padding(0, 0, 2, 2);
             this.PGrupoCategoria.Name = "PGrupoCategoria";
-            this.PGrupoCategoria.Size = new System.Drawing.Size(257, 39);
+            this.PGrupoCategoria.Size = new System.Drawing.Size(126, 39);
             this.PGrupoCategoria.TabIndex = 3;
             // 
             // CBCategoria
             // 
-            this.CBCategoria.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.CBCategoria.Dock = System.Windows.Forms.DockStyle.None;
             this.CBCategoria.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CBCategoria.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.CBCategoria.Location = new System.Drawing.Point(0, 16);
             this.CBCategoria.Margin = new System.Windows.Forms.Padding(2);
             this.CBCategoria.Name = "CBCategoria";
-            this.CBCategoria.Size = new System.Drawing.Size(257, 23);
+            this.CBCategoria.Size = new System.Drawing.Size(94, 23);
             this.CBCategoria.TabIndex = 0;
+            this.CBCategoria.SelectedIndexChanged += new System.EventHandler(this.CBCategoria_SelectedIndexChanged);
+            // BNuevaCategoria
+            this.BNuevaCategoria.BackColor = System.Drawing.Color.FromArgb(212, 131, 53);
+            this.BNuevaCategoria.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BNuevaCategoria.FlatAppearance.BorderSize = 0;
+            this.BNuevaCategoria.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BNuevaCategoria.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.BNuevaCategoria.ForeColor = System.Drawing.Color.White;
+            this.BNuevaCategoria.Location = new System.Drawing.Point(98, 16);
+            this.BNuevaCategoria.Name = "BNuevaCategoria";
+            this.BNuevaCategoria.Size = new System.Drawing.Size(28, 23);
+            this.BNuevaCategoria.TabIndex = 2;
+            this.BNuevaCategoria.Text = "+";
+            this.BNuevaCategoria.UseVisualStyleBackColor = false;
+            this.BNuevaCategoria.Click += new System.EventHandler(this.BNuevaCategoria_Click);
             // 
             // LCategoria
             // 
@@ -466,9 +485,43 @@
             this.LCategoria.Location = new System.Drawing.Point(0, 0);
             this.LCategoria.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
             this.LCategoria.Name = "LCategoria";
-            this.LCategoria.Size = new System.Drawing.Size(257, 20);
+            this.LCategoria.Size = new System.Drawing.Size(126, 20);
             this.LCategoria.TabIndex = 1;
             this.LCategoria.Text = "Categoría:";
+            // 
+            // PGrupoProveedor (Columna 1, Fila 2)
+            // 
+            this.PGrupoProveedor.Controls.Add(this.CBProveedor);
+            this.PGrupoProveedor.Controls.Add(this.LProveedor);
+            this.PGrupoProveedor.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.PGrupoProveedor.Location = new System.Drawing.Point(130, 82);
+            this.PGrupoProveedor.Margin = new System.Windows.Forms.Padding(2, 0, 0, 2);
+            this.PGrupoProveedor.Name = "PGrupoProveedor";
+            this.PGrupoProveedor.Size = new System.Drawing.Size(127, 39);
+            this.PGrupoProveedor.TabIndex = 4;
+            //
+            // CBProveedor
+            //
+            this.CBProveedor.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.CBProveedor.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.CBProveedor.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.CBProveedor.Location = new System.Drawing.Point(0, 16);
+            this.CBProveedor.Margin = new System.Windows.Forms.Padding(2);
+            this.CBProveedor.Name = "CBProveedor";
+            this.CBProveedor.Size = new System.Drawing.Size(127, 23);
+            this.CBProveedor.TabIndex = 0;
+            //
+            // LProveedor
+            //
+            this.LProveedor.Dock = System.Windows.Forms.DockStyle.Top;
+            this.LProveedor.Font = new System.Drawing.Font("Segoe UI", 8F, System.Drawing.FontStyle.Bold);
+            this.LProveedor.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.LProveedor.Location = new System.Drawing.Point(0, 0);
+            this.LProveedor.Margin = new System.Windows.Forms.Padding(2, 0, 2, 0);
+            this.LProveedor.Name = "LProveedor";
+            this.LProveedor.Size = new System.Drawing.Size(127, 20);
+            this.LProveedor.TabIndex = 1;
+            this.LProveedor.Text = "Proveedor:";
             // 
             // PGrupoDescripcion
             // 
@@ -682,7 +735,7 @@
             this.PHabilitado.Margin = new System.Windows.Forms.Padding(2);
             this.PHabilitado.Name = "PHabilitado";
             this.PHabilitado.Padding = new System.Windows.Forms.Padding(4, 5, 0, 0);
-            this.PHabilitado.Size = new System.Drawing.Size(253, 1);
+            this.PHabilitado.Size = new System.Drawing.Size(253, 19);
             this.PHabilitado.TabIndex = 10;
             // 
             // ChBProductoHabilitado
@@ -695,90 +748,56 @@
             this.ChBProductoHabilitado.Location = new System.Drawing.Point(4, 5);
             this.ChBProductoHabilitado.Margin = new System.Windows.Forms.Padding(2);
             this.ChBProductoHabilitado.Name = "ChBProductoHabilitado";
-            this.ChBProductoHabilitado.Size = new System.Drawing.Size(89, 0);
+            this.ChBProductoHabilitado.Size = new System.Drawing.Size(140, 14);
             this.ChBProductoHabilitado.TabIndex = 0;
             this.ChBProductoHabilitado.Text = "Producto Habilitado";
             // 
             // PBotonesAccion
             // 
-            this.PBotonesAccion.Controls.Add(this.BLimpiar);
             this.PBotonesAccion.Controls.Add(this.TLPBotonesMed);
             this.PBotonesAccion.Controls.Add(this.TLPBotonesSup);
             this.PBotonesAccion.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.PBotonesAccion.Location = new System.Drawing.Point(10, 311);
+            this.PBotonesAccion.Location = new System.Drawing.Point(10, 355);
             this.PBotonesAccion.Margin = new System.Windows.Forms.Padding(2);
             this.PBotonesAccion.Name = "PBotonesAccion";
-            this.PBotonesAccion.Size = new System.Drawing.Size(257, 143);
+            this.PBotonesAccion.Size = new System.Drawing.Size(257, 99);
             this.PBotonesAccion.TabIndex = 1;
-            // 
-            // BLimpiar
-            // 
-            this.BLimpiar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(108)))), ((int)(((byte)(117)))), ((int)(((byte)(125)))));
-            this.BLimpiar.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BLimpiar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.BLimpiar.FlatAppearance.BorderSize = 0;
-            this.BLimpiar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BLimpiar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.BLimpiar.ForeColor = System.Drawing.Color.White;
-            this.BLimpiar.ImageIndex = 4;
-            this.BLimpiar.ImageList = this.imgListaIconos;
-            this.BLimpiar.Location = new System.Drawing.Point(0, 90);
-            this.BLimpiar.Margin = new System.Windows.Forms.Padding(2);
-            this.BLimpiar.Name = "BLimpiar";
-            this.BLimpiar.Padding = new System.Windows.Forms.Padding(62, 0, 0, 0);
-            this.BLimpiar.Size = new System.Drawing.Size(257, 42);
-            this.BLimpiar.TabIndex = 0;
-            this.BLimpiar.Text = "Limpiar Campos";
-            this.BLimpiar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.BLimpiar.UseVisualStyleBackColor = false;
-            this.BLimpiar.Click += new System.EventHandler(this.BLimpiar_Click);
-            // 
-            // imgListaIconos
-            // 
-            this.imgListaIconos.ImageStream = ((System.Windows.Forms.ImageListStreamer)(resources.GetObject("imgListaIconos.ImageStream")));
-            this.imgListaIconos.TransparentColor = System.Drawing.Color.Transparent;
-            this.imgListaIconos.Images.SetKeyName(0, "boton_nuevo.png");
-            this.imgListaIconos.Images.SetKeyName(1, "boton_guardar.png");
-            this.imgListaIconos.Images.SetKeyName(2, "boton_editar.png");
-            this.imgListaIconos.Images.SetKeyName(3, "boton_desactivar.png");
-            this.imgListaIconos.Images.SetKeyName(4, "boton_limpiar.png");
             // 
             // TLPBotonesMed
             // 
             this.TLPBotonesMed.ColumnCount = 2;
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.TLPBotonesMed.Controls.Add(this.BEditar, 0, 0);
+            this.TLPBotonesMed.Controls.Add(this.BActualizar, 0, 0);
             this.TLPBotonesMed.Controls.Add(this.BDesactivar, 1, 0);
             this.TLPBotonesMed.Dock = System.Windows.Forms.DockStyle.Top;
             this.TLPBotonesMed.Location = new System.Drawing.Point(0, 45);
             this.TLPBotonesMed.Margin = new System.Windows.Forms.Padding(2);
             this.TLPBotonesMed.Name = "TLPBotonesMed";
+            this.TLPBotonesMed.RowCount = 1;
             this.TLPBotonesMed.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
             this.TLPBotonesMed.Size = new System.Drawing.Size(257, 45);
             this.TLPBotonesMed.TabIndex = 1;
             // 
-            // BEditar
+            // BActualizar
             // 
-            this.BEditar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
-            this.BEditar.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BEditar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.BEditar.FlatAppearance.BorderSize = 0;
-            this.BEditar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BEditar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.BEditar.ForeColor = System.Drawing.Color.White;
-            this.BEditar.ImageIndex = 2;
-            this.BEditar.ImageList = this.imgListaIconos;
-            this.BEditar.Location = new System.Drawing.Point(0, 0);
-            this.BEditar.Margin = new System.Windows.Forms.Padding(0, 0, 2, 2);
-            this.BEditar.Name = "BEditar";
-            this.BEditar.Padding = new System.Windows.Forms.Padding(29, 0, 0, 0);
-            this.BEditar.Size = new System.Drawing.Size(126, 43);
-            this.BEditar.TabIndex = 0;
-            this.BEditar.Text = "Editar";
-            this.BEditar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.BEditar.UseVisualStyleBackColor = false;
-            this.BEditar.Click += new System.EventHandler(this.BEditar_Click);
+            this.BActualizar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
+            this.BActualizar.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BActualizar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.BActualizar.FlatAppearance.BorderSize = 0;
+            this.BActualizar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BActualizar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
+            this.BActualizar.ForeColor = System.Drawing.Color.White;
+            this.BActualizar.Location = new System.Drawing.Point(0, 0);
+            this.BActualizar.Margin = new System.Windows.Forms.Padding(0, 0, 2, 2);
+            this.BActualizar.Name = "BActualizar";
+            this.BActualizar.Padding = new System.Windows.Forms.Padding(14, 0, 0, 0);
+            this.BActualizar.Size = new System.Drawing.Size(126, 43);
+            this.BActualizar.TabIndex = 0;
+            this.BActualizar.Text = "Actualizar";
+            this.BActualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.BActualizar.UseVisualStyleBackColor = false;
+            this.BActualizar.Click += new System.EventHandler(this.BActualizar_Click);
             // 
             // BDesactivar
             // 
@@ -789,8 +808,6 @@
             this.BDesactivar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BDesactivar.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.BDesactivar.ForeColor = System.Drawing.Color.White;
-            this.BDesactivar.ImageIndex = 3;
-            this.BDesactivar.ImageList = this.imgListaIconos;
             this.BDesactivar.Location = new System.Drawing.Point(130, 0);
             this.BDesactivar.Margin = new System.Windows.Forms.Padding(2, 0, 0, 2);
             this.BDesactivar.Name = "BDesactivar";
@@ -813,9 +830,10 @@
             this.TLPBotonesSup.Location = new System.Drawing.Point(0, 0);
             this.TLPBotonesSup.Margin = new System.Windows.Forms.Padding(2);
             this.TLPBotonesSup.Name = "TLPBotonesSup";
+            this.TLPBotonesSup.RowCount = 1;
             this.TLPBotonesSup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
             this.TLPBotonesSup.Size = new System.Drawing.Size(257, 45);
-            this.TLPBotonesSup.TabIndex = 2;
+            this.TLPBotonesSup.TabIndex = 0;
             // 
             // BNuevo
             // 
@@ -826,8 +844,6 @@
             this.BNuevo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BNuevo.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
             this.BNuevo.ForeColor = System.Drawing.Color.White;
-            this.BNuevo.ImageIndex = 0;
-            this.BNuevo.ImageList = this.imgListaIconos;
             this.BNuevo.Location = new System.Drawing.Point(0, 0);
             this.BNuevo.Margin = new System.Windows.Forms.Padding(0, 0, 2, 2);
             this.BNuevo.Name = "BNuevo";
@@ -848,8 +864,6 @@
             this.BGuardar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BGuardar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
             this.BGuardar.ForeColor = System.Drawing.Color.White;
-            this.BGuardar.ImageIndex = 1;
-            this.BGuardar.ImageList = this.imgListaIconos;
             this.BGuardar.Location = new System.Drawing.Point(130, 0);
             this.BGuardar.Margin = new System.Windows.Forms.Padding(2, 0, 0, 2);
             this.BGuardar.Name = "BGuardar";
@@ -1039,8 +1053,8 @@
             this.PEncabezado.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PBIconoTitulo)).EndInit();
             this.ResumeLayout(false);
-
         }
+
         #endregion
 
         private System.Windows.Forms.Panel PFondo;
@@ -1103,9 +1117,11 @@
         private System.Windows.Forms.Button BNuevo;
         private System.Windows.Forms.Button BGuardar;
         private System.Windows.Forms.TableLayoutPanel TLPBotonesMed;
-        private System.Windows.Forms.Button BEditar;
+        private System.Windows.Forms.Button BActualizar;
         private System.Windows.Forms.Button BDesactivar;
-        private System.Windows.Forms.Button BLimpiar;
-        private System.Windows.Forms.ImageList imgListaIconos;
+        private System.Windows.Forms.Panel PGrupoProveedor;
+        private System.Windows.Forms.Label LProveedor;
+        private System.Windows.Forms.ComboBox CBProveedor;
+        private System.Windows.Forms.Button BNuevaCategoria;
     }
 }

@@ -15,6 +15,8 @@ namespace CapaPresentacion
     {
         private DataTable _dtProveedores = new DataTable();
         private int _idProveedorSeleccionado = 0;
+        private int _proveedorId = 0;
+        private bool _esEdicion = false;
         public FormProveedores()
         {
             InitializeComponent();
@@ -32,15 +34,12 @@ namespace CapaPresentacion
             CargarDesplegablesSimulados();
             CargarHistorialProveedoresSimulado();
 
-            // Arranque limpio: panel lateral en blanco y sin fila marcada
+            // Panel lateral en blanco y sin fila marcada
             LimpiarFormulario();
             DGVProveedores.ClearSelection();
             DGVProveedores.CurrentCell = null;
         }
-
-        // =========================================================================
-        // ÍCONO VECTORIAL: PROVEEDORES (Camión de distribución y logística)
-        // =========================================================================
+        // Ícono vectorial: PROVEEDORES (Camión de distribución y logística)
         private Image GenerarIconoProveedores(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -57,11 +56,11 @@ namespace CapaPresentacion
                     // Cabina de transporte
                     PointF[] cabina = new PointF[]
                     {
-                new PointF(18.5f, 12.5f), // Unión con acoplado
-                new PointF(23.5f, 12.5f), // Techo cabina
-                new PointF(27.5f, 16.5f), // Parabrisas inclinado
-                new PointF(27.5f, 20.5f), // Paragolpes delantero
-                new PointF(18.5f, 20.5f)  // Chasis inferior cabina
+                        new PointF(18.5f, 12.5f), // Unión con acoplado
+                        new PointF(23.5f, 12.5f), // Techo cabina
+                        new PointF(27.5f, 16.5f), // Parabrisas inclinado
+                        new PointF(27.5f, 20.5f), // Paragolpes delantero
+                        new PointF(18.5f, 20.5f)  // Chasis inferior cabina
                     };
                     g.DrawLines(pen, cabina);
 
@@ -75,10 +74,7 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
-        // =========================================================================
-        // 1. ESCALADO DE ICONOS (ESTÁNDAR CLIENTES)
-        // =========================================================================
+        // Escalado de iconos 
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
@@ -92,19 +88,14 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private void AsignarEstiloEIconos()
         {
                 BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
                 BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-                BEditar.Image = EscalarIcono(Properties.Resources.boton_editar_blanco, 32, 32);
+                BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
                 BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
-                BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
         }
-
-        // =========================================================================
-        // 2. RESTRICCIONES Y CONFIGURACIONES REACTIVAS
-        // =========================================================================
+        // Restricciones y configuraciones reactivas
         private void InicializarComportamiento()
         {
             // CUIT solo dígitos y guiones
@@ -115,11 +106,11 @@ namespace CapaPresentacion
                     e.Handled = true;
             };
 
-            // TELÉFONO: Solo dígitos (sin guiones) y opcionalmente el '+' inicial
+            // TELÉFONO: Solo dígitos sin guiones
             TBTelefono.MaxLength = 18;
             TBTelefono.KeyPress += (s, e) =>
             {
-                // Permite teclas de control (borrar, etc.)
+                // Permite teclas de control
                 if (char.IsControl(e.KeyChar)) return;
 
                 // Permite '+' solo en la primera posición
@@ -131,7 +122,7 @@ namespace CapaPresentacion
                     e.Handled = true;
             };
 
-            // VINCULACIÓN EN CASCADA PROVINCIA -> LOCALIDADES
+            // Vinculación en cascada provincia -> localidades
             CBProvincia.SelectedIndexChanged += (s, e) =>
             {
                 CBLocalidad.Items.Clear();
@@ -306,15 +297,31 @@ namespace CapaPresentacion
             TBCuit.Focus();
         }
 
-        private void BEditar_Click(object sender, EventArgs e)
+        private void BActualizar_Click(object sender, EventArgs e)
         {
-            if (_idProveedorSeleccionado <= 0)
+            if (DGVProveedores.CurrentRow == null || DGVProveedores.CurrentRow.Index < 0)
             {
-                MessageBox.Show("Seleccione un proveedor de la grilla para editar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione un proveedor de la grilla para actualizar sus datos.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            MessageBox.Show($"Modo edición activado para: {TBRazonSocial.Text}", "Edición", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                var idValue = DGVProveedores.CurrentRow.Cells[0].Value;
+                if (idValue != null && idValue != DBNull.Value)
+                {
+                    int id = Convert.ToInt32(idValue);
+                    _proveedorId = id;
+                    _esEdicion = true;
+                    CargarProveedorEnFormulario(id);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar datos del proveedor: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void BDesactivar_Click(object sender, EventArgs e)
@@ -344,11 +351,6 @@ namespace CapaPresentacion
                 }
                 LimpiarFormulario();
             }
-        }
-
-        private void BLimpiar_Click(object sender, EventArgs e)
-        {
-            LimpiarFormulario();
         }
 
         private void DGVProveedores_CellClick(object sender, DataGridViewCellEventArgs e)
@@ -388,6 +390,41 @@ namespace CapaPresentacion
 
             string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "Habilitado";
             ChBProveedorHabilitado.Checked = (estado == "Habilitado");
+        }
+        private void CargarProveedorEnFormulario(int id)
+        {
+            if (DGVProveedores.CurrentRow == null) return;
+
+            DataGridViewRow fila = DGVProveedores.CurrentRow;
+
+            // Carga de campos fiscales y de contacto
+            TBCuit.Text = fila.Cells["ColCuit"].Value?.ToString() ?? "";
+            TBRazonSocial.Text = fila.Cells["ColRazonSocial"].Value?.ToString() ?? "";
+            TBContacto.Text = fila.Cells["ColContacto"].Value?.ToString() ?? "";
+            TBTelefono.Text = fila.Cells["ColTelefono"].Value?.ToString() ?? "";
+            TBEmail.Text = fila.Cells["ColEmail"].Value?.ToString() ?? "";
+
+            // Carga de domicilio
+            TBCalle.Text = fila.Cells["ColCalle"].Value?.ToString() ?? "";
+            TBNro.Text = fila.Cells["ColNro"].Value?.ToString() ?? "";
+
+            // Combos de ubicación
+            if (CBProvincia.Items.Count > 0)
+            {
+                string prov = fila.Cells["ColProvincia"].Value?.ToString() ?? "";
+                CBProvincia.SelectedIndex = CBProvincia.FindStringExact(prov);
+            }
+
+            if (CBLocalidad.Items.Count > 0)
+            {
+                string loc = fila.Cells["ColLocalidad"].Value?.ToString() ?? "";
+                CBLocalidad.SelectedIndex = CBLocalidad.FindStringExact(loc);
+            }
+
+            // Estado habilitado
+            string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "";
+            ChBProveedorHabilitado.Checked = estado.Equals("Activo", StringComparison.OrdinalIgnoreCase) ||
+                                            estado.Equals("Habilitado", StringComparison.OrdinalIgnoreCase);
         }
 
         private void LimpiarFormulario()

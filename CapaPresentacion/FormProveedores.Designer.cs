@@ -90,9 +90,8 @@
             this.ChBProveedorHabilitado = new System.Windows.Forms.CheckBox();
 
             this.PBotonesAccion = new System.Windows.Forms.Panel();
-            this.BLimpiar = new System.Windows.Forms.Button();
             this.TLPBotonesMed = new System.Windows.Forms.TableLayoutPanel();
-            this.BEditar = new System.Windows.Forms.Button();
+            this.BActualizar = new System.Windows.Forms.Button();
             this.BDesactivar = new System.Windows.Forms.Button();
             this.TPLBotonesSup = new System.Windows.Forms.TableLayoutPanel();
             this.BNuevo = new System.Windows.Forms.Button();
@@ -451,7 +450,7 @@
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.TLPFormularioEdicion.Size = new System.Drawing.Size(388, 457);
+            this.TLPFormularioEdicion.Size = new System.Drawing.Size(388, 523);
             this.TLPFormularioEdicion.TabIndex = 0;
 
             // CUIT
@@ -692,7 +691,7 @@
             this.PHabilitado.Location = new System.Drawing.Point(3, 285);
             this.PHabilitado.Name = "PHabilitado";
             this.PHabilitado.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
-            this.PHabilitado.Size = new System.Drawing.Size(382, 169);
+            this.PHabilitado.Size = new System.Drawing.Size(382, 235);
             this.PHabilitado.TabIndex = 10;
 
             this.ChBProveedorHabilitado.Checked = true;
@@ -707,15 +706,14 @@
             this.ChBProveedorHabilitado.Text = "Proveedor Habilitado";
 
             // 
-            // PBotonesAccion (Botonera unificada idéntica a Clientes)
+            // PBotonesAccion (Dos filas compactas: 110px)
             // 
-            this.PBotonesAccion.Controls.Add(this.BLimpiar);
             this.PBotonesAccion.Controls.Add(this.TLPBotonesMed);
             this.PBotonesAccion.Controls.Add(this.TPLBotonesSup);
             this.PBotonesAccion.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.PBotonesAccion.Location = new System.Drawing.Point(14, 512);
+            this.PBotonesAccion.Location = new System.Drawing.Point(14, 578);
             this.PBotonesAccion.Name = "PBotonesAccion";
-            this.PBotonesAccion.Size = new System.Drawing.Size(388, 176);
+            this.PBotonesAccion.Size = new System.Drawing.Size(388, 110);
             this.PBotonesAccion.TabIndex = 1;
 
             // Fila Superior Botones
@@ -728,7 +726,7 @@
             this.TPLBotonesSup.Location = new System.Drawing.Point(0, 0);
             this.TPLBotonesSup.Name = "TPLBotonesSup";
             this.TPLBotonesSup.Size = new System.Drawing.Size(388, 55);
-            this.TPLBotonesSup.TabIndex = 2;
+            this.TPLBotonesSup.TabIndex = 0;
 
             // BNuevo
             this.BNuevo.BackColor = System.Drawing.Color.FromArgb(39, 174, 96);
@@ -772,7 +770,7 @@
             this.TLPBotonesMed.ColumnCount = 2;
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.TLPBotonesMed.Controls.Add(this.BEditar, 0, 0);
+            this.TLPBotonesMed.Controls.Add(this.BActualizar, 0, 0);
             this.TLPBotonesMed.Controls.Add(this.BDesactivar, 1, 0);
             this.TLPBotonesMed.Dock = System.Windows.Forms.DockStyle.Top;
             this.TLPBotonesMed.Location = new System.Drawing.Point(0, 55);
@@ -780,24 +778,24 @@
             this.TLPBotonesMed.Size = new System.Drawing.Size(388, 55);
             this.TLPBotonesMed.TabIndex = 1;
 
-            // BEditar
-            this.BEditar.BackColor = System.Drawing.Color.FromArgb(212, 131, 53);
-            this.BEditar.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BEditar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.BEditar.FlatAppearance.BorderSize = 0;
-            this.BEditar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BEditar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.BEditar.ForeColor = System.Drawing.Color.White;
-            this.BEditar.Location = new System.Drawing.Point(0, 0);
-            this.BEditar.Margin = new System.Windows.Forms.Padding(0, 0, 3, 3);
-            this.BEditar.Name = "BEditar";
-            this.BEditar.Padding = new System.Windows.Forms.Padding(36, 0, 0, 0);
-            this.BEditar.Size = new System.Drawing.Size(191, 52);
-            this.BEditar.TabIndex = 0;
-            this.BEditar.Text = "Editar";
-            this.BEditar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.BEditar.UseVisualStyleBackColor = false;
-            this.BEditar.Click += new System.EventHandler(this.BEditar_Click);
+            // BActualizar
+            this.BActualizar.BackColor = System.Drawing.Color.FromArgb(212, 131, 53);
+            this.BActualizar.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BActualizar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.BActualizar.FlatAppearance.BorderSize = 0;
+            this.BActualizar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BActualizar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
+            this.BActualizar.ForeColor = System.Drawing.Color.White;
+            this.BActualizar.Location = new System.Drawing.Point(0, 0);
+            this.BActualizar.Margin = new System.Windows.Forms.Padding(0, 0, 3, 3);
+            this.BActualizar.Name = "BActualizar";
+            this.BActualizar.Padding = new System.Windows.Forms.Padding(20, 0, 0, 0);
+            this.BActualizar.Size = new System.Drawing.Size(191, 52);
+            this.BActualizar.TabIndex = 0;
+            this.BActualizar.Text = "Actualizar";
+            this.BActualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.BActualizar.UseVisualStyleBackColor = false;
+            this.BActualizar.Click += new System.EventHandler(this.BActualizar_Click);
 
             // BDesactivar
             this.BDesactivar.BackColor = System.Drawing.Color.FromArgb(192, 57, 43);
@@ -817,24 +815,6 @@
             this.BDesactivar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BDesactivar.UseVisualStyleBackColor = false;
             this.BDesactivar.Click += new System.EventHandler(this.BDesactivar_Click);
-
-            // BLimpiar
-            this.BLimpiar.BackColor = System.Drawing.Color.FromArgb(108, 117, 125);
-            this.BLimpiar.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BLimpiar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.BLimpiar.FlatAppearance.BorderSize = 0;
-            this.BLimpiar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BLimpiar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.BLimpiar.ForeColor = System.Drawing.Color.White;
-            this.BLimpiar.Location = new System.Drawing.Point(0, 110);
-            this.BLimpiar.Name = "BLimpiar";
-            this.BLimpiar.Padding = new System.Windows.Forms.Padding(80, 0, 0, 0);
-            this.BLimpiar.Size = new System.Drawing.Size(388, 52);
-            this.BLimpiar.TabIndex = 0;
-            this.BLimpiar.Text = "Limpiar Campos";
-            this.BLimpiar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.BLimpiar.UseVisualStyleBackColor = false;
-            this.BLimpiar.Click += new System.EventHandler(this.BLimpiar_Click);
 
             // 
             // FormProveedores
@@ -944,8 +924,7 @@
         private System.Windows.Forms.Button BNuevo;
         private System.Windows.Forms.Button BGuardar;
         private System.Windows.Forms.TableLayoutPanel TLPBotonesMed;
-        private System.Windows.Forms.Button BEditar;
         private System.Windows.Forms.Button BDesactivar;
-        private System.Windows.Forms.Button BLimpiar;
+        private System.Windows.Forms.Button BActualizar;
     }
 }

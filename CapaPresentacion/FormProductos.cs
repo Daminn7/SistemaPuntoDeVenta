@@ -18,12 +18,17 @@ namespace CapaPresentacion
         // DECLARACIÓN DE VARIABLES
         // ============================================================
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
-        private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();
+        private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();        
+        private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
         private bool _esEdicion = false;
         private int _productoId = 0;
         private List<CategoriaDto> _categorias;
         private List<ProductoDto> _productosOriginales;
+        private List<ProveedorDto> _todosLosProveedores;
 
+        // ============================================================
+        // CONSTRUCTOR LIMPIO (Eventos delegados al Designer)
+        // ============================================================
         public FormProductos()
         {
             InitializeComponent();
@@ -32,6 +37,8 @@ namespace CapaPresentacion
 
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
+            if (imagenOriginal == null) return null;
+
             Bitmap nuevoBitmap = new Bitmap(ancho, alto);
             using (Graphics g = Graphics.FromImage(nuevoBitmap))
             {
@@ -43,37 +50,36 @@ namespace CapaPresentacion
 
         private void AsignarEstiloEIconos()
         {
-            BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
-            BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-            BEditar.Image = EscalarIcono(Properties.Resources.boton_editar_blanco, 32, 32);
-            BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
-            BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
+            try
+            {
+                BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
+                BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
+                // BActualizar utiliza el icono que antes pertenecía a Limpiar:
+                BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
+                BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
+            }
+            catch
+            {
+                // Fallback silencioso
+            }
         }
 
         // ============================================================
         // CARGA DEL FORMULARIO (UNIFICADO)
         // ============================================================
         private async void FormProductos_Load(object sender, EventArgs e)
-        {   
+        {
             AplicarRestriccionesPorRol();
-            // ✅ Cargar datos desde la API
+
+            // Cargar datos desde la lógica asíncrona
             await CargarCategoriasAsync();
+            await CargarProveedoresAsync();
             await CargarProductosAsync();
             ConfigurarEstiloDataGridView();
-
-            // ✅ Lógica de visibilidad por rol (comentada hasta que SesionUsuario esté disponible)
-            /*
-            if (SesionUsuario.Rol == "Vendedor")
-            {
-                PTarjetaLateral.Visible = false;
-                TLPContenido.ColumnStyles[0].Width = 100F;
-                TLPContenido.ColumnStyles[1].Width = 0F;
-            }
-            */
         }
+
         private void AplicarRestriccionesPorRol()
         {
-            // Accedemos a la clase estática de sesión declarada en FormPrincipal
             string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
 
             if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
@@ -94,11 +100,11 @@ namespace CapaPresentacion
                 DGVProductos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 DGVProductos.MultiSelect = false;
 
-                // Quitar la selección inicial para que no quede una fila marcada en azul
+                // Quitar la selección inicial
                 DGVProductos.ClearSelection();
                 DGVProductos.CurrentCell = null;
 
-                // Cambiar título si el control existe en el diseñador
+                // Cambiar título
                 Control[] lblTitulo = this.Controls.Find("LTituloPrincipal", true);
                 if (lblTitulo.Length > 0)
                 {
@@ -106,6 +112,7 @@ namespace CapaPresentacion
                 }
             }
         }
+
         // ============================================================
         // CARGA DE CATEGORÍAS
         // ============================================================
@@ -164,11 +171,9 @@ namespace CapaPresentacion
                     producto.CodBarras ?? "",
                     producto.Nombre ?? "",
                     producto.CategoriaNombre ?? "",
-                    producto.ProveedorNombre ?? "",
-                    producto.StockActual,
-                    producto.StockMinimo,
-                    producto.PrecioMinorista.ToString("0.00"),
                     producto.PrecioMayorista?.ToString("0.00") ?? "",
+                    producto.PrecioMinorista.ToString("0.00"),
+                    producto.StockActual,
                     producto.Estado ? "Activo" : "Inactivo"
                 );
             }
@@ -195,7 +200,7 @@ namespace CapaPresentacion
         {
             if (e.RowIndex < 0) return;
 
-            // Si es Vendedor o Cajero, solo permitimos navegar y visualizar la grilla
+            // Si es Vendedor o Cajero, solo permitimos navegar y consultar
             string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
             {
@@ -251,9 +256,15 @@ namespace CapaPresentacion
 
                 if (producto.CategoriaId > 0)
                     CBCategoria.SelectedValue = producto.CategoriaId;
+                // Disparar o esperar el llenado de proveedores y marcar el proveedor del producto
+                if (producto.ProveedorId.HasValue && producto.ProveedorId.Value > 0)
+                {
+                    CBProveedor.SelectedValue = producto.ProveedorId.Value;
+                }
 
                 NUDStockActual.Value = producto.StockActual;
                 NUDStockMinimo.Value = producto.StockMinimo;
+                ChBProductoHabilitado.Checked = producto.Estado;
             }
             catch (Exception ex)
             {
@@ -261,10 +272,7 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // VALIDACIONES
-        // ============================================================
+        // Validaciones
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
@@ -441,15 +449,14 @@ namespace CapaPresentacion
                 txt.Text = valor.ToString("0.00");
             }
         }
-
-        // ============================================================
-        // BOTONES
-        // ============================================================
-
+        // Botones
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             if (!ValidarCamposProducto())
                 return;
+            int? idProveedor = (CBProveedor.SelectedIndex != -1 && CBProveedor.SelectedValue != null)
+            ? (int?)Convert.ToInt32(CBProveedor.SelectedValue)
+            : null;
 
             try
             {
@@ -460,7 +467,7 @@ namespace CapaPresentacion
                     Nombre = TNombreProducto.Text.Trim(),
                     Descripcion = TDescripcion.Text.Trim(),
                     CategoriaId = (int)CBCategoria.SelectedValue,
-                    ProveedorId = null,
+                    ProveedorId = idProveedor,
                     StockActual = (int)NUDStockActual.Value,
                     StockMinimo = (int)NUDStockMinimo.Value,
                     StockMaximo = 1000,
@@ -488,7 +495,7 @@ namespace CapaPresentacion
                         StockMaximo = producto.StockMaximo,
                         ProveedorId = producto.ProveedorId,
                         CategoriaId = producto.CategoriaId,
-                        Estado = true
+                        Estado = ChBProductoHabilitado.Checked
                     };
                     await _productoLogica.Actualizar(_productoId, actualizarProducto);
                     MessageBox.Show("Producto actualizado exitosamente", "Éxito",
@@ -511,21 +518,16 @@ namespace CapaPresentacion
             }
         }
 
-        private void BLimpiar_Click(object sender, EventArgs e)
-        {
-            LimpiarCampos();
-        }
-
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarCampos();
         }
 
-        private void BEditar_Click(object sender, EventArgs e)
+        private void BActualizar_Click(object sender, EventArgs e)
         {
             if (DGVProductos.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Seleccione un producto para editar", "Aviso",
+                MessageBox.Show("Seleccione un producto para actualizar", "Aviso",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -585,10 +587,7 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // LIMPIAR CAMPOS
-        // ============================================================
+        // Limpiar campos
         private void LimpiarCampos()
         {
             TCodigoInterno.Clear();
@@ -598,19 +597,134 @@ namespace CapaPresentacion
             TPrecioMinorista.Clear();
             TPrecioMayorista.Clear();
             CBCategoria.SelectedIndex = -1;
+            CBProveedor.DataSource = null;
+            CBProveedor.Items.Clear();
             NUDStockActual.Value = 0;
             NUDStockMinimo.Value = 1;
+            ChBProductoHabilitado.Checked = true;
             _esEdicion = false;
             _productoId = 0;
             TCodigoInterno.Focus();
         }
-
-        private void DGVProductos_CellContentClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex >= 0)
+        private async Task CargarProveedoresAsync()
+        { 
+            try
             {
-                DGVProductos.Rows[e.RowIndex].Selected = true;
+                _todosLosProveedores = await _proveedorLogica.ObtenerTodos();
             }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private void CBCategoria_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            //Verificar si ya hay un método de filtrado en dbo para quitarlo de la memoria
+            if (CBCategoria.SelectedValue == null || !int.TryParse(CBCategoria.SelectedValue.ToString(), out int idCategoria))
+            {
+                CBProveedor.DataSource = null;
+                CBProveedor.Items.Clear();
+                return;
+            }
+
+            if (_todosLosProveedores == null || _todosLosProveedores.Count == 0)
+            {
+                CBProveedor.DataSource = null;
+                return;
+            }
+
+            // Filtrar proveedores asociados a esta categoría
+            // (Ajustar la propiedad según tu DTO)
+            var proveedoresFiltrados = _todosLosProveedores
+                //.Where(p => p.CategoriaId == idCategoria || p.Estado == true)
+                .ToList();
+
+            CBProveedor.DataSource = null;
+            CBProveedor.DataSource = proveedoresFiltrados;
+            CBProveedor.DisplayMember = "RazonSocial"; // O "Nombre" según ProveedorDto
+            CBProveedor.ValueMember = "Id";
+            CBProveedor.SelectedIndex = -1;
+        }
+        private async void BNuevaCategoria_Click(object sender, EventArgs e)
+        {
+            using (FormModalCategoria modal = new FormModalCategoria())
+            {
+                if (modal.ShowDialog(this) == DialogResult.OK)
+                {
+                    await CargarCategoriasAsync();
+                    if (modal.IdCategoriaCreada > 0)
+                    {
+                        CBCategoria.SelectedValue = modal.IdCategoriaCreada;
+                    }
+                }
+            }
+        }
+        // =========================================================================
+        // 1. ALTA RÁPIDA DE PROVEEDOR DESDE COMPRAS
+        // =========================================================================
+        private async void BNuevoProveedor_Click(object sender, EventArgs e)
+        {
+            using (FormProveedores frmProv = new FormProveedores())
+            {
+                frmProv.StartPosition = FormStartPosition.CenterParent;
+                frmProv.FormBorderStyle = FormBorderStyle.FixedDialog;
+                frmProv.ShowInTaskbar = false;
+
+                // Abre el formulario como diálogo modal
+                if (frmProv.ShowDialog(this) == DialogResult.OK || frmProv.DialogResult == DialogResult.Cancel)
+                {
+                    // Guarda el ID o texto seleccionado previamente si existía
+                    var proveedorPrevio = CBProveedor.SelectedValue;
+
+                    // Recarga los proveedores reales desde tu capa lógica / API
+                    await CargarProveedoresAsync();
+
+                    // Si tenía uno seleccionado, intenta conservarlo
+                    if (proveedorPrevio != null)
+                    {
+                        CBProveedor.SelectedValue = proveedorPrevio;
+                    }
+                }
+            }
+        }
+
+        // =========================================================================
+        // 2. ALTA RÁPIDA DE PRODUCTO DESDE COMPRAS
+        // =========================================================================
+        private async void BNuevoProducto_Click(object sender, EventArgs e)
+        {
+            using (FormProductos frmProd = new FormProductos())
+            {
+                frmProd.StartPosition = FormStartPosition.CenterParent;
+                frmProd.FormBorderStyle = FormBorderStyle.FixedDialog;
+                frmProd.ShowInTaskbar = false;
+
+                // Abre el catálogo para que dé de alta el artículo nuevo
+                if (frmProd.ShowDialog(this) == DialogResult.OK || frmProd.DialogResult == DialogResult.Cancel)
+                {
+                    // Recarga el catálogo general de productos desde la capa lógica
+                    await CargarProductosAsync();
+
+                    // Si hay un proveedor seleccionado en la cabecera de compras,
+                    // refrescamos la lista filtrada de productos de ese proveedor:
+                    ActualizarProductosPorProveedor();
+                }
+            }
+        }
+
+        // Método auxiliar para refrescar el combo de productos según el proveedor actual:
+        private void ActualizarProductosPorProveedor()
+        {
+            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
+            {
+                //CBProducto.DataSource = null;
+                //CBProducto.Items.Clear();
+                return;
+            }
+
+            // Dispara el refresco del combo de productos vinculados al proveedor
+            //CBProveedor_SelectedIndexChanged(CBProveedor, EventArgs.Empty);
         }
     }
 }

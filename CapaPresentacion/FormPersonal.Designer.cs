@@ -75,9 +75,8 @@
             this.PHabilitado = new System.Windows.Forms.Panel();
             this.ChBUsuarioHabilitado = new System.Windows.Forms.CheckBox();
             this.PBotonesAccion = new System.Windows.Forms.Panel();
-            this.BLimpiar = new System.Windows.Forms.Button();
             this.TLPBotonesMed = new System.Windows.Forms.TableLayoutPanel();
-            this.BEditar = new System.Windows.Forms.Button();
+            this.BActualizar = new System.Windows.Forms.Button();
             this.BDesactivar = new System.Windows.Forms.Button();
             this.TPLBotonesSup = new System.Windows.Forms.TableLayoutPanel();
             this.BNuevo = new System.Windows.Forms.Button();
@@ -124,7 +123,7 @@
             this.PFondo.Controls.Add(this.PEncabezado);
             this.PFondo.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PFondo.Location = new System.Drawing.Point(0, 0);
-            this.PFondo.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PFondo.Margin = new System.Windows.Forms.Padding(2);
             this.PFondo.Name = "PFondo";
             this.PFondo.Padding = new System.Windows.Forms.Padding(16, 12, 16, 12);
             this.PFondo.Size = new System.Drawing.Size(1040, 640);
@@ -139,7 +138,7 @@
             this.TLPContenido.Controls.Add(this.PTarjetaLateral, 1, 0);
             this.TLPContenido.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TLPContenido.Location = new System.Drawing.Point(16, 81);
-            this.TLPContenido.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TLPContenido.Margin = new System.Windows.Forms.Padding(2);
             this.TLPContenido.Name = "TLPContenido";
             this.TLPContenido.RowCount = 1;
             this.TLPContenido.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
@@ -291,7 +290,7 @@
             this.TLPFormularioEdicion.Controls.Add(this.PHabilitado, 0, 6);
             this.TLPFormularioEdicion.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TLPFormularioEdicion.Location = new System.Drawing.Point(10, 45);
-            this.TLPFormularioEdicion.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TLPFormularioEdicion.Margin = new System.Windows.Forms.Padding(2);
             this.TLPFormularioEdicion.Name = "TLPFormularioEdicion";
             this.TLPFormularioEdicion.RowCount = 7;
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
@@ -301,7 +300,7 @@
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 41F));
             this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.TLPFormularioEdicion.Size = new System.Drawing.Size(261, 343);
+            this.TLPFormularioEdicion.Size = new System.Drawing.Size(261, 387);
             this.TLPFormularioEdicion.TabIndex = 0;
             // 
             // PGrupoDni
@@ -320,7 +319,7 @@
             this.TBDni.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBDni.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBDni.Location = new System.Drawing.Point(0, 16);
-            this.TBDni.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBDni.Margin = new System.Windows.Forms.Padding(2);
             this.TBDni.Name = "TBDni";
             this.TBDni.Size = new System.Drawing.Size(128, 23);
             this.TBDni.TabIndex = 0;
@@ -353,7 +352,7 @@
             this.TBCuil.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBCuil.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBCuil.Location = new System.Drawing.Point(0, 16);
-            this.TBCuil.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBCuil.Margin = new System.Windows.Forms.Padding(2);
             this.TBCuil.Name = "TBCuil";
             this.TBCuil.Size = new System.Drawing.Size(129, 23);
             this.TBCuil.TabIndex = 0;
@@ -386,7 +385,7 @@
             this.TBNombre.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBNombre.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBNombre.Location = new System.Drawing.Point(0, 16);
-            this.TBNombre.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBNombre.Margin = new System.Windows.Forms.Padding(2);
             this.TBNombre.Name = "TBNombre";
             this.TBNombre.Size = new System.Drawing.Size(128, 23);
             this.TBNombre.TabIndex = 0;
@@ -419,7 +418,7 @@
             this.TBApellido.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBApellido.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBApellido.Location = new System.Drawing.Point(0, 16);
-            this.TBApellido.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBApellido.Margin = new System.Windows.Forms.Padding(2);
             this.TBApellido.Name = "TBApellido";
             this.TBApellido.Size = new System.Drawing.Size(129, 23);
             this.TBApellido.TabIndex = 0;
@@ -452,7 +451,7 @@
             this.TBTelefono.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBTelefono.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBTelefono.Location = new System.Drawing.Point(0, 16);
-            this.TBTelefono.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBTelefono.Margin = new System.Windows.Forms.Padding(2);
             this.TBTelefono.Name = "TBTelefono";
             this.TBTelefono.Size = new System.Drawing.Size(128, 23);
             this.TBTelefono.TabIndex = 0;
@@ -485,7 +484,7 @@
             this.TBEmail.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBEmail.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBEmail.Location = new System.Drawing.Point(0, 16);
-            this.TBEmail.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBEmail.Margin = new System.Windows.Forms.Padding(2);
             this.TBEmail.Name = "TBEmail";
             this.TBEmail.Size = new System.Drawing.Size(129, 23);
             this.TBEmail.TabIndex = 0;
@@ -533,7 +532,7 @@
             this.CBRol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CBRol.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.CBRol.Location = new System.Drawing.Point(0, 16);
-            this.CBRol.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.CBRol.Margin = new System.Windows.Forms.Padding(2);
             this.CBRol.Name = "CBRol";
             this.CBRol.Size = new System.Drawing.Size(128, 23);
             this.CBRol.TabIndex = 0;
@@ -566,7 +565,7 @@
             this.TBUsuario.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBUsuario.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBUsuario.Location = new System.Drawing.Point(0, 16);
-            this.TBUsuario.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBUsuario.Margin = new System.Windows.Forms.Padding(2);
             this.TBUsuario.Name = "TBUsuario";
             this.TBUsuario.Size = new System.Drawing.Size(129, 23);
             this.TBUsuario.TabIndex = 0;
@@ -600,7 +599,7 @@
             this.TBPassword.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBPassword.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBPassword.Location = new System.Drawing.Point(0, 16);
-            this.TBPassword.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBPassword.Margin = new System.Windows.Forms.Padding(2);
             this.TBPassword.Name = "TBPassword";
             this.TBPassword.PasswordChar = '●';
             this.TBPassword.Size = new System.Drawing.Size(261, 23);
@@ -624,10 +623,10 @@
             this.PHabilitado.Controls.Add(this.ChBUsuarioHabilitado);
             this.PHabilitado.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PHabilitado.Location = new System.Drawing.Point(2, 230);
-            this.PHabilitado.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PHabilitado.Margin = new System.Windows.Forms.Padding(2);
             this.PHabilitado.Name = "PHabilitado";
             this.PHabilitado.Padding = new System.Windows.Forms.Padding(0, 6, 0, 0);
-            this.PHabilitado.Size = new System.Drawing.Size(257, 111);
+            this.PHabilitado.Size = new System.Drawing.Size(257, 155);
             this.PHabilitado.TabIndex = 10;
             // 
             // ChBUsuarioHabilitado
@@ -638,7 +637,7 @@
             this.ChBUsuarioHabilitado.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.ChBUsuarioHabilitado.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
             this.ChBUsuarioHabilitado.Location = new System.Drawing.Point(0, 6);
-            this.ChBUsuarioHabilitado.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.ChBUsuarioHabilitado.Margin = new System.Windows.Forms.Padding(2);
             this.ChBUsuarioHabilitado.Name = "ChBUsuarioHabilitado";
             this.ChBUsuarioHabilitado.Size = new System.Drawing.Size(257, 21);
             this.ChBUsuarioHabilitado.TabIndex = 0;
@@ -646,70 +645,50 @@
             // 
             // PBotonesAccion
             // 
-            this.PBotonesAccion.Controls.Add(this.BLimpiar);
             this.PBotonesAccion.Controls.Add(this.TLPBotonesMed);
             this.PBotonesAccion.Controls.Add(this.TPLBotonesSup);
             this.PBotonesAccion.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.PBotonesAccion.Location = new System.Drawing.Point(10, 388);
-            this.PBotonesAccion.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PBotonesAccion.Location = new System.Drawing.Point(10, 432);
+            this.PBotonesAccion.Margin = new System.Windows.Forms.Padding(2);
             this.PBotonesAccion.Name = "PBotonesAccion";
-            this.PBotonesAccion.Size = new System.Drawing.Size(261, 143);
+            this.PBotonesAccion.Size = new System.Drawing.Size(261, 99);
             this.PBotonesAccion.TabIndex = 1;
-            // 
-            // BLimpiar
-            // 
-            this.BLimpiar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(108)))), ((int)(((byte)(117)))), ((int)(((byte)(125)))));
-            this.BLimpiar.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BLimpiar.Dock = System.Windows.Forms.DockStyle.Top;
-            this.BLimpiar.FlatAppearance.BorderSize = 0;
-            this.BLimpiar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BLimpiar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.BLimpiar.ForeColor = System.Drawing.Color.White;
-            this.BLimpiar.Location = new System.Drawing.Point(0, 90);
-            this.BLimpiar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.BLimpiar.Name = "BLimpiar";
-            this.BLimpiar.Padding = new System.Windows.Forms.Padding(60, 0, 0, 0);
-            this.BLimpiar.Size = new System.Drawing.Size(261, 42);
-            this.BLimpiar.TabIndex = 0;
-            this.BLimpiar.Text = "Limpiar Campos";
-            this.BLimpiar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.BLimpiar.UseVisualStyleBackColor = false;
-            this.BLimpiar.Click += new System.EventHandler(this.BLimpiar_Click);
             // 
             // TLPBotonesMed
             // 
             this.TLPBotonesMed.ColumnCount = 2;
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
-            this.TLPBotonesMed.Controls.Add(this.BEditar, 0, 0);
+            this.TLPBotonesMed.Controls.Add(this.BActualizar, 0, 0);
             this.TLPBotonesMed.Controls.Add(this.BDesactivar, 1, 0);
             this.TLPBotonesMed.Dock = System.Windows.Forms.DockStyle.Top;
             this.TLPBotonesMed.Location = new System.Drawing.Point(0, 45);
-            this.TLPBotonesMed.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TLPBotonesMed.Margin = new System.Windows.Forms.Padding(2);
             this.TLPBotonesMed.Name = "TLPBotonesMed";
-            this.TLPBotonesMed.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.TLPBotonesMed.RowCount = 1;
+            this.TLPBotonesMed.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
             this.TLPBotonesMed.Size = new System.Drawing.Size(261, 45);
             this.TLPBotonesMed.TabIndex = 1;
             // 
-            // BEditar
+            // BActualizar
             // 
-            this.BEditar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
-            this.BEditar.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BEditar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.BEditar.FlatAppearance.BorderSize = 0;
-            this.BEditar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BEditar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
-            this.BEditar.ForeColor = System.Drawing.Color.White;
-            this.BEditar.Location = new System.Drawing.Point(0, 0);
-            this.BEditar.Margin = new System.Windows.Forms.Padding(0, 0, 2, 2);
-            this.BEditar.Name = "BEditar";
-            this.BEditar.Padding = new System.Windows.Forms.Padding(27, 0, 0, 0);
-            this.BEditar.Size = new System.Drawing.Size(128, 43);
-            this.BEditar.TabIndex = 0;
-            this.BEditar.Text = "Editar";
-            this.BEditar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
-            this.BEditar.UseVisualStyleBackColor = false;
-            this.BEditar.Click += new System.EventHandler(this.BEditar_Click);
+            this.BActualizar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
+            this.BActualizar.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BActualizar.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.BActualizar.FlatAppearance.BorderSize = 0;
+            this.BActualizar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BActualizar.Font = new System.Drawing.Font("Segoe UI", 10.2F, System.Drawing.FontStyle.Bold);
+            this.BActualizar.ForeColor = System.Drawing.Color.White;
+            this.BActualizar.Location = new System.Drawing.Point(0, 0);
+            this.BActualizar.Margin = new System.Windows.Forms.Padding(0, 0, 2, 2);
+            this.BActualizar.Name = "BActualizar";
+            this.BActualizar.Padding = new System.Windows.Forms.Padding(14, 0, 0, 0);
+            this.BActualizar.Size = new System.Drawing.Size(128, 43);
+            this.BActualizar.TabIndex = 0;
+            this.BActualizar.Text = "Actualizar";
+            this.BActualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
+            this.BActualizar.UseVisualStyleBackColor = false;
+            this.BActualizar.Click += new System.EventHandler(this.BActualizar_Click);
             // 
             // BDesactivar
             // 
@@ -740,11 +719,12 @@
             this.TPLBotonesSup.Controls.Add(this.BGuardar, 1, 0);
             this.TPLBotonesSup.Dock = System.Windows.Forms.DockStyle.Top;
             this.TPLBotonesSup.Location = new System.Drawing.Point(0, 0);
-            this.TPLBotonesSup.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TPLBotonesSup.Margin = new System.Windows.Forms.Padding(2);
             this.TPLBotonesSup.Name = "TPLBotonesSup";
-            this.TPLBotonesSup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 20F));
+            this.TPLBotonesSup.RowCount = 1;
+            this.TPLBotonesSup.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
             this.TPLBotonesSup.Size = new System.Drawing.Size(261, 45);
-            this.TPLBotonesSup.TabIndex = 2;
+            this.TPLBotonesSup.TabIndex = 0;
             // 
             // BNuevo
             // 
@@ -821,7 +801,7 @@
             this.PBarraFiltros.Controls.Add(this.BLimpiarFiltros);
             this.PBarraFiltros.Dock = System.Windows.Forms.DockStyle.Top;
             this.PBarraFiltros.Location = new System.Drawing.Point(16, 43);
-            this.PBarraFiltros.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PBarraFiltros.Margin = new System.Windows.Forms.Padding(2);
             this.PBarraFiltros.Name = "PBarraFiltros";
             this.PBarraFiltros.Size = new System.Drawing.Size(1008, 38);
             this.PBarraFiltros.TabIndex = 1;
@@ -842,7 +822,7 @@
             // 
             this.TBBuscar.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBBuscar.Location = new System.Drawing.Point(165, 9);
-            this.TBBuscar.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.TBBuscar.Margin = new System.Windows.Forms.Padding(2);
             this.TBBuscar.Name = "TBBuscar";
             this.TBBuscar.Size = new System.Drawing.Size(218, 23);
             this.TBBuscar.TabIndex = 1;
@@ -864,7 +844,7 @@
             this.CBFiltroRol.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CBFiltroRol.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.CBFiltroRol.Location = new System.Drawing.Point(484, 8);
-            this.CBFiltroRol.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.CBFiltroRol.Margin = new System.Windows.Forms.Padding(2);
             this.CBFiltroRol.Name = "CBFiltroRol";
             this.CBFiltroRol.Size = new System.Drawing.Size(144, 23);
             this.CBFiltroRol.TabIndex = 3;
@@ -878,7 +858,7 @@
             this.BLimpiarFiltros.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.BLimpiarFiltros.ForeColor = System.Drawing.Color.White;
             this.BLimpiarFiltros.Location = new System.Drawing.Point(641, 7);
-            this.BLimpiarFiltros.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.BLimpiarFiltros.Margin = new System.Windows.Forms.Padding(2);
             this.BLimpiarFiltros.Name = "BLimpiarFiltros";
             this.BLimpiarFiltros.Size = new System.Drawing.Size(64, 24);
             this.BLimpiarFiltros.TabIndex = 4;
@@ -891,7 +871,7 @@
             this.PEncabezado.Controls.Add(this.PBIconoTitulo);
             this.PEncabezado.Dock = System.Windows.Forms.DockStyle.Top;
             this.PEncabezado.Location = new System.Drawing.Point(16, 12);
-            this.PEncabezado.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PEncabezado.Margin = new System.Windows.Forms.Padding(2);
             this.PEncabezado.Name = "PEncabezado";
             this.PEncabezado.Size = new System.Drawing.Size(1008, 31);
             this.PEncabezado.TabIndex = 2;
@@ -912,7 +892,7 @@
             // 
             this.PBIconoTitulo.BackColor = System.Drawing.Color.Transparent;
             this.PBIconoTitulo.Location = new System.Drawing.Point(0, 2);
-            this.PBIconoTitulo.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.PBIconoTitulo.Margin = new System.Windows.Forms.Padding(2);
             this.PBIconoTitulo.Name = "PBIconoTitulo";
             this.PBIconoTitulo.Size = new System.Drawing.Size(28, 28);
             this.PBIconoTitulo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -927,7 +907,7 @@
             this.ClientSize = new System.Drawing.Size(1040, 640);
             this.Controls.Add(this.PFondo);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.None;
-            this.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
+            this.Margin = new System.Windows.Forms.Padding(2);
             this.Name = "FormPersonal";
             this.Text = "Gestión de Personal";
             this.Load += new System.EventHandler(this.FormPersonal_Load);
@@ -963,7 +943,6 @@
             this.PEncabezado.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PBIconoTitulo)).EndInit();
             this.ResumeLayout(false);
-
         }
 
         #endregion
@@ -1027,8 +1006,7 @@
         private System.Windows.Forms.Button BNuevo;
         private System.Windows.Forms.Button BGuardar;
         private System.Windows.Forms.TableLayoutPanel TLPBotonesMed;
-        private System.Windows.Forms.Button BEditar;
+        private System.Windows.Forms.Button BActualizar;
         private System.Windows.Forms.Button BDesactivar;
-        private System.Windows.Forms.Button BLimpiar;
     }
 }

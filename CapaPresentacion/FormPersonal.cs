@@ -15,7 +15,8 @@ namespace CapaPresentacion
     {
         private DataTable _dtPersonal = new DataTable();
         private int _idUsuarioSeleccionado = 0;
-
+        private int _usuarioId = 0;
+        private bool _esEdicion = false;
         // ID del usuario que tiene la sesión activa (ej: Gastón, Administrador con ID = 1)
         // Al conectar la Capa Negocio/Sesión, se alimentará de SesionUsuario.IdUsuario
         public int IdUsuarioActualEnSesion { get; set; } = 1;
@@ -97,9 +98,8 @@ namespace CapaPresentacion
 
                 BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
                 BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-                BEditar.Image = EscalarIcono(Properties.Resources.boton_editar_blanco, 32, 32);
+                BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
                 BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
-                BLimpiar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
             }
             catch
             {
@@ -318,18 +318,52 @@ namespace CapaPresentacion
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarFormulario();
+            _usuarioId = 0;
+            _esEdicion = false;
+
+            TBDni.Clear();
+            TBCuil.Clear();
+            TBNombre.Clear();
+            TBApellido.Clear();
+            TBTelefono.Clear();
+            TBEmail.Clear();
+            TBUsuario.Clear();
+            TBPassword.Clear();
+            CBRol.SelectedIndex = -1;
+            ChBUsuarioHabilitado.Checked = true;
+
+            DGVPersonal.ClearSelection();
+            if (DGVPersonal.CurrentCell != null)
+                DGVPersonal.CurrentCell = null;
+
             TBDni.Focus();
         }
 
-        private void BEditar_Click(object sender, EventArgs e)
+        private void BActualizar_Click(object sender, EventArgs e)
         {
-            if (_idUsuarioSeleccionado <= 0)
+            if (DGVPersonal.CurrentRow == null || DGVPersonal.CurrentRow.Index < 0)
             {
-                MessageBox.Show("Seleccione un registro del personal en la grilla para editar.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione un usuario de la grilla para actualizar sus datos.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
-            MessageBox.Show($"Modo edición activo para el personal: {TBNombre.Text} {TBApellido.Text}", "Edición de Personal", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            try
+            {
+                var idValue = DGVPersonal.CurrentRow.Cells[0].Value;
+                if (idValue != null && idValue != DBNull.Value)
+                {
+                    int id = Convert.ToInt32(idValue);
+                    _usuarioId = id;
+                    _esEdicion = true;
+                    CargarPersonalEnFormulario(id);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar usuario: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void BDesactivar_Click(object sender, EventArgs e)
@@ -407,7 +441,47 @@ namespace CapaPresentacion
             // Si el seleccionado es el Administrador actual, se bloquea el botón Dar de Baja
             BDesactivar.Enabled = (_idUsuarioSeleccionado != IdUsuarioActualEnSesion);
         }
+        private void CargarPersonalEnFormulario(int id)
+        {
+            if (DGVPersonal.CurrentRow == null) return;
 
+            DataGridViewRow fila = DGVPersonal.CurrentRow;
+
+            TBDni.Text = fila.Cells["ColDni"].Value?.ToString() ?? "";
+            TBCuil.Text = fila.Cells["ColCuil"].Value?.ToString() ?? "";
+
+            // Si Nombre y Apellido se muestran combinados en la grilla
+            string nombreCompleto = fila.Cells["ColNombreCompleto"].Value?.ToString() ?? "";
+            string[] partes = nombreCompleto.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+            if (partes.Length > 1)
+            {
+                TBNombre.Text = partes[0];
+                TBApellido.Text = string.Join(" ", partes.Skip(1));
+            }
+            else
+            {
+                TBNombre.Text = nombreCompleto;
+                TBApellido.Clear();
+            }
+
+            TBTelefono.Text = fila.Cells["ColTelefono"].Value?.ToString() ?? "";
+            TBEmail.Text = fila.Cells["ColEmail"].Value?.ToString() ?? "";
+            CBRol.Text = fila.Cells["ColRol"].Value?.ToString() ?? "";
+
+            // El nombre de usuario suele coincidir con el DNI o la columna correspondiente
+            if (string.IsNullOrWhiteSpace(TBUsuario.Text))
+            {
+                TBUsuario.Text = fila.Cells["ColDni"].Value?.ToString() ?? "";
+            }
+
+            // Estado (Habilitado / Inactivo)
+            string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "";
+            ChBUsuarioHabilitado.Checked = (estado.Equals("Activo", StringComparison.OrdinalIgnoreCase) ||
+                                           estado.Equals("Habilitado", StringComparison.OrdinalIgnoreCase));
+
+            // La contraseña se deja vacía para no modificarla a menos que el admin escriba una nueva
+            TBPassword.Clear();
+        }
         private void LimpiarFormulario()
         {
             _idUsuarioSeleccionado = 0;
