@@ -18,19 +18,18 @@ namespace CapaPresentacion
         // ============================================================
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
         private readonly ClienteLogica _clienteLogica = new ClienteLogica();
-        private readonly DireccionLogica _direccionLogica = new DireccionLogica();
-        private readonly TelefonoLogica _telefonoLogica = new TelefonoLogica();
-        private readonly UsuarioLogica _usuarioLogica = new UsuarioLogica();
 
         private bool _actualizandoCuil = false;
-        private bool _esEdicion = false;
+        private bool _esEdicion = false;       // true = editando, false = nuevo
         private int _clienteId = 0;
-        private int _usuarioId = 0;
         private List<ProvinciaDto> _provincias;
         private List<LocalidadDto> _localidades;
 
+        // ✅ NUEVO: Controla qué clientes se muestran (true = activos, false = inactivos)
+        private bool _mostrarSoloActivos = true;
+
         // ============================================================
-        // CONSTRUCTOR LIMPIO (Eventos delegados al Designer)
+        // CONSTRUCTOR
         // ============================================================
         public FormClientes()
         {
@@ -60,65 +59,60 @@ namespace CapaPresentacion
             ConfigurarEstiloDataGridView();
             await CargarProvinciasAsync();
             await CargarClientesAsync();
+            LimpiarCampos();
+
+            // ✅ NUEVO: Inicializar el texto del botón de estado
+            BLimpiarFiltros.Text = "Ver Inactivos";
         }
+
+        // ============================================================
+        // PERMISOS POR ROL
+        // ============================================================
         private void AplicarPermisosPorRol()
         {
             string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
 
             if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
             {
-                // 1. Ocultar la tarjeta lateral de edición completa para el cajero
+                // El cajero solo puede consultar la grilla
                 if (PTarjetaLateral != null)
-                {
                     PTarjetaLateral.Visible = false;
-                }
 
-                // 2. Expandir la grilla de clientes al 100% del formulario
                 if (TLPContenido != null && TLPContenido.ColumnCount >= 2)
                 {
                     TLPContenido.ColumnStyles[0].SizeType = SizeType.Percent;
                     TLPContenido.ColumnStyles[0].Width = 100F;
-
                     TLPContenido.ColumnStyles[1].SizeType = SizeType.Percent;
                     TLPContenido.ColumnStyles[1].Width = 0F;
                 }
 
-                // 3. Grilla en modo estricto de solo lectura
                 DGVClientes.ReadOnly = true;
                 DGVClientes.AllowUserToAddRows = false;
                 DGVClientes.AllowUserToDeleteRows = false;
                 DGVClientes.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 DGVClientes.MultiSelect = false;
 
-                // 4. Actualizar título para reflejar consulta
                 if (LTituloPrincipal != null)
-                {
                     LTituloPrincipal.Text = "CONSULTA Y VALIDACIÓN DE CLIENTES";
-                }
             }
             else if (rol == "VENDEDOR")
             {
-                // El vendedor puede dar de alta o actualizar datos de contacto,
-                // pero NO tiene permiso para dar de baja clientes
+                // El vendedor no puede dar de baja clientes
                 if (BDesactivar != null)
-                {
                     BDesactivar.Visible = false;
-                }
 
-                // Ajustamos BActualizar para que ocupe todo el ancho disponible en su fila
                 if (TLPBotonesMed != null && TLPBotonesMed.ColumnCount >= 2)
                 {
                     TLPBotonesMed.ColumnStyles[0].SizeType = SizeType.Percent;
                     TLPBotonesMed.ColumnStyles[0].Width = 100F;
-
                     TLPBotonesMed.ColumnStyles[1].SizeType = SizeType.Percent;
                     TLPBotonesMed.ColumnStyles[1].Width = 0F;
                 }
 
-                // Centrado de BActualizar al ocupar el ancho completo (388 px)
                 BActualizar.Padding = new Padding(125, 0, 0, 0);
             }
         }
+
         // ============================================================
         // ESTILO DEL DATAGRIDVIEW
         // ============================================================
@@ -132,7 +126,7 @@ namespace CapaPresentacion
             DGVClientes.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
             DGVClientes.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
         }
-        
+
         // ============================================================
         // CARGA DE CLIENTES
         // ============================================================
@@ -145,7 +139,12 @@ namespace CapaPresentacion
                 DGVClientes.Rows.Clear();
                 if (clientes == null || clientes.Count == 0) return;
 
-                foreach (var cliente in clientes)
+                // ✅ NUEVO: Filtrar según _mostrarSoloActivos
+                var clientesFiltrados = clientes
+                    .Where(c => _mostrarSoloActivos ? c.Estado : !c.Estado)
+                    .ToList();
+
+                foreach (var cliente in clientesFiltrados)
                 {
                     string dni = cliente.Dni ?? "";
                     string cuilCuit = cliente.CuilCuit ?? "";
@@ -154,6 +153,7 @@ namespace CapaPresentacion
                     string email = cliente.Email ?? "";
                     string direccion = cliente.Direccion ?? "";
 
+                    // Formatear localidad y provincia
                     string localidadMostrar = "";
                     if (!string.IsNullOrEmpty(cliente.Provincia) || !string.IsNullOrEmpty(cliente.Localidad))
                     {
@@ -164,16 +164,19 @@ namespace CapaPresentacion
                         localidadMostrar = cliente.Localidad;
                     }
 
+                    // ✅ Formatear el estado como texto
+                    string estadoMostrar = cliente.Estado ? "Activo" : "Inactivo";
+
                     DGVClientes.Rows.Add(
-                        cliente.IdCliente,
-                        dni,
-                        cuilCuit,
-                        nombreCompleto,
-                        telefono,
-                        email,
-                        localidadMostrar,
-                        direccion,
-                        cliente.Estado
+                        cliente.IdCliente,      // Columna 0: ID (oculta)
+                        dni,                    // Columna 1: DNI
+                        cuilCuit,               // Columna 2: CUIL/CUIT
+                        nombreCompleto,         // Columna 3: Nombre Completo
+                        telefono,               // Columna 4: Teléfono
+                        email,                  // Columna 5: Email
+                        localidadMostrar,       // Columna 6: Provincia - Localidad
+                        direccion,              // Columna 7: Dirección
+                        estadoMostrar           // Columna 8: Estado (Activo/Inactivo)
                     );
                 }
             }
@@ -190,12 +193,10 @@ namespace CapaPresentacion
         {
             if (e.RowIndex < 0) return;
 
-            // Si es Cajero, solo navega y consulta la grilla, no carga la ficha de edición
+            // El cajero no puede editar clientes
             string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
-            {
                 return;
-            }
 
             try
             {
@@ -228,20 +229,21 @@ namespace CapaPresentacion
                     return;
                 }
 
-                _usuarioId = cliente.UsuarioId;
-
+                // ============================================================
                 // DATOS PERSONALES
+                // ============================================================
                 TBCodigoInterno.Text = cliente.Dni ?? "";
                 TBCuilCuit.Text = cliente.CuilCuit ?? "";
                 TBNombreRazonSocial.Text = cliente.Nombre ?? "";
                 TApellido.Text = cliente.Apellido ?? "";
                 TBEmail.Text = cliente.Email ?? "";
 
-                // TELÉFONO (Separación de Característica y Número si corresponde)
+                // ============================================================
+                // TELÉFONO (Separación de Característica y Número)
+                // ============================================================
                 string telCompleto = (cliente.Telefono ?? "").Trim();
                 if (!string.IsNullOrEmpty(telCompleto))
                 {
-                    // Si viene con formato "379-4123456" o "379 4123456"
                     string[] partesTel = telCompleto.Split(new char[] { '-', ' ' }, StringSplitOptions.RemoveEmptyEntries);
                     if (partesTel.Length >= 2)
                     {
@@ -250,7 +252,6 @@ namespace CapaPresentacion
                     }
                     else if (telCompleto.Length > 7)
                     {
-                        // Estimación por longitud
                         int longCaract = telCompleto.Length - 7;
                         TBCaracteristica.Text = telCompleto.Substring(0, longCaract);
                         TTelefono.Text = telCompleto.Substring(longCaract);
@@ -267,14 +268,41 @@ namespace CapaPresentacion
                     TTelefono.Clear();
                 }
 
+                // ============================================================
                 // DIRECCIÓN
+                // ============================================================
                 TBCalle.Clear();
                 TBNro.Clear();
                 TBPiso.Clear();
                 TBDpto.Clear();
 
-                if (!string.IsNullOrEmpty(cliente.Direccion))
+                // ✅ Usar DireccionCompleta si está disponible
+                if (cliente.DireccionCompleta != null)
                 {
+                    try
+                    {
+                        var dir = cliente.DireccionCompleta as dynamic;
+                        if (dir != null)
+                        {
+                            // ✅ Intentar diferentes nombres de propiedades
+                            if (dir.Calle != null) TBCalle.Text = dir.Calle.ToString();
+                            if (dir.calle != null) TBCalle.Text = dir.calle.ToString();
+
+                            if (dir.Numero != null) TBNro.Text = dir.Numero.ToString();
+                            if (dir.numero != null) TBNro.Text = dir.numero.ToString();
+
+                            if (dir.Piso != null) TBPiso.Text = dir.Piso.ToString();
+                            if (dir.piso != null) TBPiso.Text = dir.piso.ToString();
+
+                            if (dir.Departamento != null) TBDpto.Text = dir.Departamento.ToString();
+                            if (dir.departamento != null) TBDpto.Text = dir.departamento.ToString();
+                        }
+                    }
+                    catch { }
+                }
+                else if (!string.IsNullOrEmpty(cliente.Direccion))
+                {
+                    // ✅ Fallback: extraer calle y número del campo Direccion
                     string direccion = cliente.Direccion;
                     int lastSpaceIndex = direccion.LastIndexOf(' ');
                     if (lastSpaceIndex > 0)
@@ -296,34 +324,35 @@ namespace CapaPresentacion
                     }
                 }
 
-                if (cliente.DireccionCompleta != null)
-                {
-                    try
-                    {
-                        var dir = cliente.DireccionCompleta as dynamic;
-                        if (dir != null)
-                        {
-                            if (dir.Calle != null) TBCalle.Text = dir.Calle.ToString();
-                            if (dir.Numero != null) TBNro.Text = dir.Numero.ToString();
-                            if (dir.Piso != null) TBPiso.Text = dir.Piso.ToString();
-                            if (dir.Departamento != null) TBDpto.Text = dir.Departamento.ToString();
-                        }
-                    }
-                    catch { }
-                }
-
-                // PROVINCIA Y LOCALIDAD
+                // ============================================================
+                // ✅ PROVINCIA Y LOCALIDAD
+                // ============================================================
                 if (cliente.LocalidadId.HasValue && cliente.LocalidadId.Value > 0)
                 {
                     int localidadId = cliente.LocalidadId.Value;
+
+                    // ✅ Buscar la localidad en la lista cargada
                     var localidad = _localidades?.FirstOrDefault(l => l.Id == localidadId);
+
+                    // ✅ Si no se encuentra, cargar las localidades de esa provincia
+                    if (localidad == null && cliente.ProvinciaId.HasValue && cliente.ProvinciaId.Value > 0)
+                    {
+                        await CargarLocalidadesPorProvinciaAsync(cliente.ProvinciaId.Value);
+                        localidad = _localidades?.FirstOrDefault(l => l.Id == localidadId);
+                    }
+
                     if (localidad != null)
                     {
                         var provincia = _provincias?.FirstOrDefault(p => p.Id == localidad.ProvinciaId);
                         if (provincia != null)
                         {
+                            // ✅ Seleccionar la provincia
                             CBProvincia.SelectedValue = provincia.Id;
-                            await Task.Delay(200);
+
+                            // ✅ Esperar a que la cascada cargue las localidades
+                            await Task.Delay(300);
+
+                            // ✅ Seleccionar la localidad
                             CBLocalidad.SelectedValue = localidadId;
                         }
                     }
@@ -554,6 +583,7 @@ namespace CapaPresentacion
         {
             mensajeError = string.Empty;
 
+            // DNI
             string dni = TBCodigoInterno.Text.Trim();
             if (string.IsNullOrWhiteSpace(dni) || dni.Length != 8 || !dni.All(char.IsDigit))
             {
@@ -562,6 +592,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Nombre
             if (string.IsNullOrWhiteSpace(TBNombreRazonSocial.Text.Trim()))
             {
                 mensajeError = "Debe ingresar el Nombre o Razón Social del cliente.";
@@ -569,6 +600,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Característica
             if (string.IsNullOrWhiteSpace(TBCaracteristica.Text.Trim()) || TBCaracteristica.Text.Length < 2)
             {
                 mensajeError = "Debe ingresar la Característica telefónica (código de área de 2 a 5 dígitos).";
@@ -576,6 +608,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Teléfono
             if (string.IsNullOrWhiteSpace(TTelefono.Text.Trim()) || TTelefono.Text.Length < 6)
             {
                 mensajeError = "Debe ingresar un número de teléfono válido (mínimo 6 dígitos).";
@@ -583,6 +616,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Email
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             if (string.IsNullOrWhiteSpace(TBEmail.Text.Trim()) || !Regex.IsMatch(TBEmail.Text.Trim(), patronEmail))
             {
@@ -591,6 +625,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Calle
             if (string.IsNullOrWhiteSpace(TBCalle.Text.Trim()))
             {
                 mensajeError = "Debe ingresar el nombre de la Calle.";
@@ -598,6 +633,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Provincia
             if (CBProvincia.SelectedIndex == -1)
             {
                 mensajeError = "Debe seleccionar una Provincia de la lista.";
@@ -605,6 +641,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Localidad
             if (CBLocalidad.SelectedIndex == -1)
             {
                 mensajeError = "Debe seleccionar una Localidad.";
@@ -616,11 +653,19 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // 7. BOTÓN GUARDAR (Nuevo o Edición)
+        // 7. BOTÓN GUARDAR (SOLO CREAR NUEVO CLIENTE)
         // ============================================================
         private async void BGuardar_Click(object sender, EventArgs e)
         {
-            /*if (!ValidarCamposCliente(out string error))
+            // Si estamos en modo edición, avisar que use Actualizar
+            if (_esEdicion)
+            {
+                MessageBox.Show("Está en modo edición. Use el botón 'Actualizar' para guardar los cambios.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!ValidarCamposCliente(out string error))
             {
                 MessageBox.Show(error, "Validación de Datos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
@@ -628,118 +673,117 @@ namespace CapaPresentacion
 
             try
             {
-                // PASO 1: Dirección (con Piso y Dpto)
-                var direccion = new CrearDireccionDto
-                {
-                    Calle = TBCalle.Text.Trim(),
-                    Numero = string.IsNullOrWhiteSpace(TBNro.Text) ? (int?)null : int.Parse(TBNro.Text),
-                    Edificio = null,
-                    Piso = string.IsNullOrWhiteSpace(TBPiso.Text) ? null : TBPiso.Text.Trim(),
-                    Departamento = string.IsNullOrWhiteSpace(TBDpto.Text) ? null : TBDpto.Text.Trim(),
-                    Descripcion = null,
-                    LocalidadId = (int)CBLocalidad.SelectedValue
-                };
-                var direccionCreada = await _direccionLogica.Crear(direccion);
-
-                // PASO 2: Teléfono con su característica real
-                var telefono = new CrearTelefonoDto
-                {
-                    Caracteristica = TBCaracteristica.Text.Trim(),
-                    Numero = long.Parse(TTelefono.Text.Trim())
-                };
-                var telefonoCreado = await _telefonoLogica.Crear(telefono);
-
-                // PASO 3: Usuario
-                var usuario = new CrearUsuarioDto
+                // ✅ MODIFICADO: Crear cliente completo en UNA SOLA PETICIÓN
+                // Antes se hacían 4 peticiones separadas (dirección, teléfono, usuario, cliente)
+                // Ahora se envía todo junto al endpoint POST /api/clientes
+                var crearCliente = new CrearClienteDto
                 {
                     Nombre = TBNombreRazonSocial.Text.Trim(),
                     Apellido = TApellido.Text.Trim(),
                     Dni = TBCodigoInterno.Text.Trim(),
                     CuilCuit = TBCuilCuit.Text.Trim(),
                     Email = TBEmail.Text.Trim(),
-                    DireccionId = direccionCreada.Id,
-                    TelefonoId = telefonoCreado.Id,
-                    PerfilId = 4,
-                    EsCliente = true,
-                    EsPersonal = false,
-                    EsProveedor = false,
-                    CodUsuario = null,
-                    Contrasena = null
+                    Direccion = new DireccionCrearDto
+                    {
+                        Calle = TBCalle.Text.Trim(),
+                        Numero = string.IsNullOrWhiteSpace(TBNro.Text) ? (int?)null : int.Parse(TBNro.Text),
+                        Edificio = null,
+                        Piso = string.IsNullOrWhiteSpace(TBPiso.Text) ? (int?)null : int.Parse(TBPiso.Text),
+                        Departamento = TBDpto.Text.Trim(),
+                        Descripcion = null,
+                        LocalidadId = (int)CBLocalidad.SelectedValue
+                    },
+                    Telefono = new TelefonoCrearDto
+                    {
+                        Caracteristica = TBCaracteristica.Text.Trim(),
+                        Numero = long.Parse(TTelefono.Text.Trim())
+                    }
                 };
 
-                if (_esEdicion)
-                {
-                    var actualizarUsuario = new ActualizarUsuarioDto
-                    {
-                        Nombre = usuario.Nombre,
-                        Apellido = usuario.Apellido,
-                        Dni = usuario.Dni,
-                        CuilCuit = usuario.CuilCuit,
-                        Email = usuario.Email,
-                        DireccionId = usuario.DireccionId,
-                        TelefonoId = usuario.TelefonoId,
-                        EsCliente = true,
-                        Estado = ChBClienteHabilitado.Checked
-                    };
-                    await _usuarioLogica.ActualizarUsuario(_usuarioId, actualizarUsuario);
-                    MessageBox.Show("Cliente actualizado exitosamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    var usuarioCreado = await _usuarioLogica.CrearUsuario(usuario);
-                    var crearCliente = new CrearClienteDto
-                    {
-                        UsuarioId = usuarioCreado.Id
-                    };
-                    await _clienteLogica.Crear(crearCliente);
-                    MessageBox.Show("Cliente creado exitosamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                await _clienteLogica.Crear(crearCliente);
 
+                MessageBox.Show("Cliente creado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 await CargarClientesAsync();
                 LimpiarCampos();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }*/
+                MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         // ============================================================
-        // 8. BOTÓN ACTUALIZAR (Antes Editar)
+        // 8. BOTÓN ACTUALIZAR (SOLO ACTUALIZAR CLIENTE SELECCIONADO)
         // ============================================================
-        private void BActualizar_Click(object sender, EventArgs e)
+        private async void BActualizar_Click(object sender, EventArgs e)
         {
-            if (DGVClientes.SelectedRows.Count == 0)
+            // Verificar que haya un cliente seleccionado
+            if (!_esEdicion || _clienteId <= 0)
             {
-                MessageBox.Show("Seleccione un cliente de la grilla para actualizar sus datos.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione un cliente de la grilla para actualizar sus datos.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!ValidarCamposCliente(out string error))
+            {
+                MessageBox.Show(error, "Validación de Datos", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             try
             {
-                var idValue = DGVClientes.SelectedRows[0].Cells[0].Value;
-                if (idValue != null && idValue != DBNull.Value)
+                // ✅ MODIFICADO: Actualizar cliente completo en UNA SOLA PETICIÓN
+                // Antes se hacían peticiones separadas para dirección, teléfono y usuario
+                // Ahora se envía todo junto al endpoint PUT /api/clientes/{id}
+                var actualizarCliente = new CrearClienteDto
                 {
-                    _clienteId = Convert.ToInt32(idValue);
-                    _esEdicion = true;
-                    CargarClienteEnFormulario(_clienteId);
-                }
+                    Nombre = TBNombreRazonSocial.Text.Trim(),
+                    Apellido = TApellido.Text.Trim(),
+                    Dni = TBCodigoInterno.Text.Trim(),
+                    CuilCuit = TBCuilCuit.Text.Trim(),
+                    Email = TBEmail.Text.Trim(),
+                    Direccion = new DireccionCrearDto
+                    {
+                        Calle = TBCalle.Text.Trim(),
+                        Numero = string.IsNullOrWhiteSpace(TBNro.Text) ? (int?)null : int.Parse(TBNro.Text),
+                        Edificio = null,
+                        Piso = string.IsNullOrWhiteSpace(TBPiso.Text) ? (int?)null : int.Parse(TBPiso.Text),
+                        Departamento = TBDpto.Text.Trim(),
+                        Descripcion = null,
+                        LocalidadId = (int)CBLocalidad.SelectedValue
+                    },
+                    Telefono = new TelefonoCrearDto
+                    {
+                        Caracteristica = TBCaracteristica.Text.Trim(),
+                        Numero = long.Parse(TTelefono.Text.Trim())
+                    }
+                };
+
+                await _clienteLogica.Actualizar(_clienteId, actualizarCliente);
+
+                MessageBox.Show("Cliente actualizado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await CargarClientesAsync();
+                LimpiarCampos();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al preparar cliente: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         // ============================================================
-        // 9. BOTÓN DESACTIVAR (Dar de baja)
+        // 9. BOTÓN DESACTIVAR (DAR DE BAJA)
         // ============================================================
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (DGVClientes.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Seleccione un cliente para desactivar", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione un cliente para dar de baja", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -751,18 +795,18 @@ namespace CapaPresentacion
                 int id = Convert.ToInt32(idValue);
                 string nombre = DGVClientes.SelectedRows[0].Cells[3].Value?.ToString() ?? "";
 
-                if (MessageBox.Show($"¿Desea desactivar al cliente '{nombre}'?", "Confirmar",
+                if (MessageBox.Show($"¿Desea dar de baja al cliente '{nombre}'?", "Confirmar",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     await _clienteLogica.Eliminar(id);
-                    MessageBox.Show("Cliente desactivado exitosamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("Cliente dado de baja exitosamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     await CargarClientesAsync();
                     LimpiarCampos();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al desactivar: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -784,9 +828,19 @@ namespace CapaPresentacion
             await CargarClientesAsync();
         }
 
-        private void BLimpiarFiltros_Click(object sender, EventArgs e)
+        // ============================================================
+        // ✅ NUEVO: BOTÓN ESTADO (Alterna entre Activos e Inactivos)
+        // ============================================================
+        private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
-            TBBuscar.Clear();
+            // ✅ Alternar el filtro
+            _mostrarSoloActivos = !_mostrarSoloActivos;
+
+            // ✅ Cambiar el texto del botón para indicar qué se está mostrando
+            BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
+
+            // ✅ Recargar la lista con el filtro aplicado
+            await CargarClientesAsync();
         }
 
         // ============================================================
@@ -813,7 +867,6 @@ namespace CapaPresentacion
             ChBClienteHabilitado.Checked = true;
             _esEdicion = false;
             _clienteId = 0;
-            _usuarioId = 0;
         }
 
         // ============================================================
@@ -838,7 +891,6 @@ namespace CapaPresentacion
             {
                 BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
                 BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-                // BActualizar ahora utiliza el icono que antes pertenecía a Limpiar:
                 BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
                 BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             }
