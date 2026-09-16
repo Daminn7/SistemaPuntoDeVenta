@@ -61,8 +61,8 @@ namespace CapaPresentacion
             await CargarClientesAsync();
             LimpiarCampos();
 
-            // ✅ NUEVO: Inicializar el texto del botón de estado
-            BLimpiarFiltros.Text = "Ver Inactivos";
+            // Inicializar el texto del botón de estado
+            BLimpiarFiltros.Text = "Inactivos";
         }
 
         // ============================================================
@@ -139,7 +139,7 @@ namespace CapaPresentacion
                 DGVClientes.Rows.Clear();
                 if (clientes == null || clientes.Count == 0) return;
 
-                // ✅ NUEVO: Filtrar según _mostrarSoloActivos
+                // Filtrar según _mostrarSoloActivos
                 var clientesFiltrados = clientes
                     .Where(c => _mostrarSoloActivos ? c.Estado : !c.Estado)
                     .ToList();
@@ -164,7 +164,7 @@ namespace CapaPresentacion
                         localidadMostrar = cliente.Localidad;
                     }
 
-                    // ✅ Formatear el estado como texto
+                    // Formatear el estado como texto
                     string estadoMostrar = cliente.Estado ? "Activo" : "Inactivo";
 
                     DGVClientes.Rows.Add(
@@ -276,7 +276,7 @@ namespace CapaPresentacion
                 TBPiso.Clear();
                 TBDpto.Clear();
 
-                // ✅ Usar DireccionCompleta si está disponible
+                // Usar DireccionCompleta si está disponible
                 if (cliente.DireccionCompleta != null)
                 {
                     try
@@ -284,7 +284,7 @@ namespace CapaPresentacion
                         var dir = cliente.DireccionCompleta as dynamic;
                         if (dir != null)
                         {
-                            // ✅ Intentar diferentes nombres de propiedades
+                            // Intentar diferentes nombres de propiedades
                             if (dir.Calle != null) TBCalle.Text = dir.Calle.ToString();
                             if (dir.calle != null) TBCalle.Text = dir.calle.ToString();
 
@@ -302,7 +302,7 @@ namespace CapaPresentacion
                 }
                 else if (!string.IsNullOrEmpty(cliente.Direccion))
                 {
-                    // ✅ Fallback: extraer calle y número del campo Direccion
+                    // Fallback: extraer calle y número del campo Direccion
                     string direccion = cliente.Direccion;
                     int lastSpaceIndex = direccion.LastIndexOf(' ');
                     if (lastSpaceIndex > 0)
@@ -325,16 +325,16 @@ namespace CapaPresentacion
                 }
 
                 // ============================================================
-                // ✅ PROVINCIA Y LOCALIDAD
+                // PROVINCIA Y LOCALIDAD
                 // ============================================================
                 if (cliente.LocalidadId.HasValue && cliente.LocalidadId.Value > 0)
                 {
                     int localidadId = cliente.LocalidadId.Value;
 
-                    // ✅ Buscar la localidad en la lista cargada
+                    // Buscar la localidad en la lista cargada
                     var localidad = _localidades?.FirstOrDefault(l => l.Id == localidadId);
 
-                    // ✅ Si no se encuentra, cargar las localidades de esa provincia
+                    // Si no se encuentra, cargar las localidades de esa provincia
                     if (localidad == null && cliente.ProvinciaId.HasValue && cliente.ProvinciaId.Value > 0)
                     {
                         await CargarLocalidadesPorProvinciaAsync(cliente.ProvinciaId.Value);
@@ -346,13 +346,13 @@ namespace CapaPresentacion
                         var provincia = _provincias?.FirstOrDefault(p => p.Id == localidad.ProvinciaId);
                         if (provincia != null)
                         {
-                            // ✅ Seleccionar la provincia
+                            //  Seleccionar la provincia
                             CBProvincia.SelectedValue = provincia.Id;
 
-                            // ✅ Esperar a que la cascada cargue las localidades
+                            //  Esperar a que la cascada cargue las localidades
                             await Task.Delay(300);
 
-                            // ✅ Seleccionar la localidad
+                            // Seleccionar la localidad
                             CBLocalidad.SelectedValue = localidadId;
                         }
                     }
@@ -673,7 +673,7 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ MODIFICADO: Crear cliente completo en UNA SOLA PETICIÓN
+                //  MODIFICADO: Crear cliente completo en UNA SOLA PETICIÓN
                 // Antes se hacían 4 peticiones separadas (dirección, teléfono, usuario, cliente)
                 // Ahora se envía todo junto al endpoint POST /api/clientes
                 var crearCliente = new CrearClienteDto
@@ -735,7 +735,7 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ MODIFICADO: Actualizar cliente completo en UNA SOLA PETICIÓN
+                // Actualizar cliente completo en UNA SOLA PETICIÓN
                 // Antes se hacían peticiones separadas para dirección, teléfono y usuario
                 // Ahora se envía todo junto al endpoint PUT /api/clientes/{id}
                 var actualizarCliente = new CrearClienteDto
@@ -829,17 +829,17 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // ✅ NUEVO: BOTÓN ESTADO (Alterna entre Activos e Inactivos)
+        //  BOTÓN ESTADO (Alterna entre Activos e Inactivos)
         // ============================================================
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
-            // ✅ Alternar el filtro
+            // Alternar el filtro
             _mostrarSoloActivos = !_mostrarSoloActivos;
 
-            // ✅ Cambiar el texto del botón para indicar qué se está mostrando
+            // Cambiar el texto del botón para indicar qué se está mostrando
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
 
-            // ✅ Recargar la lista con el filtro aplicado
+            //  Recargar la lista con el filtro aplicado
             await CargarClientesAsync();
         }
 
