@@ -186,7 +186,6 @@
             this.DGVPersonal.DefaultCellStyle = dataGridViewCellStyle3;
             this.DGVPersonal.Dock = System.Windows.Forms.DockStyle.Fill;
             this.DGVPersonal.EnableHeadersVisualStyles = false;
-            this.DGVPersonal.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(233)))), ((int)(((byte)(238)))));
             this.DGVPersonal.Location = new System.Drawing.Point(0, 5);
             this.DGVPersonal.Margin = new System.Windows.Forms.Padding(0, 5, 10, 0);
             this.DGVPersonal.MultiSelect = false;

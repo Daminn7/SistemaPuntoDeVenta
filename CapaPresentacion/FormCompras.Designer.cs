@@ -88,6 +88,10 @@
             this.PEncabezado = new System.Windows.Forms.Panel();
             this.LTituloPrincipal = new System.Windows.Forms.Label();
             this.PBIconoTitulo = new System.Windows.Forms.PictureBox();
+            this.PBarraFiltros = new System.Windows.Forms.Panel();
+            this.LBuscarArticulo = new System.Windows.Forms.Label();
+            this.TBBuscar = new System.Windows.Forms.TextBox();
+            this.btnBuscar = new System.Windows.Forms.Button();
             this.PFondo.SuspendLayout();
             this.TLPContenido.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DGVDetalleCompra)).BeginInit();
@@ -115,6 +119,7 @@
             // 
             this.PFondo.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(242)))), ((int)(((byte)(237)))), ((int)(((byte)(230)))));
             this.PFondo.Controls.Add(this.TLPContenido);
+            this.PFondo.Controls.Add(this.PBarraFiltros);
             this.PFondo.Controls.Add(this.PEncabezado);
             this.PFondo.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PFondo.Location = new System.Drawing.Point(0, 0);
@@ -122,6 +127,51 @@
             this.PFondo.Padding = new System.Windows.Forms.Padding(21, 15, 21, 15);
             this.PFondo.Size = new System.Drawing.Size(1534, 822);
             this.PFondo.TabIndex = 0;
+            // 
+            // PBarraFiltros
+            // 
+            this.PBarraFiltros.Controls.Add(this.btnBuscar);
+            this.PBarraFiltros.Controls.Add(this.TBBuscar);
+            this.PBarraFiltros.Controls.Add(this.LBuscarArticulo);
+            this.PBarraFiltros.Dock = System.Windows.Forms.DockStyle.Top;
+            this.PBarraFiltros.Location = new System.Drawing.Point(21, 53);
+            this.PBarraFiltros.Name = "PBarraFiltros";
+            this.PBarraFiltros.Size = new System.Drawing.Size(1492, 47);
+            this.PBarraFiltros.TabIndex = 1;
+            // 
+            // LBuscarArticulo
+            // 
+            this.LBuscarArticulo.AutoSize = true;
+            this.LBuscarArticulo.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.LBuscarArticulo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(60)))), ((int)(((byte)(60)))), ((int)(((byte)(60)))));
+            this.LBuscarArticulo.Location = new System.Drawing.Point(3, 14);
+            this.LBuscarArticulo.Name = "LBuscarArticulo";
+            this.LBuscarArticulo.Size = new System.Drawing.Size(188, 20);
+            this.LBuscarArticulo.TabIndex = 0;
+            this.LBuscarArticulo.Text = "Filtrar en Lista de Compra:";
+            // 
+            // TBBuscar
+            // 
+            this.TBBuscar.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.TBBuscar.Location = new System.Drawing.Point(200, 10);
+            this.TBBuscar.Name = "TBBuscar";
+            this.TBBuscar.Size = new System.Drawing.Size(320, 27);
+            this.TBBuscar.TabIndex = 1;
+            // 
+            // btnBuscar
+            // 
+            this.btnBuscar.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
+            this.btnBuscar.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnBuscar.FlatAppearance.BorderSize = 0;
+            this.btnBuscar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnBuscar.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.btnBuscar.ForeColor = System.Drawing.Color.White;
+            this.btnBuscar.Location = new System.Drawing.Point(535, 9);
+            this.btnBuscar.Name = "btnBuscar";
+            this.btnBuscar.Size = new System.Drawing.Size(85, 29);
+            this.btnBuscar.TabIndex = 2;
+            this.btnBuscar.Text = "Buscar";
+            this.btnBuscar.UseVisualStyleBackColor = false;
             // 
             // TLPContenido
             // 
@@ -131,11 +181,11 @@
             this.TLPContenido.Controls.Add(this.DGVDetalleCompra, 0, 0);
             this.TLPContenido.Controls.Add(this.PTarjetaLateral, 1, 0);
             this.TLPContenido.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.TLPContenido.Location = new System.Drawing.Point(21, 53);
+            this.TLPContenido.Location = new System.Drawing.Point(21, 100);
             this.TLPContenido.Name = "TLPContenido";
             this.TLPContenido.RowCount = 1;
             this.TLPContenido.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.TLPContenido.Size = new System.Drawing.Size(1492, 754);
+            this.TLPContenido.Size = new System.Drawing.Size(1492, 707);
             this.TLPContenido.TabIndex = 1;
             // 
             // DGVDetalleCompra
@@ -145,14 +195,16 @@
             this.DGVDetalleCompra.AllowUserToResizeColumns = false;
             this.DGVDetalleCompra.AllowUserToResizeRows = false;
             this.DGVDetalleCompra.BackgroundColor = System.Drawing.Color.White;
+            this.DGVDetalleCompra.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.DGVDetalleCompra.CellBorderStyle = System.Windows.Forms.DataGridViewCellBorderStyle.Single;
             this.DGVDetalleCompra.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             dataGridViewCellStyle1.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(235)))), ((int)(((byte)(235)))));
             dataGridViewCellStyle1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             dataGridViewCellStyle1.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(235)))), ((int)(((byte)(235)))), ((int)(((byte)(235)))));
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
             this.DGVDetalleCompra.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
-            this.DGVDetalleCompra.ColumnHeadersHeight = 34;
+            this.DGVDetalleCompra.ColumnHeadersHeight = 32;
             this.DGVDetalleCompra.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.DGVDetalleCompra.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.ColIdProducto,
@@ -169,18 +221,22 @@
             dataGridViewCellStyle2.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
             dataGridViewCellStyle2.SelectionForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle2.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
-            this.DGVDetalleCompra.DefaultCellStyle = dataGridViewCellStyle2;
+            // Fila alternada
+            System.Windows.Forms.DataGridViewCellStyle dgvAlt = new System.Windows.Forms.DataGridViewCellStyle();
+            dgvAlt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(248)))), ((int)(((byte)(249)))), ((int)(((byte)(250)))));
+            dgvAlt.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dgvAlt.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(30)))), ((int)(((byte)(30)))));
+            dgvAlt.SelectionBackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
+            dgvAlt.SelectionForeColor = System.Drawing.Color.White;
+            this.DGVDetalleCompra.AlternatingRowsDefaultCellStyle = dgvAlt;
             this.DGVDetalleCompra.Dock = System.Windows.Forms.DockStyle.Fill;
             this.DGVDetalleCompra.EnableHeadersVisualStyles = false;
-            this.DGVDetalleCompra.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(230)))), ((int)(((byte)(233)))), ((int)(((byte)(238)))));
-            this.DGVDetalleCompra.Location = new System.Drawing.Point(0, 6);
             this.DGVDetalleCompra.Margin = new System.Windows.Forms.Padding(0, 6, 14, 0);
             this.DGVDetalleCompra.MultiSelect = false;
             this.DGVDetalleCompra.Name = "DGVDetalleCompra";
             this.DGVDetalleCompra.ReadOnly = true;
             this.DGVDetalleCompra.RowHeadersVisible = false;
-            this.DGVDetalleCompra.RowHeadersWidth = 51;
-            this.DGVDetalleCompra.RowTemplate.Height = 30;
+            this.DGVDetalleCompra.RowTemplate.Height = 28;
             this.DGVDetalleCompra.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.DGVDetalleCompra.Size = new System.Drawing.Size(1030, 748);
             this.DGVDetalleCompra.TabIndex = 0;
@@ -291,17 +347,17 @@
             this.TLPFormularioEdicion.Location = new System.Drawing.Point(14, 55);
             this.TLPFormularioEdicion.Name = "TLPFormularioEdicion";
             this.TLPFormularioEdicion.RowCount = 10;
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 45F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 28F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 51F));
-            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 55F));
-            this.TLPFormularioEdicion.Size = new System.Drawing.Size(418, 566);
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F)); // Proveedor / TipoDoc
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F)); // NroFactura / Fecha
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F)); // FormaPago
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 24F)); // Subtitulo Artículos
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F)); // Producto
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F)); // Costo / Cantidad
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 38F)); // Botón Agregar (Achicado)
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 24F)); // Subtitulo Totales
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 48F)); // Subtotal / IVA
+            this.TLPFormularioEdicion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F)); // Total (Ocupa el resto sin desbordar)
+            this.TLPFormularioEdicion.Size = new System.Drawing.Size(418, 590);
             this.TLPFormularioEdicion.TabIndex = 0;
             // 
             // PGrupoProveedor
@@ -559,25 +615,13 @@
             this.NUDCantidad.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.NUDCantidad.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.NUDCantidad.Location = new System.Drawing.Point(0, 22);
-            this.NUDCantidad.Maximum = new decimal(new int[] {
-            100000,
-            0,
-            0,
-            0});
-            this.NUDCantidad.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            this.NUDCantidad.Maximum = new decimal(new int[] {100000, 0, 0, 0});
+            this.NUDCantidad.Minimum = new decimal(new int[] {1, 0, 0, 0});
             this.NUDCantidad.Name = "NUDCantidad";
             this.NUDCantidad.Size = new System.Drawing.Size(206, 27);
             this.NUDCantidad.TabIndex = 0;
             this.NUDCantidad.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.NUDCantidad.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            this.NUDCantidad.Value = new decimal(new int[] {1, 0, 0, 0});
             // 
             // LCantidad
             // 
@@ -595,10 +639,10 @@
             this.TLPFormularioEdicion.SetColumnSpan(this.PGrupoBotonAgregar, 2);
             this.PGrupoBotonAgregar.Controls.Add(this.BAgregarItem);
             this.PGrupoBotonAgregar.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PGrupoBotonAgregar.Location = new System.Drawing.Point(0, 283);
-            this.PGrupoBotonAgregar.Margin = new System.Windows.Forms.Padding(0, 0, 0, 4);
+            this.PGrupoBotonAgregar.Location = new System.Drawing.Point(0, 264);
+            this.PGrupoBotonAgregar.Margin = new System.Windows.Forms.Padding(0, 2, 0, 2);
             this.PGrupoBotonAgregar.Name = "PGrupoBotonAgregar";
-            this.PGrupoBotonAgregar.Size = new System.Drawing.Size(418, 41);
+            this.PGrupoBotonAgregar.Size = new System.Drawing.Size(418, 34);
             this.PGrupoBotonAgregar.TabIndex = 9;
             // 
             // BAgregarItem
@@ -608,11 +652,11 @@
             this.BAgregarItem.Dock = System.Windows.Forms.DockStyle.Fill;
             this.BAgregarItem.FlatAppearance.BorderSize = 0;
             this.BAgregarItem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BAgregarItem.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.BAgregarItem.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.BAgregarItem.ForeColor = System.Drawing.Color.White;
             this.BAgregarItem.Location = new System.Drawing.Point(0, 0);
             this.BAgregarItem.Name = "BAgregarItem";
-            this.BAgregarItem.Size = new System.Drawing.Size(418, 41);
+            this.BAgregarItem.Size = new System.Drawing.Size(418, 34);
             this.BAgregarItem.TabIndex = 0;
             this.BAgregarItem.Text = "+ Agregar Ítem a la Lista";
             this.BAgregarItem.UseVisualStyleBackColor = false;
@@ -737,9 +781,9 @@
             this.PBotonesAccion.Controls.Add(this.BGuardarCompra);
             this.PBotonesAccion.Controls.Add(this.BCancelar);
             this.PBotonesAccion.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.PBotonesAccion.Location = new System.Drawing.Point(14, 621);
+            this.PBotonesAccion.Location = new System.Drawing.Point(14, 647);
             this.PBotonesAccion.Name = "PBotonesAccion";
-            this.PBotonesAccion.Size = new System.Drawing.Size(418, 114);
+            this.PBotonesAccion.Size = new System.Drawing.Size(418, 88);
             this.PBotonesAccion.TabIndex = 1;
             // 
             // BGuardarCompra
@@ -749,12 +793,12 @@
             this.BGuardarCompra.Dock = System.Windows.Forms.DockStyle.Top;
             this.BGuardarCompra.FlatAppearance.BorderSize = 0;
             this.BGuardarCompra.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BGuardarCompra.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
+            this.BGuardarCompra.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.BGuardarCompra.ForeColor = System.Drawing.Color.White;
             this.BGuardarCompra.Location = new System.Drawing.Point(0, 0);
             this.BGuardarCompra.Name = "BGuardarCompra";
             this.BGuardarCompra.Padding = new System.Windows.Forms.Padding(65, 0, 0, 0);
-            this.BGuardarCompra.Size = new System.Drawing.Size(418, 52);
+            this.BGuardarCompra.Size = new System.Drawing.Size(418, 40);
             this.BGuardarCompra.TabIndex = 0;
             this.BGuardarCompra.Text = "Registrar e Ingresar Stock";
             this.BGuardarCompra.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -768,12 +812,12 @@
             this.BCancelar.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.BCancelar.FlatAppearance.BorderSize = 0;
             this.BCancelar.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BCancelar.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.BCancelar.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.BCancelar.ForeColor = System.Drawing.Color.White;
-            this.BCancelar.Location = new System.Drawing.Point(0, 60);
+            this.BCancelar.Location = new System.Drawing.Point(0, 48);
             this.BCancelar.Name = "BCancelar";
             this.BCancelar.Padding = new System.Windows.Forms.Padding(85, 0, 0, 0);
-            this.BCancelar.Size = new System.Drawing.Size(418, 54);
+            this.BCancelar.Size = new System.Drawing.Size(418, 40);
             this.BCancelar.TabIndex = 1;
             this.BCancelar.Text = "Descartar Compra";
             this.BCancelar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
@@ -935,5 +979,9 @@
         private System.Windows.Forms.Panel PBotonesAccion;
         private System.Windows.Forms.Button BGuardarCompra;
         private System.Windows.Forms.Button BCancelar;
+        private System.Windows.Forms.Panel PBarraFiltros;
+        private System.Windows.Forms.Label LBuscarArticulo;
+        private System.Windows.Forms.TextBox TBBuscar;
+        private System.Windows.Forms.Button btnBuscar;
     }
 }

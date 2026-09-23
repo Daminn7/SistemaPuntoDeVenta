@@ -54,7 +54,6 @@
             this.tlpBotonesAccion = new System.Windows.Forms.TableLayoutPanel();
             this.btnArqueo = new System.Windows.Forms.Button();
             this.btnImprimirInforme = new System.Windows.Forms.Button();
-            this.btnNuevoMovimiento = new System.Windows.Forms.Button();
             this.lblSubtituloTarjeta = new System.Windows.Forms.Label();
             this.lblTituloTarjeta = new System.Windows.Forms.Label();
             this.pnlBarraFiltros = new System.Windows.Forms.Panel();
@@ -276,7 +275,7 @@
             this.dgvBalance.RowHeadersWidth = 51;
             this.dgvBalance.RowTemplate.Height = 28;
             this.dgvBalance.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvBalance.Size = new System.Drawing.Size(341, 397);
+            this.dgvBalance.Size = new System.Drawing.Size(341, 441);
             this.dgvBalance.TabIndex = 0;
             // 
             // colConceptoBalance
@@ -310,12 +309,11 @@
             // pnlAccionesTarjeta
             // 
             this.pnlAccionesTarjeta.Controls.Add(this.tlpBotonesAccion);
-            this.pnlAccionesTarjeta.Controls.Add(this.btnNuevoMovimiento);
             this.pnlAccionesTarjeta.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.pnlAccionesTarjeta.Location = new System.Drawing.Point(16, 461);
+            this.pnlAccionesTarjeta.Location = new System.Drawing.Point(16, 505);
             this.pnlAccionesTarjeta.Name = "pnlAccionesTarjeta";
             this.pnlAccionesTarjeta.Padding = new System.Windows.Forms.Padding(0, 4, 0, 0);
-            this.pnlAccionesTarjeta.Size = new System.Drawing.Size(341, 96);
+            this.pnlAccionesTarjeta.Size = new System.Drawing.Size(341, 52);
             this.pnlAccionesTarjeta.TabIndex = 1;
             // 
             // tlpBotonesAccion
@@ -325,12 +323,12 @@
             this.tlpBotonesAccion.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.tlpBotonesAccion.Controls.Add(this.btnArqueo, 0, 0);
             this.tlpBotonesAccion.Controls.Add(this.btnImprimirInforme, 1, 0);
-            this.tlpBotonesAccion.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.tlpBotonesAccion.Location = new System.Drawing.Point(0, 45);
+            this.tlpBotonesAccion.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.tlpBotonesAccion.Location = new System.Drawing.Point(0, 4);
             this.tlpBotonesAccion.Name = "tlpBotonesAccion";
             this.tlpBotonesAccion.RowCount = 1;
             this.tlpBotonesAccion.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.tlpBotonesAccion.Size = new System.Drawing.Size(341, 51);
+            this.tlpBotonesAccion.Size = new System.Drawing.Size(341, 48);
             this.tlpBotonesAccion.TabIndex = 0;
             // 
             // btnArqueo
@@ -342,10 +340,10 @@
             this.btnArqueo.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnArqueo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnArqueo.ForeColor = System.Drawing.Color.White;
-            this.btnArqueo.Location = new System.Drawing.Point(0, 4);
-            this.btnArqueo.Margin = new System.Windows.Forms.Padding(0, 4, 5, 0);
+            this.btnArqueo.Location = new System.Drawing.Point(0, 0);
+            this.btnArqueo.Margin = new System.Windows.Forms.Padding(0, 0, 5, 0);
             this.btnArqueo.Name = "btnArqueo";
-            this.btnArqueo.Size = new System.Drawing.Size(165, 47);
+            this.btnArqueo.Size = new System.Drawing.Size(165, 48);
             this.btnArqueo.TabIndex = 0;
             this.btnArqueo.Text = "Cierre / Arqueo";
             this.btnArqueo.UseVisualStyleBackColor = false;
@@ -359,29 +357,13 @@
             this.btnImprimirInforme.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnImprimirInforme.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.btnImprimirInforme.ForeColor = System.Drawing.Color.White;
-            this.btnImprimirInforme.Location = new System.Drawing.Point(175, 4);
-            this.btnImprimirInforme.Margin = new System.Windows.Forms.Padding(5, 4, 0, 0);
+            this.btnImprimirInforme.Location = new System.Drawing.Point(175, 0);
+            this.btnImprimirInforme.Margin = new System.Windows.Forms.Padding(5, 0, 0, 0);
             this.btnImprimirInforme.Name = "btnImprimirInforme";
-            this.btnImprimirInforme.Size = new System.Drawing.Size(166, 47);
+            this.btnImprimirInforme.Size = new System.Drawing.Size(166, 48);
             this.btnImprimirInforme.TabIndex = 1;
             this.btnImprimirInforme.Text = "Exportar PDF";
             this.btnImprimirInforme.UseVisualStyleBackColor = false;
-            // 
-            // btnNuevoMovimiento
-            // 
-            this.btnNuevoMovimiento.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
-            this.btnNuevoMovimiento.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.btnNuevoMovimiento.Dock = System.Windows.Forms.DockStyle.Top;
-            this.btnNuevoMovimiento.FlatAppearance.BorderSize = 0;
-            this.btnNuevoMovimiento.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnNuevoMovimiento.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
-            this.btnNuevoMovimiento.ForeColor = System.Drawing.Color.White;
-            this.btnNuevoMovimiento.Location = new System.Drawing.Point(0, 4);
-            this.btnNuevoMovimiento.Name = "btnNuevoMovimiento";
-            this.btnNuevoMovimiento.Size = new System.Drawing.Size(341, 41);
-            this.btnNuevoMovimiento.TabIndex = 1;
-            this.btnNuevoMovimiento.Text = "+ Nuevo Ingreso / Egreso";
-            this.btnNuevoMovimiento.UseVisualStyleBackColor = false;
             // 
             // lblSubtituloTarjeta
             // 
@@ -633,9 +615,7 @@
         private System.Windows.Forms.DataGridView dgvBalance;
         private System.Windows.Forms.DataGridViewTextBoxColumn colConceptoBalance;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMontoBalance;
-
         private System.Windows.Forms.Panel pnlAccionesTarjeta;
-        private System.Windows.Forms.Button btnNuevoMovimiento;
         private System.Windows.Forms.TableLayoutPanel tlpBotonesAccion;
         private System.Windows.Forms.Button btnArqueo;
         private System.Windows.Forms.Button btnImprimirInforme;

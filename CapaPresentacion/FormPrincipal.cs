@@ -609,7 +609,7 @@ namespace CapaPresentacion
         }
         private void BCerrarSesion_Click(object sender, EventArgs e)
         {
-            this.Close(); // Dispara automáticamente FormPrincipal_FormClosing
+            this.Close(); // Dispara automáticamente FormClousing
         }
         // Eventos de click de navegación
         private void BMenuProductos_Click(object sender, EventArgs e)

@@ -31,9 +31,14 @@
             System.Windows.Forms.DataGridViewCellStyle dgvHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvAltRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dgvDetHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dgvDetRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle dgvDetAltRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
 
             this.PFondo = new System.Windows.Forms.Panel();
             this.TLPContenido = new System.Windows.Forms.TableLayoutPanel();
+            this.SCIzquierda = new System.Windows.Forms.SplitContainer();
+            this.LSubtituloVentas = new System.Windows.Forms.Label();
             this.DGVVentas = new System.Windows.Forms.DataGridView();
             this.ColIdVenta = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColFecha = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -42,6 +47,14 @@
             this.ColCantItems = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColTotal = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColEstado = new System.Windows.Forms.DataGridViewTextBoxColumn();
+
+            this.LSubtituloDetalle = new System.Windows.Forms.Label();
+            this.DGVDetalle = new System.Windows.Forms.DataGridView();
+            this.ColDetCodigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColDetDesc = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColDetCant = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColDetPrecio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColDetSubtotal = new System.Windows.Forms.DataGridViewTextBoxColumn();
 
             this.PTarjetaLateral = new System.Windows.Forms.Panel();
             this.PBotonesAccion = new System.Windows.Forms.Panel();
@@ -57,7 +70,6 @@
             this.PGrupoComision = new System.Windows.Forms.Panel();
             this.LValorComision = new System.Windows.Forms.Label();
             this.LTituloComision = new System.Windows.Forms.Label();
-
             this.LSubtituloTarjeta = new System.Windows.Forms.Label();
             this.LTituloTarjeta = new System.Windows.Forms.Label();
 
@@ -78,7 +90,12 @@
 
             this.PFondo.SuspendLayout();
             this.TLPContenido.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.SCIzquierda)).BeginInit();
+            this.SCIzquierda.Panel1.SuspendLayout();
+            this.SCIzquierda.Panel2.SuspendLayout();
+            this.SCIzquierda.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DGVVentas)).BeginInit();
+            ((System.ComponentModel.ISupportInitialize)(this.DGVDetalle)).BeginInit();
             this.PTarjetaLateral.SuspendLayout();
             this.PBotonesAccion.SuspendLayout();
             this.TLPMetricas.SuspendLayout();
@@ -220,11 +237,11 @@
             this.BLimpiarFiltros.Text = "Limpiar";
             this.BLimpiarFiltros.UseVisualStyleBackColor = false;
 
-            // TLPContenido
+            // TLPContenido (Doble Grilla en SplitContainer + Tarjeta Lateral)
             this.TLPContenido.ColumnCount = 2;
             this.TLPContenido.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 72F));
             this.TLPContenido.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28F));
-            this.TLPContenido.Controls.Add(this.DGVVentas, 0, 0);
+            this.TLPContenido.Controls.Add(this.SCIzquierda, 0, 0);
             this.TLPContenido.Controls.Add(this.PTarjetaLateral, 1, 0);
             this.TLPContenido.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TLPContenido.Location = new System.Drawing.Point(21, 100);
@@ -233,6 +250,33 @@
             this.TLPContenido.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.TLPContenido.Size = new System.Drawing.Size(1492, 707);
             this.TLPContenido.TabIndex = 0;
+
+            // SCIzquierda (Superior: Comprobantes / Inferior: Artículos Vendidos)
+            this.SCIzquierda.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.SCIzquierda.Location = new System.Drawing.Point(0, 0);
+            this.SCIzquierda.Margin = new System.Windows.Forms.Padding(0, 0, 14, 0);
+            this.SCIzquierda.Name = "SCIzquierda";
+            this.SCIzquierda.Orientation = System.Windows.Forms.Orientation.Horizontal;
+
+            // Panel 1: Listado de Comprobantes Emitidos
+            this.SCIzquierda.Panel1.Controls.Add(this.DGVVentas);
+            this.SCIzquierda.Panel1.Controls.Add(this.LSubtituloVentas);
+            // Panel 2: Detalle de Artículos del Comprobante
+            this.SCIzquierda.Panel2.Controls.Add(this.DGVDetalle);
+            this.SCIzquierda.Panel2.Controls.Add(this.LSubtituloDetalle);
+            this.SCIzquierda.Size = new System.Drawing.Size(1060, 707);
+            this.SCIzquierda.SplitterDistance = 350;
+            this.SCIzquierda.TabIndex = 0;
+
+            // LSubtituloVentas
+            this.LSubtituloVentas.Dock = System.Windows.Forms.DockStyle.Top;
+            this.LSubtituloVentas.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.LSubtituloVentas.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            this.LSubtituloVentas.Location = new System.Drawing.Point(0, 0);
+            this.LSubtituloVentas.Name = "LSubtituloVentas";
+            this.LSubtituloVentas.Size = new System.Drawing.Size(1060, 24);
+            this.LSubtituloVentas.TabIndex = 0;
+            this.LSubtituloVentas.Text = "COMPROBANTES Y VENTAS EMITIDAS:";
 
             // DGVVentas
             this.DGVVentas.AllowUserToAddRows = false;
@@ -282,11 +326,10 @@
                 this.ColEstado
             });
             this.DGVVentas.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.DGVVentas.Location = new System.Drawing.Point(0, 6);
-            this.DGVVentas.Margin = new System.Windows.Forms.Padding(0, 6, 14, 0);
+            this.DGVVentas.Location = new System.Drawing.Point(0, 24);
             this.DGVVentas.Name = "DGVVentas";
-            this.DGVVentas.Size = new System.Drawing.Size(1060, 701);
-            this.DGVVentas.TabIndex = 0;
+            this.DGVVentas.Size = new System.Drawing.Size(1060, 326);
+            this.DGVVentas.TabIndex = 1;
 
             this.ColIdVenta.HeaderText = "ID";
             this.ColIdVenta.Name = "ColIdVenta";
@@ -323,6 +366,88 @@
             this.ColEstado.Name = "ColEstado";
             this.ColEstado.ReadOnly = true;
 
+            // LSubtituloDetalle
+            this.LSubtituloDetalle.Dock = System.Windows.Forms.DockStyle.Top;
+            this.LSubtituloDetalle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.LSubtituloDetalle.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            this.LSubtituloDetalle.Location = new System.Drawing.Point(0, 0);
+            this.LSubtituloDetalle.Name = "LSubtituloDetalle";
+            this.LSubtituloDetalle.Size = new System.Drawing.Size(1060, 24);
+            this.LSubtituloDetalle.TabIndex = 0;
+            this.LSubtituloDetalle.Text = "DETALLE DE ARTÍCULOS DE LA VENTA SELECCIONADA:";
+
+            // DGVDetalle (Estructura idéntica a FormCobroVenta)
+            this.DGVDetalle.AllowUserToAddRows = false;
+            this.DGVDetalle.AllowUserToDeleteRows = false;
+            this.DGVDetalle.BackgroundColor = System.Drawing.Color.White;
+            this.DGVDetalle.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.DGVDetalle.ColumnHeadersHeight = 30;
+            this.DGVDetalle.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.DGVDetalle.EnableHeadersVisualStyles = false;
+            this.DGVDetalle.GridColor = System.Drawing.Color.FromArgb(230, 233, 238);
+            this.DGVDetalle.MultiSelect = false;
+            this.DGVDetalle.ReadOnly = true;
+            this.DGVDetalle.RowHeadersVisible = false;
+            this.DGVDetalle.RowTemplate.Height = 26;
+            this.DGVDetalle.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+
+            dgvDetHeaderStyle.BackColor = System.Drawing.Color.FromArgb(235, 235, 235);
+            dgvDetHeaderStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dgvDetHeaderStyle.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
+            this.DGVDetalle.ColumnHeadersDefaultCellStyle = dgvDetHeaderStyle;
+
+            dgvDetRowStyle.BackColor = System.Drawing.Color.White;
+            dgvDetRowStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dgvDetRowStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            dgvDetRowStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
+            dgvDetRowStyle.SelectionForeColor = System.Drawing.Color.White;
+            this.DGVDetalle.DefaultCellStyle = dgvDetRowStyle;
+
+            dgvDetAltRowStyle.BackColor = System.Drawing.Color.FromArgb(248, 249, 250);
+            dgvDetAltRowStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dgvDetAltRowStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
+            dgvDetAltRowStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
+            dgvDetAltRowStyle.SelectionForeColor = System.Drawing.Color.White;
+            this.DGVDetalle.AlternatingRowsDefaultCellStyle = dgvDetAltRowStyle;
+
+            this.DGVDetalle.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+                this.ColDetCodigo,
+                this.ColDetDesc,
+                this.ColDetCant,
+                this.ColDetPrecio,
+                this.ColDetSubtotal
+            });
+            this.DGVDetalle.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.DGVDetalle.Location = new System.Drawing.Point(0, 24);
+            this.DGVDetalle.Name = "DGVDetalle";
+            this.DGVDetalle.Size = new System.Drawing.Size(1060, 329);
+            this.DGVDetalle.TabIndex = 1;
+
+            this.ColDetCodigo.HeaderText = "Código";
+            this.ColDetCodigo.Width = 110;
+            this.ColDetCodigo.Name = "ColDetCodigo";
+            this.ColDetCodigo.ReadOnly = true;
+
+            this.ColDetDesc.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ColDetDesc.HeaderText = "Insumo / Descripción";
+            this.ColDetDesc.Name = "ColDetDesc";
+            this.ColDetDesc.ReadOnly = true;
+
+            this.ColDetCant.HeaderText = "Cantidad";
+            this.ColDetCant.Width = 90;
+            this.ColDetCant.Name = "ColDetCant";
+            this.ColDetCant.ReadOnly = true;
+
+            this.ColDetPrecio.HeaderText = "Precio Unit. ($)";
+            this.ColDetPrecio.Width = 130;
+            this.ColDetPrecio.Name = "ColDetPrecio";
+            this.ColDetPrecio.ReadOnly = true;
+
+            this.ColDetSubtotal.HeaderText = "Subtotal ($)";
+            this.ColDetSubtotal.Width = 130;
+            this.ColDetSubtotal.Name = "ColDetSubtotal";
+            this.ColDetSubtotal.ReadOnly = true;
+
             // PTarjetaLateral
             this.PTarjetaLateral.BackColor = System.Drawing.Color.White;
             this.PTarjetaLateral.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
@@ -331,19 +456,18 @@
             this.PTarjetaLateral.Controls.Add(this.LSubtituloTarjeta);
             this.PTarjetaLateral.Controls.Add(this.LTituloTarjeta);
             this.PTarjetaLateral.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PTarjetaLateral.Location = new System.Drawing.Point(1074, 6);
-            this.PTarjetaLateral.Margin = new System.Windows.Forms.Padding(0, 6, 0, 0);
+            this.PTarjetaLateral.Location = new System.Drawing.Point(1074, 0);
             this.PTarjetaLateral.Name = "PTarjetaLateral";
-            this.PTarjetaLateral.Padding = new System.Windows.Forms.Padding(14, 11, 14, 11);
-            this.PTarjetaLateral.Size = new System.Drawing.Size(418, 701);
+            this.PTarjetaLateral.Padding = new System.Windows.Forms.Padding(14);
+            this.PTarjetaLateral.Size = new System.Drawing.Size(418, 707);
             this.PTarjetaLateral.TabIndex = 1;
 
             this.LTituloTarjeta.Dock = System.Windows.Forms.DockStyle.Top;
-            this.LTituloTarjeta.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.LTituloTarjeta.Font = new System.Drawing.Font("Segoe UI", 10.5F, System.Drawing.FontStyle.Bold);
             this.LTituloTarjeta.ForeColor = System.Drawing.Color.FromArgb(212, 131, 53);
-            this.LTituloTarjeta.Location = new System.Drawing.Point(14, 11);
+            this.LTituloTarjeta.Location = new System.Drawing.Point(14, 14);
             this.LTituloTarjeta.Name = "LTituloTarjeta";
-            this.LTituloTarjeta.Size = new System.Drawing.Size(388, 23);
+            this.LTituloTarjeta.Size = new System.Drawing.Size(388, 24);
             this.LTituloTarjeta.TabIndex = 0;
             this.LTituloTarjeta.Text = "MI RENDIMIENTO PERSONAL";
             this.LTituloTarjeta.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -351,9 +475,9 @@
             this.LSubtituloTarjeta.Dock = System.Windows.Forms.DockStyle.Top;
             this.LSubtituloTarjeta.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Italic);
             this.LSubtituloTarjeta.ForeColor = System.Drawing.Color.Gray;
-            this.LSubtituloTarjeta.Location = new System.Drawing.Point(14, 34);
+            this.LSubtituloTarjeta.Location = new System.Drawing.Point(14, 38);
             this.LSubtituloTarjeta.Name = "LSubtituloTarjeta";
-            this.LSubtituloTarjeta.Size = new System.Drawing.Size(388, 21);
+            this.LSubtituloTarjeta.Size = new System.Drawing.Size(388, 20);
             this.LSubtituloTarjeta.TabIndex = 1;
             this.LSubtituloTarjeta.Text = "Métricas y comprobantes del vendedor";
             this.LSubtituloTarjeta.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
@@ -365,7 +489,7 @@
             this.TLPMetricas.Controls.Add(this.PGrupoOperaciones, 0, 1);
             this.TLPMetricas.Controls.Add(this.PGrupoComision, 0, 2);
             this.TLPMetricas.Dock = System.Windows.Forms.DockStyle.Top;
-            this.TLPMetricas.Location = new System.Drawing.Point(14, 55);
+            this.TLPMetricas.Location = new System.Drawing.Point(14, 58);
             this.TLPMetricas.Name = "TLPMetricas";
             this.TLPMetricas.RowCount = 3;
             this.TLPMetricas.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 85F));
@@ -401,6 +525,7 @@
             this.LValorTotalVentas.Location = new System.Drawing.Point(10, 36);
             this.LValorTotalVentas.Name = "LValorTotalVentas";
             this.LValorTotalVentas.Size = new System.Drawing.Size(360, 30);
+            this.LValorTotalVentas.TabIndex = 1;
             this.LValorTotalVentas.Text = "$ 0,00";
 
             // Tarjeta 2: Operaciones
@@ -430,6 +555,7 @@
             this.LValorOperaciones.Location = new System.Drawing.Point(10, 36);
             this.LValorOperaciones.Name = "LValorOperaciones";
             this.LValorOperaciones.Size = new System.Drawing.Size(360, 30);
+            this.LValorOperaciones.TabIndex = 1;
             this.LValorOperaciones.Text = "0 operaciones";
 
             // Tarjeta 3: Comisión
@@ -459,6 +585,7 @@
             this.LValorComision.Location = new System.Drawing.Point(10, 36);
             this.LValorComision.Name = "LValorComision";
             this.LValorComision.Size = new System.Drawing.Size(360, 30);
+            this.LValorComision.TabIndex = 1;
             this.LValorComision.Text = "$ 0,00";
 
             // PBotonesAccion
@@ -467,7 +594,7 @@
             this.PBotonesAccion.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.PBotonesAccion.Location = new System.Drawing.Point(14, 569);
             this.PBotonesAccion.Name = "PBotonesAccion";
-            this.PBotonesAccion.Size = new System.Drawing.Size(388, 119);
+            this.PBotonesAccion.Size = new System.Drawing.Size(388, 122);
             this.PBotonesAccion.TabIndex = 3;
 
             // BReimprimirTicket
@@ -480,7 +607,7 @@
             this.BReimprimirTicket.ForeColor = System.Drawing.Color.White;
             this.BReimprimirTicket.Location = new System.Drawing.Point(0, 0);
             this.BReimprimirTicket.Name = "BReimprimirTicket";
-            this.BReimprimirTicket.Size = new System.Drawing.Size(388, 52);
+            this.BReimprimirTicket.Size = new System.Drawing.Size(388, 54);
             this.BReimprimirTicket.TabIndex = 0;
             this.BReimprimirTicket.Text = "🖨 Reimprimir Comprobante";
             this.BReimprimirTicket.UseVisualStyleBackColor = false;
@@ -494,9 +621,9 @@
             this.BExportarExcel.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BExportarExcel.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.BExportarExcel.ForeColor = System.Drawing.Color.White;
-            this.BExportarExcel.Location = new System.Drawing.Point(0, 67);
+            this.BExportarExcel.Location = new System.Drawing.Point(0, 68);
             this.BExportarExcel.Name = "BExportarExcel";
-            this.BExportarExcel.Size = new System.Drawing.Size(388, 52);
+            this.BExportarExcel.Size = new System.Drawing.Size(388, 54);
             this.BExportarExcel.TabIndex = 1;
             this.BExportarExcel.Text = "📊 Exportar Mis Ventas (.xls)";
             this.BExportarExcel.UseVisualStyleBackColor = false;
@@ -515,7 +642,12 @@
 
             this.PFondo.ResumeLayout(false);
             this.TLPContenido.ResumeLayout(false);
+            this.SCIzquierda.Panel1.ResumeLayout(false);
+            this.SCIzquierda.Panel2.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.SCIzquierda)).EndInit();
+            this.SCIzquierda.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.DGVVentas)).EndInit();
+            ((System.ComponentModel.ISupportInitialize)(this.DGVDetalle)).EndInit();
             this.PTarjetaLateral.ResumeLayout(false);
             this.PBotonesAccion.ResumeLayout(false);
             this.TLPMetricas.ResumeLayout(false);
@@ -547,6 +679,8 @@
         private System.Windows.Forms.ComboBox CBFiltroEstado;
         private System.Windows.Forms.Button BLimpiarFiltros;
         private System.Windows.Forms.TableLayoutPanel TLPContenido;
+        private System.Windows.Forms.SplitContainer SCIzquierda;
+        private System.Windows.Forms.Label LSubtituloVentas;
         private System.Windows.Forms.DataGridView DGVVentas;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColIdVenta;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColFecha;
@@ -555,6 +689,13 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn ColCantItems;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColTotal;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColEstado;
+        private System.Windows.Forms.Label LSubtituloDetalle;
+        private System.Windows.Forms.DataGridView DGVDetalle;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColDetCodigo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColDetDesc;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColDetCant;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColDetPrecio;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColDetSubtotal;
         private System.Windows.Forms.Panel PTarjetaLateral;
         private System.Windows.Forms.Label LTituloTarjeta;
         private System.Windows.Forms.Label LSubtituloTarjeta;

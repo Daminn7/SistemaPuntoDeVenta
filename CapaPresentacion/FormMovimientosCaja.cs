@@ -17,14 +17,12 @@ namespace CapaPresentacion
         {
             InitializeComponent();
         }
-
         private void FormMovimientosCaja_Load(object sender, EventArgs e)
         {
             // Genera el icono vectorial del título en ocre
             pbIconoTitulo.Image = GenerarIconoCaja(Color.FromArgb(212, 131, 53));
             InicializarTablaBalance();
         }
-
         private Image GenerarIconoCaja(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);

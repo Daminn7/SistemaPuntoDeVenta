@@ -1,4 +1,6 @@
-﻿namespace CapaPresentacion
+﻿using System.Drawing;
+
+namespace CapaPresentacion
 {
     partial class FormProductos
     {
@@ -187,6 +189,13 @@
             dataGridViewCellStyle4.SelectionForeColor = System.Drawing.Color.White;
             dataGridViewCellStyle4.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.DGVProductos.DefaultCellStyle = dataGridViewCellStyle4;
+            this.DGVProductos.DefaultCellStyle.ForeColor = Color.Black;
+            this.DGVProductos.DefaultCellStyle.BackColor = Color.White;
+            this.DGVProductos.DefaultCellStyle.SelectionBackColor = Color.FromArgb(212, 131, 53);
+            this.DGVProductos.DefaultCellStyle.SelectionForeColor = Color.White;
+            this.DGVProductos.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
+            this.DGVProductos.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
+            this.DGVProductos.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
             this.DGVProductos.Dock = System.Windows.Forms.DockStyle.Fill;
             this.DGVProductos.EnableHeadersVisualStyles = false;
             this.DGVProductos.Location = new System.Drawing.Point(0, 5);

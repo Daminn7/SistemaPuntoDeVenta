@@ -14,9 +14,7 @@ namespace CapaPresentacion
 {
     public partial class FormProductos : Form
     {
-        // ============================================================
-        // DECLARACIÓN DE VARIABLES
-        // ============================================================
+        // Declaración de variables
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
         private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();        
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
@@ -25,10 +23,7 @@ namespace CapaPresentacion
         private List<CategoriaDto> _categorias;
         private List<ProductoDto> _productosOriginales;
         private List<ProveedorDto> _todosLosProveedores;
-
-        // ============================================================
-        // CONSTRUCTOR LIMPIO (Eventos delegados al Designer)
-        // ============================================================
+        // Constructor
         public FormProductos()
         {
             InitializeComponent();
@@ -54,7 +49,6 @@ namespace CapaPresentacion
             {
                 BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
                 BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-                // BActualizar utiliza el icono que antes pertenecía a Limpiar:
                 BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
                 BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             }
@@ -63,10 +57,7 @@ namespace CapaPresentacion
                 // Fallback silencioso
             }
         }
-
-        // ============================================================
-        // CARGA DEL FORMULARIO (UNIFICADO)
-        // ============================================================
+        // Carga de formulario
         private async void FormProductos_Load(object sender, EventArgs e)
         {
             AplicarRestriccionesPorRol();
@@ -75,7 +66,6 @@ namespace CapaPresentacion
             await CargarCategoriasAsync();
             await CargarProveedoresAsync();
             await CargarProductosAsync();
-            ConfigurarEstiloDataGridView();
         }
 
         private void AplicarRestriccionesPorRol()
@@ -112,10 +102,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
-        // CARGA DE CATEGORÍAS
-        // ============================================================
+        // Carga de categorías
         private async Task CargarCategoriasAsync()
         {
             try
@@ -132,10 +119,7 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al cargar categorías: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // CARGA DE PRODUCTOS
-        // ============================================================
+        // Carga de productos
         private async Task CargarProductosAsync()
         {
             try
@@ -155,10 +139,7 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // MOSTRAR PRODUCTOS EN EL DATAGRIDVIEW
-        // ============================================================
+        // Mostrar productos en datagrid
         private void MostrarProductos(List<ProductoDto> productos)
         {
             DGVProductos.Rows.Clear();
@@ -178,24 +159,7 @@ namespace CapaPresentacion
                 );
             }
         }
-
-        // ============================================================
-        // ESTILO DEL DATAGRIDVIEW
-        // ============================================================
-        private void ConfigurarEstiloDataGridView()
-        {
-            DGVProductos.DefaultCellStyle.ForeColor = Color.Black;
-            DGVProductos.DefaultCellStyle.BackColor = Color.White;
-            DGVProductos.DefaultCellStyle.SelectionBackColor = Color.FromArgb(212, 131, 53);
-            DGVProductos.DefaultCellStyle.SelectionForeColor = Color.White;
-            DGVProductos.ColumnHeadersDefaultCellStyle.ForeColor = Color.Black;
-            DGVProductos.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
-            DGVProductos.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
-        }
-
-        // ============================================================
-        // SELECCIÓN DE PRODUCTO EN EL DATAGRIDVIEW
-        // ============================================================
+        // Selección de producto en el datagrid
         private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -230,10 +194,7 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // CARGAR PRODUCTO EN EL FORMULARIO PARA EDITAR
-        // ============================================================
+        // Cargar producto en el formulario para editar
         private async void CargarProductoEnFormulario(int id)
         {
             try
@@ -635,7 +596,7 @@ namespace CapaPresentacion
             }
 
             // Filtrar proveedores asociados a esta categoría
-            // (Ajustar la propiedad según tu DTO)
+            // (Ajustar la propiedad según DTO)
             var proveedoresFiltrados = _todosLosProveedores
                 //.Where(p => p.CategoriaId == idCategoria || p.Estado == true)
                 .ToList();
@@ -659,72 +620,6 @@ namespace CapaPresentacion
                     }
                 }
             }
-        }
-        // =========================================================================
-        // 1. ALTA RÁPIDA DE PROVEEDOR DESDE COMPRAS
-        // =========================================================================
-        private async void BNuevoProveedor_Click(object sender, EventArgs e)
-        {
-            using (FormProveedores frmProv = new FormProveedores())
-            {
-                frmProv.StartPosition = FormStartPosition.CenterParent;
-                frmProv.FormBorderStyle = FormBorderStyle.FixedDialog;
-                frmProv.ShowInTaskbar = false;
-
-                // Abre el formulario como diálogo modal
-                if (frmProv.ShowDialog(this) == DialogResult.OK || frmProv.DialogResult == DialogResult.Cancel)
-                {
-                    // Guarda el ID o texto seleccionado previamente si existía
-                    var proveedorPrevio = CBProveedor.SelectedValue;
-
-                    // Recarga los proveedores reales desde tu capa lógica / API
-                    await CargarProveedoresAsync();
-
-                    // Si tenía uno seleccionado, intenta conservarlo
-                    if (proveedorPrevio != null)
-                    {
-                        CBProveedor.SelectedValue = proveedorPrevio;
-                    }
-                }
-            }
-        }
-
-        // =========================================================================
-        // 2. ALTA RÁPIDA DE PRODUCTO DESDE COMPRAS
-        // =========================================================================
-        private async void BNuevoProducto_Click(object sender, EventArgs e)
-        {
-            using (FormProductos frmProd = new FormProductos())
-            {
-                frmProd.StartPosition = FormStartPosition.CenterParent;
-                frmProd.FormBorderStyle = FormBorderStyle.FixedDialog;
-                frmProd.ShowInTaskbar = false;
-
-                // Abre el catálogo para que dé de alta el artículo nuevo
-                if (frmProd.ShowDialog(this) == DialogResult.OK || frmProd.DialogResult == DialogResult.Cancel)
-                {
-                    // Recarga el catálogo general de productos desde la capa lógica
-                    await CargarProductosAsync();
-
-                    // Si hay un proveedor seleccionado en la cabecera de compras,
-                    // refrescamos la lista filtrada de productos de ese proveedor:
-                    ActualizarProductosPorProveedor();
-                }
-            }
-        }
-
-        // Método auxiliar para refrescar el combo de productos según el proveedor actual:
-        private void ActualizarProductosPorProveedor()
-        {
-            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
-            {
-                //CBProducto.DataSource = null;
-                //CBProducto.Items.Clear();
-                return;
-            }
-
-            // Dispara el refresco del combo de productos vinculados al proveedor
-            //CBProveedor_SelectedIndexChanged(CBProveedor, EventArgs.Empty);
         }
     }
 }

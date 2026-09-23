@@ -17,6 +17,7 @@ namespace CapaPresentacion
     public partial class FormMisVentas : Form
     {
         private DataTable _dtMisVentas = new DataTable();
+        private DataTable _dtDetalleVentas = new DataTable();
         private int _idVentaSeleccionada = 0;
 
         public FormMisVentas()
@@ -34,8 +35,10 @@ namespace CapaPresentacion
 
             DGVVentas.ClearSelection();
             DGVVentas.CurrentCell = null;
+            DGVDetalle.DataSource = null;
+            DGVDetalle.Rows.Clear();
         }
-        //Ícono del encabezado
+
         private Image DibujarIconoMisVentas(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -66,7 +69,7 @@ namespace CapaPresentacion
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = DibujarIconoMisVentas(Color.FromArgb(212, 131, 53));
         }
-        //Configuración y filtrado
+
         private void InicializarComportamiento()
         {
             DTPFechaDesde.Value = DateTime.Now.AddDays(-15);
@@ -86,7 +89,6 @@ namespace CapaPresentacion
                 AplicarFiltros();
             };
 
-            // Pintar celdas de Estado con color representativo
             DGVVentas.CellFormatting += (s, e) =>
             {
                 if (DGVVentas.Columns[e.ColumnIndex].Name == "ColEstado" && e.Value != null)
@@ -103,20 +105,24 @@ namespace CapaPresentacion
                 }
             };
 
+            // Al hacer clic en un comprobante, carga sus artículos en DGVDetalle
             DGVVentas.CellClick += (s, e) =>
             {
                 if (e.RowIndex >= 0)
                 {
                     _idVentaSeleccionada = Convert.ToInt32(DGVVentas.Rows[e.RowIndex].Cells["ColIdVenta"].Value ?? 0);
+                    CargarDetalleArticulos(_idVentaSeleccionada);
                 }
             };
         }
+
         private void CargarDesplegableEstados()
         {
             CBFiltroEstado.Items.Clear();
             CBFiltroEstado.Items.AddRange(new object[] { "Todos", "Cobrado", "Pendiente", "Anulado" });
             CBFiltroEstado.SelectedIndex = 0;
         }
+
         private void CargarHistorialPersonalSimulado()
         {
             if (_dtMisVentas.Columns.Count == 0)
@@ -145,11 +151,52 @@ namespace CapaPresentacion
             ColCantItems.DataPropertyName = "ColCantItems";
             ColTotal.DataPropertyName = "ColTotal";
             ColEstado.DataPropertyName = "ColEstado";
-
             ColTotal.DefaultCellStyle.Format = "C2";
 
             DGVVentas.DataSource = _dtMisVentas;
+
+            // Inicialización de la tabla en memoria de ítems vendidos
+            if (_dtDetalleVentas.Columns.Count == 0)
+            {
+                _dtDetalleVentas.Columns.Add("IdVenta", typeof(int));
+                _dtDetalleVentas.Columns.Add("ColDetCodigo", typeof(string));
+                _dtDetalleVentas.Columns.Add("ColDetDesc", typeof(string));
+                _dtDetalleVentas.Columns.Add("ColDetCant", typeof(int));
+                _dtDetalleVentas.Columns.Add("ColDetPrecio", typeof(decimal));
+                _dtDetalleVentas.Columns.Add("ColDetSubtotal", typeof(decimal));
+
+                _dtDetalleVentas.Rows.Add(1, "HI-001", "Hierro del 8 nervado x 12m", 4, 8500m, 34000m);
+                _dtDetalleVentas.Rows.Add(1, "DIS-115", "Disco de corte 115mm Tyrolit", 2, 5600m, 11200m);
+                _dtDetalleVentas.Rows.Add(2, "ELE-6013", "Electrodos Punta Azul 2.5mm (1kg)", 2, 6400m, 12800m);
+                _dtDetalleVentas.Rows.Add(3, "CA-4040", "Caño Estructural 40x40x1.6mm x 6m", 6, 9500m, 57000m);
+                _dtDetalleVentas.Rows.Add(3, "PIN-01", "Antióxido Negro Ferromicáceo 4L", 2, 10500m, 21000m);
+                _dtDetalleVentas.Rows.Add(4, "CHA-20", "Chapa Lisa C-20 1x2m", 1, 12500m, 12500m);
+                _dtDetalleVentas.Rows.Add(5, "HI-010", "Hierro del 10 nervado x 12m", 2, 11500m, 23000m);
+                _dtDetalleVentas.Rows.Add(5, "DIS-180", "Disco de corte 180mm Norton", 3, 3666.67m, 11000m);
+                _dtDetalleVentas.Rows.Add(6, "BUL-12", "Bulón Cabeza Redonda 1/2 x 2\"", 1, 4500m, 4500m);
+            }
+
+            DGVDetalle.AutoGenerateColumns = false;
+            ColDetCodigo.DataPropertyName = "ColDetCodigo";
+            ColDetDesc.DataPropertyName = "ColDetDesc";
+            ColDetCant.DataPropertyName = "ColDetCant";
+            ColDetPrecio.DataPropertyName = "ColDetPrecio";
+            ColDetSubtotal.DataPropertyName = "ColDetSubtotal";
+            ColDetPrecio.DefaultCellStyle.Format = "C2";
+            ColDetSubtotal.DefaultCellStyle.Format = "C2";
         }
+
+        private void CargarDetalleArticulos(int idVenta)
+        {
+            if (_dtDetalleVentas == null) return;
+
+            DataView dv = new DataView(_dtDetalleVentas);
+            dv.RowFilter = $"IdVenta = {idVenta}";
+            DGVDetalle.DataSource = dv;
+            DGVDetalle.ClearSelection();
+            DGVDetalle.CurrentCell = null;
+        }
+
         private void AplicarFiltros()
         {
             if (_dtMisVentas == null || _dtMisVentas.DefaultView == null) return;
@@ -171,8 +218,12 @@ namespace CapaPresentacion
 
             _dtMisVentas.DefaultView.RowFilter = filtro;
             RecalcularMetricasPersonales();
+
+            // Limpia el detalle al aplicar nuevos filtros
+            DGVDetalle.DataSource = null;
+            DGVDetalle.Rows.Clear();
         }
-        //Recálculo de métricas
+
         private void RecalcularMetricasPersonales()
         {
             decimal totalFacturado = 0m;
@@ -197,7 +248,7 @@ namespace CapaPresentacion
             LValorOperaciones.Text = $"{operacionesCobradas} operaciones";
             LValorComision.Text = comision.ToString("C2");
         }
-        // Acciones de botones
+
         private void BReimprimirTicket_Click(object sender, EventArgs e)
         {
             if (DGVVentas.CurrentRow == null)
@@ -226,6 +277,7 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al reimprimir comprobante:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
+        
         private void ImprimirTicket_PrintPage(object sender, PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -233,6 +285,7 @@ namespace CapaPresentacion
             float y = 50;
 
             DataGridViewRow fila = DGVVentas.CurrentRow;
+            string vendedor = SesionUsuario.Nombre ?? "Vendedor";
 
             using (Font fTitulo = new Font("Segoe UI", 15, FontStyle.Bold))
             using (Font fSub = new Font("Segoe UI", 9.5f))
@@ -244,7 +297,7 @@ namespace CapaPresentacion
             {
                 g.DrawString("HIERRO Y FORJA", fTitulo, bOcre, x, y);
                 g.DrawString("DUPLICADO DE COMPROBANTE DE VENTA", fSub, bGrafito, x, y + 26);
-                g.DrawString($"Emisión original: {fila.Cells["ColFecha"].Value}  |  Vendedor: {SesionUsuario.Nombre}", fSub, bGris, x, y + 46);
+                g.DrawString($"Emisión original: {fila.Cells["ColFecha"].Value}  |  Vendedor: {vendedor}", fSub, bGris, x, y + 46);
 
                 y += 75;
                 g.DrawLine(penLinea, x, y, 700, y);
@@ -262,7 +315,8 @@ namespace CapaPresentacion
 
                 g.DrawString($"IMPORTE TOTAL: {Convert.ToDecimal(fila.Cells["ColTotal"].Value):C2}", fTitulo, bOcre, x + 300, y);
             }
-        }   
+        }
+
         private void BExportarExcel_Click(object sender, EventArgs e)
         {
             if (_dtMisVentas.Rows.Count == 0)
@@ -271,19 +325,17 @@ namespace CapaPresentacion
                 return;
             }
 
-            // Declaración explícita con nombre completo para evitar cualquier ambigüedad
-            using (System.Windows.Forms.SaveFileDialog sfd = new System.Windows.Forms.SaveFileDialog())
+            using (SaveFileDialog sfd = new SaveFileDialog())
             {
                 sfd.Filter = "Libro de Excel (*.xls)|*.xls";
                 sfd.FileName = $"MisVentas_{DateTime.Now:yyyyMMdd_HHmm}.xls";
 
-                if (sfd.ShowDialog() == System.Windows.Forms.DialogResult.OK)
+                if (sfd.ShowDialog() == DialogResult.OK)
                 {
                     try
                     {
                         System.Text.StringBuilder xml = new System.Text.StringBuilder();
 
-                        // 1. Declaración XML y encabezado compatible con Excel
                         xml.AppendLine("<?xml version=\"1.0\" encoding=\"utf-8\"?>");
                         xml.AppendLine("<?mso-application progid=\"Excel.Sheet\"?>");
                         xml.AppendLine("<Workbook xmlns=\"urn:schemas-microsoft-com:office:spreadsheet\"");
@@ -292,21 +344,17 @@ namespace CapaPresentacion
                         xml.AppendLine(" xmlns:ss=\"urn:schemas-microsoft-com:office:spreadsheet\"");
                         xml.AppendLine(" xmlns:html=\"http://www.w3.org/TR/REC-html40\">");
 
-                        // 2. Estilos visuales institucionales
                         xml.AppendLine(" <Styles>");
                         xml.AppendLine("  <Style ss:ID=\"Default\" ss:Name=\"Normal\">");
                         xml.AppendLine("   <Alignment ss:Vertical=\"Center\"/>");
                         xml.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Color=\"#333333\"/>");
                         xml.AppendLine("  </Style>");
-
                         xml.AppendLine("  <Style ss:ID=\"sTitulo\">");
                         xml.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"14\" ss:Bold=\"1\" ss:Color=\"#D48335\"/>");
                         xml.AppendLine("  </Style>");
-
                         xml.AppendLine("  <Style ss:ID=\"sSubtitulo\">");
                         xml.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"9\" ss:Italic=\"1\" ss:Color=\"#666666\"/>");
                         xml.AppendLine("  </Style>");
-
                         xml.AppendLine("  <Style ss:ID=\"sHeader\">");
                         xml.AppendLine("   <Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>");
                         xml.AppendLine("   <Borders>");
@@ -315,23 +363,19 @@ namespace CapaPresentacion
                         xml.AppendLine("   <Font ss:FontName=\"Segoe UI\" ss:Size=\"10\" ss:Bold=\"1\" ss:Color=\"#FFFFFF\"/>");
                         xml.AppendLine("   <Interior ss:Color=\"#26282C\" ss:Pattern=\"Solid\"/>");
                         xml.AppendLine("  </Style>");
-
                         xml.AppendLine("  <Style ss:ID=\"sTextoCentrado\">");
                         xml.AppendLine("   <Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>");
                         xml.AppendLine("  </Style>");
-
                         xml.AppendLine("  <Style ss:ID=\"sMoneda\">");
                         xml.AppendLine("   <Alignment ss:Horizontal=\"Right\" ss:Vertical=\"Center\"/>");
                         xml.AppendLine("   <NumberFormat ss:Format=\"$#,##0.00\"/>");
                         xml.AppendLine("  </Style>");
-
                         xml.AppendLine("  <Style ss:ID=\"sNumero\">");
                         xml.AppendLine("   <Alignment ss:Horizontal=\"Center\" ss:Vertical=\"Center\"/>");
                         xml.AppendLine("   <NumberFormat ss:Format=\"0\"/>");
                         xml.AppendLine("  </Style>");
                         xml.AppendLine(" </Styles>");
 
-                        // 3. Hoja de Trabajo y Dimensiones de Columnas
                         xml.AppendLine(" <Worksheet ss:Name=\"Mis Ventas\">");
                         xml.AppendLine("  <Table ss:DefaultRowHeight=\"20\">");
                         xml.AppendLine("   <Column ss:Width=\"50\"/>");
@@ -342,16 +386,16 @@ namespace CapaPresentacion
                         xml.AppendLine("   <Column ss:Width=\"110\"/>");
                         xml.AppendLine("   <Column ss:Width=\"90\"/>");
 
-                        // 4. Filas de Título Institucional
+                        string vendedor = SesionUsuario.Nombre ?? "Vendedor";
+
                         xml.AppendLine("   <Row ss:Height=\"26\">");
                         xml.AppendLine("    <Cell ss:StyleID=\"sTitulo\"><Data ss:Type=\"String\">HIERRO Y FORJA - HISTORIAL DE VENTAS</Data></Cell>");
                         xml.AppendLine("   </Row>");
                         xml.AppendLine("   <Row ss:Height=\"18\">");
-                        xml.AppendLine($"    <Cell ss:StyleID=\"sSubtitulo\"><Data ss:Type=\"String\">Vendedor: {SesionUsuario.Nombre} | Exportado: {DateTime.Now:dd/MM/yyyy HH:mm:ss}</Data></Cell>");
+                        xml.AppendLine($"    <Cell ss:StyleID=\"sSubtitulo\"><Data ss:Type=\"String\">Vendedor: {vendedor} | Exportado: {DateTime.Now:dd/MM/yyyy HH:mm:ss}</Data></Cell>");
                         xml.AppendLine("   </Row>");
                         xml.AppendLine("   <Row ss:Height=\"10\"/>");
 
-                        // 5. Fila de Encabezados
                         xml.AppendLine("   <Row ss:Height=\"24\">");
                         xml.AppendLine("    <Cell ss:StyleID=\"sHeader\"><Data ss:Type=\"String\">ID</Data></Cell>");
                         xml.AppendLine("    <Cell ss:StyleID=\"sHeader\"><Data ss:Type=\"String\">Fecha / Hora</Data></Cell>");
@@ -362,9 +406,8 @@ namespace CapaPresentacion
                         xml.AppendLine("    <Cell ss:StyleID=\"sHeader\"><Data ss:Type=\"String\">Estado</Data></Cell>");
                         xml.AppendLine("   </Row>");
 
-                        // 6. Filas de Datos
-                        System.Data.DataView dv = _dtMisVentas.DefaultView;
-                        foreach (System.Data.DataRowView drv in dv)
+                        DataView dv = _dtMisVentas.DefaultView;
+                        foreach (DataRowView drv in dv)
                         {
                             int id = Convert.ToInt32(drv["ColIdVenta"]);
                             string fecha = drv["ColFecha"].ToString();
@@ -389,7 +432,6 @@ namespace CapaPresentacion
                         xml.AppendLine(" </Worksheet>");
                         xml.AppendLine("</Workbook>");
 
-                        // 7. Guardado dentro del ámbito seguro de 'sfd'
                         System.IO.File.WriteAllText(sfd.FileName, xml.ToString(), System.Text.Encoding.UTF8);
 
                         MessageBox.Show("El historial de ventas se exportó exitosamente como planilla de Excel.", "Exportación Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);

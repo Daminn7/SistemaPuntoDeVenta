@@ -31,7 +31,6 @@
             System.Windows.Forms.DataGridViewCellStyle dgvHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvAltRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
-
             this.PFondo = new System.Windows.Forms.Panel();
             this.TLPContenido = new System.Windows.Forms.TableLayoutPanel();
             this.DGVProveedores = new System.Windows.Forms.DataGridView();
@@ -44,51 +43,38 @@
             this.ColLocalidad = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColDireccion = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColEstado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-
             this.PTarjetaLateral = new System.Windows.Forms.Panel();
             this.TLPFormularioEdicion = new System.Windows.Forms.TableLayoutPanel();
-
             this.PGrupoCuit = new System.Windows.Forms.Panel();
             this.TBCuit = new System.Windows.Forms.TextBox();
             this.LCuit = new System.Windows.Forms.Label();
-
             this.PGrupoRazonSocial = new System.Windows.Forms.Panel();
             this.TBRazonSocial = new System.Windows.Forms.TextBox();
             this.LRazonSocial = new System.Windows.Forms.Label();
-
             this.PGrupoContacto = new System.Windows.Forms.Panel();
             this.TBContacto = new System.Windows.Forms.TextBox();
             this.LContacto = new System.Windows.Forms.Label();
-
             this.PGrupoTelefono = new System.Windows.Forms.Panel();
             this.TBTelefono = new System.Windows.Forms.TextBox();
             this.LTelefono = new System.Windows.Forms.Label();
-
             this.PGrupoEmail = new System.Windows.Forms.Panel();
             this.TBEmail = new System.Windows.Forms.TextBox();
             this.LEmail = new System.Windows.Forms.Label();
-
             this.LSubtituloDomicilio = new System.Windows.Forms.Label();
-
             this.PGrupoCalle = new System.Windows.Forms.Panel();
             this.TBCalle = new System.Windows.Forms.TextBox();
             this.LCalle = new System.Windows.Forms.Label();
-
             this.PGrupoNro = new System.Windows.Forms.Panel();
             this.TBNro = new System.Windows.Forms.TextBox();
             this.LNroAltura = new System.Windows.Forms.Label();
-
             this.PGrupoProvincia = new System.Windows.Forms.Panel();
             this.CBProvincia = new System.Windows.Forms.ComboBox();
             this.LProvincia = new System.Windows.Forms.Label();
-
             this.PGrupoLocalidad = new System.Windows.Forms.Panel();
             this.CBLocalidad = new System.Windows.Forms.ComboBox();
             this.LLocalidad = new System.Windows.Forms.Label();
-
             this.PHabilitado = new System.Windows.Forms.Panel();
             this.ChBProveedorHabilitado = new System.Windows.Forms.CheckBox();
-
             this.PBotonesAccion = new System.Windows.Forms.Panel();
             this.TLPBotonesMed = new System.Windows.Forms.TableLayoutPanel();
             this.BActualizar = new System.Windows.Forms.Button();
@@ -96,21 +82,17 @@
             this.TPLBotonesSup = new System.Windows.Forms.TableLayoutPanel();
             this.BNuevo = new System.Windows.Forms.Button();
             this.BGuardar = new System.Windows.Forms.Button();
-
             this.LSubtituloTarjeta = new System.Windows.Forms.Label();
             this.LTituloTarjeta = new System.Windows.Forms.Label();
-
             this.PBarraFiltros = new System.Windows.Forms.Panel();
             this.LBuscar = new System.Windows.Forms.Label();
             this.TBBuscar = new System.Windows.Forms.TextBox();
             this.LFiltroLocalidad = new System.Windows.Forms.Label();
             this.CBFiltroLocalidad = new System.Windows.Forms.ComboBox();
             this.BLimpiarFiltros = new System.Windows.Forms.Button();
-
             this.PEncabezado = new System.Windows.Forms.Panel();
             this.LTituloPrincipal = new System.Windows.Forms.Label();
             this.PBIconoTitulo = new System.Windows.Forms.PictureBox();
-
             this.PFondo.SuspendLayout();
             this.TLPContenido.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DGVProveedores)).BeginInit();
@@ -133,7 +115,6 @@
             this.PEncabezado.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PBIconoTitulo)).BeginInit();
             this.SuspendLayout();
-
             // 
             // PFondo
             // 
@@ -147,7 +128,6 @@
             this.PFondo.Padding = new System.Windows.Forms.Padding(21, 15, 21, 15);
             this.PFondo.Size = new System.Drawing.Size(1534, 822);
             this.PFondo.TabIndex = 0;
-
             // 
             // PEncabezado
             // 
@@ -158,7 +138,6 @@
             this.PEncabezado.Name = "PEncabezado";
             this.PEncabezado.Size = new System.Drawing.Size(1492, 38);
             this.PEncabezado.TabIndex = 2;
-
             // 
             // PBIconoTitulo
             // 
@@ -169,7 +148,6 @@
             this.PBIconoTitulo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.PBIconoTitulo.TabIndex = 1;
             this.PBIconoTitulo.TabStop = false;
-
             // 
             // LTituloPrincipal
             // 
@@ -181,7 +159,6 @@
             this.LTituloPrincipal.Size = new System.Drawing.Size(260, 28);
             this.LTituloPrincipal.TabIndex = 0;
             this.LTituloPrincipal.Text = "GESTIÓN DE PROVEEDORES";
-
             // 
             // PBarraFiltros
             // 
@@ -195,7 +172,6 @@
             this.PBarraFiltros.Name = "PBarraFiltros";
             this.PBarraFiltros.Size = new System.Drawing.Size(1492, 47);
             this.PBarraFiltros.TabIndex = 1;
-
             // 
             // LBuscar
             // 
@@ -207,7 +183,6 @@
             this.LBuscar.Size = new System.Drawing.Size(210, 20);
             this.LBuscar.TabIndex = 0;
             this.LBuscar.Text = "Buscar por CUIT / Proveedor:";
-
             // 
             // TBBuscar
             // 
@@ -216,7 +191,6 @@
             this.TBBuscar.Name = "TBBuscar";
             this.TBBuscar.Size = new System.Drawing.Size(290, 27);
             this.TBBuscar.TabIndex = 1;
-
             // 
             // LFiltroLocalidad
             // 
@@ -228,7 +202,6 @@
             this.LFiltroLocalidad.Size = new System.Drawing.Size(79, 20);
             this.LFiltroLocalidad.TabIndex = 2;
             this.LFiltroLocalidad.Text = "Localidad:";
-
             // 
             // CBFiltroLocalidad
             // 
@@ -238,7 +211,6 @@
             this.CBFiltroLocalidad.Name = "CBFiltroLocalidad";
             this.CBFiltroLocalidad.Size = new System.Drawing.Size(190, 28);
             this.CBFiltroLocalidad.TabIndex = 3;
-
             // 
             // BLimpiarFiltros
             // 
@@ -254,7 +226,6 @@
             this.BLimpiarFiltros.TabIndex = 4;
             this.BLimpiarFiltros.Text = "Limpiar";
             this.BLimpiarFiltros.UseVisualStyleBackColor = false;
-
             // 
             // TLPContenido
             // 
@@ -270,7 +241,6 @@
             this.TLPContenido.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.TLPContenido.Size = new System.Drawing.Size(1492, 707);
             this.TLPContenido.TabIndex = 0;
-
             // 
             // DGVProveedores
             // 
@@ -285,35 +255,30 @@
             this.DGVProveedores.ColumnHeadersHeight = 32;
             this.DGVProveedores.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.DGVProveedores.EnableHeadersVisualStyles = false;
-            this.DGVProveedores.GridColor = System.Drawing.Color.FromArgb(230, 233, 238);
             this.DGVProveedores.MultiSelect = false;
             this.DGVProveedores.ReadOnly = true;
             this.DGVProveedores.RowHeadersVisible = false;
             this.DGVProveedores.RowHeadersWidth = 51;
             this.DGVProveedores.RowTemplate.Height = 28;
             this.DGVProveedores.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-
             dgvHeaderStyle.BackColor = System.Drawing.Color.FromArgb(235, 235, 235);
             dgvHeaderStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             dgvHeaderStyle.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
             dgvHeaderStyle.SelectionBackColor = System.Drawing.Color.FromArgb(235, 235, 235);
             dgvHeaderStyle.SelectionForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
             this.DGVProveedores.ColumnHeadersDefaultCellStyle = dgvHeaderStyle;
-
             dgvRowStyle.BackColor = System.Drawing.Color.White;
             dgvRowStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             dgvRowStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             dgvRowStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             dgvRowStyle.SelectionForeColor = System.Drawing.Color.White;
             this.DGVProveedores.DefaultCellStyle = dgvRowStyle;
-
             dgvAltRowStyle.BackColor = System.Drawing.Color.FromArgb(248, 249, 250);
             dgvAltRowStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point);
             dgvAltRowStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             dgvAltRowStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             dgvAltRowStyle.SelectionForeColor = System.Drawing.Color.White;
             this.DGVProveedores.AlternatingRowsDefaultCellStyle = dgvAltRowStyle;
-
             this.DGVProveedores.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
                 this.ColIdProveedor,
                 this.ColCuit,
@@ -683,7 +648,6 @@
             this.CBLocalidad.Location = new System.Drawing.Point(0, 21);
             this.CBLocalidad.Name = "CBLocalidad";
             this.CBLocalidad.Size = new System.Drawing.Size(191, 28);
-
             // CheckBox Proveedor Habilitado
             this.TLPFormularioEdicion.SetColumnSpan(this.PHabilitado, 2);
             this.PHabilitado.Controls.Add(this.ChBProveedorHabilitado);
@@ -704,7 +668,6 @@
             this.ChBProveedorHabilitado.Size = new System.Drawing.Size(382, 26);
             this.ChBProveedorHabilitado.TabIndex = 0;
             this.ChBProveedorHabilitado.Text = "Proveedor Habilitado";
-
             // 
             // PBotonesAccion (Dos filas compactas: 110px)
             // 
@@ -715,7 +678,6 @@
             this.PBotonesAccion.Name = "PBotonesAccion";
             this.PBotonesAccion.Size = new System.Drawing.Size(388, 110);
             this.PBotonesAccion.TabIndex = 1;
-
             // Fila Superior Botones
             this.TPLBotonesSup.ColumnCount = 2;
             this.TPLBotonesSup.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
@@ -727,7 +689,6 @@
             this.TPLBotonesSup.Name = "TPLBotonesSup";
             this.TPLBotonesSup.Size = new System.Drawing.Size(388, 55);
             this.TPLBotonesSup.TabIndex = 0;
-
             // BNuevo
             this.BNuevo.BackColor = System.Drawing.Color.FromArgb(39, 174, 96);
             this.BNuevo.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -746,7 +707,6 @@
             this.BNuevo.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BNuevo.UseVisualStyleBackColor = false;
             this.BNuevo.Click += new System.EventHandler(this.BNuevo_Click);
-
             // BGuardar
             this.BGuardar.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
             this.BGuardar.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -765,7 +725,6 @@
             this.BGuardar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BGuardar.UseVisualStyleBackColor = false;
             this.BGuardar.Click += new System.EventHandler(this.BGuardar_Click);
-
             // Fila Media Botones
             this.TLPBotonesMed.ColumnCount = 2;
             this.TLPBotonesMed.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
@@ -777,7 +736,6 @@
             this.TLPBotonesMed.Name = "TLPBotonesMed";
             this.TLPBotonesMed.Size = new System.Drawing.Size(388, 55);
             this.TLPBotonesMed.TabIndex = 1;
-
             // BActualizar
             this.BActualizar.BackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             this.BActualizar.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -796,7 +754,6 @@
             this.BActualizar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BActualizar.UseVisualStyleBackColor = false;
             this.BActualizar.Click += new System.EventHandler(this.BActualizar_Click);
-
             // BDesactivar
             this.BDesactivar.BackColor = System.Drawing.Color.FromArgb(192, 57, 43);
             this.BDesactivar.Cursor = System.Windows.Forms.Cursors.Hand;
@@ -815,7 +772,6 @@
             this.BDesactivar.TextImageRelation = System.Windows.Forms.TextImageRelation.ImageBeforeText;
             this.BDesactivar.UseVisualStyleBackColor = false;
             this.BDesactivar.Click += new System.EventHandler(this.BDesactivar_Click);
-
             // 
             // FormProveedores
             // 
@@ -828,7 +784,6 @@
             this.Name = "FormProveedores";
             this.Text = "Gestión de Proveedores";
             this.Load += new System.EventHandler(this.FormProveedores_Load);
-
             this.PFondo.ResumeLayout(false);
             this.TLPContenido.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.DGVProveedores)).EndInit();

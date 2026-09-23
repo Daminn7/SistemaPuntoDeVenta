@@ -66,6 +66,7 @@ namespace CapaPresentacion
             this.LSubtituloTarjeta = new System.Windows.Forms.Label();
             this.LTituloTarjeta = new System.Windows.Forms.Label();
             this.PBarraArticulo = new System.Windows.Forms.Panel();
+            this.BCargarPresupuesto = new System.Windows.Forms.Button();
             this.BAgregarItem = new System.Windows.Forms.Button();
             this.NUDCantidad = new System.Windows.Forms.NumericUpDown();
             this.LCantidad = new System.Windows.Forms.Label();
@@ -496,6 +497,7 @@ namespace CapaPresentacion
             this.PBarraArticulo.Controls.Add(this.LCantidad);
             this.PBarraArticulo.Controls.Add(this.TBBuscarArticulo);
             this.PBarraArticulo.Controls.Add(this.LBuscarArticulo);
+            this.PBarraArticulo.Controls.Add(this.BCargarPresupuesto);
             this.PBarraArticulo.Controls.Add(this.CBClientes);
             this.PBarraArticulo.Controls.Add(this.LCliente);
             this.PBarraArticulo.Dock = System.Windows.Forms.DockStyle.Top;
@@ -506,16 +508,16 @@ namespace CapaPresentacion
             // 
             // BAgregarItem
             // 
-            this.BAgregarItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
+            this.BAgregarItem.BackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             this.BAgregarItem.Cursor = System.Windows.Forms.Cursors.Hand;
             this.BAgregarItem.FlatAppearance.BorderSize = 0;
             this.BAgregarItem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BAgregarItem.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.BAgregarItem.ForeColor = System.Drawing.Color.White;
-            this.BAgregarItem.Location = new System.Drawing.Point(1065, 12);
+            this.BAgregarItem.Location = new System.Drawing.Point(1115, 13);
             this.BAgregarItem.Name = "BAgregarItem";
-            this.BAgregarItem.Size = new System.Drawing.Size(130, 33);
-            this.BAgregarItem.TabIndex = 3;
+            this.BAgregarItem.Size = new System.Drawing.Size(120, 33);
+            this.BAgregarItem.TabIndex = 4;
             this.BAgregarItem.Text = "➕ Agregar";
             this.BAgregarItem.UseVisualStyleBackColor = false;
             this.BAgregarItem.Click += new System.EventHandler(this.BAgregarItem_Click);
@@ -523,64 +525,52 @@ namespace CapaPresentacion
             // NUDCantidad
             // 
             this.NUDCantidad.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.NUDCantidad.Location = new System.Drawing.Point(967, 15);
-            this.NUDCantidad.Maximum = new decimal(new int[] {
-            10000,
-            0,
-            0,
-            0});
-            this.NUDCantidad.Minimum = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            this.NUDCantidad.Location = new System.Drawing.Point(1022, 15);
+            this.NUDCantidad.Maximum = new decimal(new int[] { 10000, 0, 0, 0 });
+            this.NUDCantidad.Minimum = new decimal(new int[] { 1, 0, 0, 0 });
             this.NUDCantidad.Name = "NUDCantidad";
             this.NUDCantidad.Size = new System.Drawing.Size(75, 29);
-            this.NUDCantidad.TabIndex = 2;
+            this.NUDCantidad.TabIndex = 3;
             this.NUDCantidad.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
-            this.NUDCantidad.Value = new decimal(new int[] {
-            1,
-            0,
-            0,
-            0});
+            this.NUDCantidad.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
             // LCantidad
             // 
-            this.LCantidad.AutoSize = true;
-            this.LCantidad.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.LCantidad.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
-            this.LCantidad.Location = new System.Drawing.Point(915, 19);
-            this.LCantidad.Name = "LCantidad";
-            this.LCantidad.Size = new System.Drawing.Size(45, 20);
-            this.LCantidad.TabIndex = 2;
-            this.LCantidad.Text = "Cant:";
+            this.LCliente.AutoSize = true;
+            this.LCliente.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.LCliente.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.LCliente.Location = new System.Drawing.Point(14, 19);
+            this.LCliente.Name = "LCliente";
+            this.LCliente.Size = new System.Drawing.Size(61, 20);
+            this.LCliente.TabIndex = 0;
+            this.LCliente.Text = "Cliente:";
             // 
             // TBBuscarArticulo
             // 
             this.TBBuscarArticulo.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.TBBuscarArticulo.Location = new System.Drawing.Point(546, 15);
+            this.TBBuscarArticulo.Location = new System.Drawing.Point(658, 15);
             this.TBBuscarArticulo.Name = "TBBuscarArticulo";
-            this.TBBuscarArticulo.Size = new System.Drawing.Size(340, 29);
-            this.TBBuscarArticulo.TabIndex = 1;
+            this.TBBuscarArticulo.Size = new System.Drawing.Size(300, 29);
+            this.TBBuscarArticulo.TabIndex = 2;
             // 
             // LBuscarArticulo
             // 
             this.LBuscarArticulo.AutoSize = true;
             this.LBuscarArticulo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.LBuscarArticulo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(50)))), ((int)(((byte)(50)))), ((int)(((byte)(50)))));
-            this.LBuscarArticulo.Location = new System.Drawing.Point(370, 19);
+            this.LBuscarArticulo.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.LBuscarArticulo.Location = new System.Drawing.Point(490, 19);
             this.LBuscarArticulo.Name = "LBuscarArticulo";
             this.LBuscarArticulo.Size = new System.Drawing.Size(163, 20);
-            this.LBuscarArticulo.TabIndex = 1;
+            this.LBuscarArticulo.TabIndex = 2;
             this.LBuscarArticulo.Text = "Buscar Insumo / Cód.:";
             // 
             // CBClientes
             // 
             this.CBClientes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CBClientes.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.CBClientes.Location = new System.Drawing.Point(82, 15);
+            this.CBClientes.Location = new System.Drawing.Point(80, 15);
             this.CBClientes.Name = "CBClientes";
-            this.CBClientes.Size = new System.Drawing.Size(260, 29);
+            this.CBClientes.Size = new System.Drawing.Size(230, 29);
             this.CBClientes.TabIndex = 0;
             // 
             // LCliente
@@ -593,6 +583,33 @@ namespace CapaPresentacion
             this.LCliente.Size = new System.Drawing.Size(61, 20);
             this.LCliente.TabIndex = 0;
             this.LCliente.Text = "Cliente:";
+            // 
+            // BCargarPresupuesto
+            // 
+            this.BCargarPresupuesto.BackColor = System.Drawing.Color.FromArgb(41, 128, 185);
+            this.BCargarPresupuesto.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BCargarPresupuesto.FlatAppearance.BorderSize = 0;
+            this.BCargarPresupuesto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BCargarPresupuesto.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.BCargarPresupuesto.ForeColor = System.Drawing.Color.White;
+            this.BCargarPresupuesto.Location = new System.Drawing.Point(318, 14);
+            this.BCargarPresupuesto.Name = "BCargarPresupuesto";
+            this.BCargarPresupuesto.Size = new System.Drawing.Size(155, 31);
+            this.BCargarPresupuesto.TabIndex = 1;
+            this.BCargarPresupuesto.Text = "📂 Cargar Presupuesto";
+            this.BCargarPresupuesto.UseVisualStyleBackColor = false;
+            this.BCargarPresupuesto.Click += new System.EventHandler(this.BCargarPresupuesto_Click);
+            // 
+            // LCantidad
+            // 
+            this.LCantidad.AutoSize = true;
+            this.LCantidad.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.LCantidad.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.LCantidad.Location = new System.Drawing.Point(972, 19);
+            this.LCantidad.Name = "LCantidad";
+            this.LCantidad.Size = new System.Drawing.Size(45, 20);
+            this.LCantidad.TabIndex = 3;
+            this.LCantidad.Text = "Cant:";
             // 
             // PEncabezado
             // 
@@ -698,5 +715,6 @@ namespace CapaPresentacion
             private System.Windows.Forms.Button BEnviarACaja;
             private System.Windows.Forms.Button BGuardarPresupuesto;
             private System.Windows.Forms.Button BCancelarVenta;
-        }
+            private System.Windows.Forms.Button BCargarPresupuesto;
+    }
 }
