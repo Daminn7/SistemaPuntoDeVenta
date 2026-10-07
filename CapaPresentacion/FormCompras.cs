@@ -15,9 +15,9 @@ namespace CapaPresentacion
 {
     public partial class FormCompras : Form
     {
+        //Declaración de variables
         private DataTable _dtDetalle = new DataTable();
         private bool _actualizandoNroFactura = false;
-
         // Catálogo simulado (reemplazable por llamadas a _productoLogica y _proveedorLogica)
         private class ItemCatalogo
         {
@@ -27,14 +27,14 @@ namespace CapaPresentacion
             public decimal UltimoCosto { get; set; }
             public string ProveedorAsociado { get; set; }
         }
-
         private List<ItemCatalogo> _catalogoDisponible = new List<ItemCatalogo>();
-
+        // Variables en memoria en hasta que se conecte dbo
+        private List<ProductoDto> _listaProductosCompleta = new List<ProductoDto>();
+        private List<ProveedorDto> _listaProveedores = new List<ProveedorDto>();
         public FormCompras()
         {
             InitializeComponent();
         }
-
         private void FormCompras_Load(object sender, EventArgs e)
         {
             if (PBIconoTitulo != null)
@@ -49,7 +49,6 @@ namespace CapaPresentacion
             CargarCatalogoSimulado();
             LimpiarFormularioCompleto();
         }
-
         private void AsignarEstiloEIconos()
         {
             try
@@ -62,7 +61,6 @@ namespace CapaPresentacion
                 // Fallback silencioso
             }
         }
-
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
@@ -76,7 +74,6 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private Image GenerarIconoCompras(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -120,7 +117,6 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private void AplicarFiltroDetalle()
         {
             if (_dtDetalle == null || _dtDetalle.DefaultView == null) return;
@@ -159,7 +155,6 @@ namespace CapaPresentacion
 
             DGVDetalleCompra.DataSource = _dtDetalle;
         }
-
         private void ConfigurarRestriccionesTeclado()
         {
             TBNroComprobante.MaxLength = 20;
@@ -172,7 +167,6 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private void PermitirDecimales_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox txt = (TextBox)sender;
@@ -194,7 +188,6 @@ namespace CapaPresentacion
             if (!char.IsDigit(e.KeyChar))
                 e.Handled = true;
         }
-
         private void ConfigurarFormatoNroComprobante()
         {
             TBNroComprobante.TextChanged += (s, e) =>
@@ -216,7 +209,7 @@ namespace CapaPresentacion
                 _actualizandoNroFactura = false;
             };
         }
-
+        //Datos temporales en memoria
         private void CargarDesplegables()
         {
             CBTipoComprobante.Items.Clear();
@@ -232,7 +225,7 @@ namespace CapaPresentacion
             CBProveedor.Items.AddRange(proveedores);
             CBProveedor.SelectedIndex = -1;
         }
-
+        //Datos temporales en memoria
         private void CargarCatalogoSimulado()
         {
             _catalogoDisponible = new List<ItemCatalogo>
@@ -246,27 +239,26 @@ namespace CapaPresentacion
                 new ItemCatalogo { Id = 7, Codigo = "DC-045", Nombre = "Disco de Corte 115x1.0mm (Pack x 25)", UltimoCosto = 11200m, ProveedorAsociado = "Ferretería Industrial Mayorista" }
             };
         }
-
         private void CBProveedor_SelectedIndexChanged(object sender, EventArgs e)
         {
             CBProducto.DataSource = null;
             CBProducto.Items.Clear();
 
-            // 1. Si no hay nada seleccionado, bloqueamos el combo de productos
+            // Si no hay nada seleccionado, bloqueamos el combo de productos
             if (CBProveedor.SelectedIndex == -1 || string.IsNullOrWhiteSpace(CBProveedor.Text))
             {
                 CBProducto.Enabled = false;
                 return;
             }
 
-            // 2. Comparamos contra la propiedad que ya existe en tu clase
+            // Comparamos contra la propiedad que ya existe en tu clase
             string proveedorSeleccionado = CBProveedor.Text.Trim();
 
             var productosFiltrados = _catalogoDisponible
                 .Where(p => string.Equals(p.ProveedorAsociado?.Trim(), proveedorSeleccionado, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            // 3. Si tiene productos, los cargamos; si no, queda deshabilitado
+            // Si tiene productos, los cargamos; si no, queda deshabilitado
             if (productosFiltrados.Count > 0)
             {
                 CBProducto.DisplayMember = "Nombre";
@@ -280,7 +272,6 @@ namespace CapaPresentacion
                 CBProducto.Enabled = false;
             }
         }
-
         private void CBProducto_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (CBProducto.SelectedItem is ItemCatalogo item)
@@ -293,10 +284,7 @@ namespace CapaPresentacion
                 TBCostoUnitario.Clear();
             }
         }
-
-        // =========================================================================
-        // ACCIONES DE DETALLE (AGREGAR / QUITAR RENGLÓN)
-        // =========================================================================
+        // Acciones de detalle (AGREGAR / QUITAR RENGLÓN)
         private void BAgregarItem_Click(object sender, EventArgs e)
         {
             if (CBProducto.SelectedItem == null || !(CBProducto.SelectedItem is ItemCatalogo item))
@@ -356,7 +344,6 @@ namespace CapaPresentacion
             NUDCantidad.Value = 1;
             CBProducto.Focus();
         }
-
         private void DGVDetalleCompra_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -368,7 +355,6 @@ namespace CapaPresentacion
                 RecalcularLiquidacion();
             }
         }
-
         private void RecalcularLiquidacion()
         {
             decimal sumaSubtotales = 0m;
@@ -388,10 +374,7 @@ namespace CapaPresentacion
             TBIva.Text = iva.ToString("N2");
             TBTotalCompra.Text = totalFinal.ToString("N2");
         }
-
-        // =========================================================================
-        // CONFIRMACIÓN Y CANCELACIÓN DEL COMPROBANTE
-        // =========================================================================
+        // Confirmación y cancelación del comprobante
         private void BGuardarCompra_Click(object sender, EventArgs e)
         {
             if (CBProveedor.SelectedIndex == -1)
@@ -429,7 +412,6 @@ namespace CapaPresentacion
                 LimpiarFormularioCompleto();
             }
         }
-
         private void BCancelar_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count > 0)
@@ -442,7 +424,6 @@ namespace CapaPresentacion
 
             LimpiarFormularioCompleto();
         }
-
         private void LimpiarFormularioCompleto()
         {
             CBProveedor.SelectedIndex = -1;
@@ -465,8 +446,7 @@ namespace CapaPresentacion
             if (DGVDetalleCompra.CurrentCell != null)
                 DGVDetalleCompra.CurrentCell = null;
         }
-
-        // 1. ALTA RÁPIDA DE PROVEEDOR DESDE COMPRAS
+        // Alta rápida de proveedor desde compras 
         private async void BNuevoProveedor_Click(object sender, EventArgs e)
         {
             using (FormProveedores frmProv = new FormProveedores())
@@ -492,10 +472,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // =========================================================================
-        // 2. ALTA RÁPIDA DE PRODUCTO DESDE COMPRAS
-        // =========================================================================
+        // Alta rápida de productos desde compras
         private async void BNuevoProducto_Click(object sender, EventArgs e)
         {
             using (FormProductos frmProd = new FormProductos())
@@ -516,7 +493,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         // Método auxiliar para refrescar el combo de productos según el proveedor actual:
         private void ActualizarProductosPorProveedor()
         {
@@ -530,11 +506,7 @@ namespace CapaPresentacion
             // Dispara el refresco del combo de productos vinculados al proveedor
             //CBProveedor_SelectedIndexChanged(CBProveedor, EventArgs.Empty);
         }
-        // VARIABLES EN MEMORIA EN FormCompras.cs hasta que se conecte dbo
-        private List<ProductoDto> _listaProductosCompleta = new List<ProductoDto>();
-        private List<ProveedorDto> _listaProveedores = new List<ProveedorDto>();
-
-        // MÉTODOS DE CARGA DE DATOS ASYNC
+        // Métodos de carga de datos ASYNC
         private async Task CargarProveedoresAsync()
         {
             try
@@ -555,7 +527,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private async Task CargarProductosAsync()
         {
             try

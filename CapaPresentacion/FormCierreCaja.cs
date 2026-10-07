@@ -15,13 +15,10 @@ namespace CapaPresentacion
 {
     public partial class FormCierreCaja : Form
     {
-        // =========================================================================
-        // VARIABLES Y ESTADO DEL TURNO
-        // =========================================================================
+        // Variables locales momentáneas
         private bool _cajaAbierta = false;
         private int _idTurnoCaja = 0;
         private string _nombreCajero = "Operador";
-
         // Acumuladores contables del turno
         private decimal _fondoInicial = 0m;
         private decimal _ventasEfectivo = 0m;
@@ -33,10 +30,7 @@ namespace CapaPresentacion
         {
             InitializeComponent();
         }
-
-        // =========================================================================
-        // CARGA DEL FORMULARIO
-        // =========================================================================
+        // Carga del formulario
         private async void FormCierreCaja_Load(object sender, EventArgs e)
         {
             if (PBIconoTitulo != null)
@@ -46,13 +40,11 @@ namespace CapaPresentacion
             await ConsultarEstadoTurnoActualAsync();
             ActualizarInterfazSegunEstado();
         }
-
         private void ObtenerDatosOperador()
         {
             _nombreCajero = SesionUsuario.Nombre ?? "Cajero General";
             LInfoOperador.Text = $"Operador de Caja: {_nombreCajero} | Fecha: {DateTime.Now:dd/MM/yyyy}";
         }
-
         private Image GenerarIconoBóveda(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -74,7 +66,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private async Task ConsultarEstadoTurnoActualAsync()
         {
             try
@@ -84,7 +75,6 @@ namespace CapaPresentacion
 
                 _cajaAbierta = false;
                 _idTurnoCaja = 1042;
-
                 _fondoInicial = 20000.00m;
                 _ventasEfectivo = 85400.00m;
                 _cobrosDigitales = 42000.00m;
@@ -98,7 +88,6 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al cargar el turno de caja: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void RecalcularMetricasVisuales()
         {
             TBFondoInicial.Text = $"$ {_fondoInicial:N2}";
@@ -110,7 +99,6 @@ namespace CapaPresentacion
             decimal totalEnGaveta = _fondoInicial + _ventasEfectivo - _egresosMenores;
             TBTotalGaveta.Text = $"$ {totalEnGaveta:N2}";
         }
-
         private void ActualizarInterfazSegunEstado()
         {
             if (_cajaAbierta)
@@ -149,10 +137,7 @@ namespace CapaPresentacion
                 RecalcularMetricasVisuales();
             }
         }
-
-        // =========================================================================
-        // ACCIÓN 1: APERTURA DE TURNO (C# PURO CON MODAL NATIVO)
-        // =========================================================================
+        // Acción 1: apertura de turno con modal de valor inicial
         private async void BAbrirTurno_Click(object sender, EventArgs e)
         {
             using (FormModalAperturaCaja modalApertura = new FormModalAperturaCaja())
@@ -183,10 +168,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // =========================================================================
-        // ACCIÓN 2: REGISTRO DE MOVIMIENTO MENOR (C# PURO CON MODAL NATIVO)
-        // =========================================================================
+        // Acción 2: registro de movimiento menor 
         private void BMovimientoMenor_Click(object sender, EventArgs e)
         {
             decimal maximoDisponible = _fondoInicial + _ventasEfectivo - _egresosMenores;
@@ -206,10 +188,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // =========================================================================
-        // ACCIÓN 3: ARQUEO Y CIERRE DE TURNO
-        // =========================================================================
+        // Acción 3: arqueo y cierre de turno
         private async void BCerrarTurno_Click(object sender, EventArgs e)
         {
             decimal efectivoTeoricoEsperado = _fondoInicial + _ventasEfectivo - _egresosMenores;
@@ -258,4 +237,3 @@ namespace CapaPresentacion
         }
     }
 }
-

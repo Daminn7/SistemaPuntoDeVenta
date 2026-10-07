@@ -13,7 +13,7 @@ namespace CapaPresentacion
 {
     public partial class FormDashboard : Form
     {
-        // Paleta aplicación
+        // Paleta de colores de la aplicación
         private readonly Color ColorOcre = Color.FromArgb(212, 131, 53);
         private readonly Color ColorVerde = Color.FromArgb(39, 174, 96);
         private readonly Color ColorGrafito = Color.FromArgb(38, 40, 44);
@@ -26,7 +26,6 @@ namespace CapaPresentacion
             if (pbIconoTitulo != null)
                 pbIconoTitulo.Image = GenerarIconoDashboard(Color.FromArgb(212, 131, 53));
         }
-
         private void FormDashboard_Load(object sender, EventArgs e)
         {
             CargarDatosMuestra();
@@ -72,7 +71,6 @@ namespace CapaPresentacion
                 g.FillRectangle(brushAcento, 1, 1, ctrl.Width - 2, 4);
             }
         }
-
         private void DibujarBordeSimple(Graphics g, Control ctrl)
         {
             g.SmoothingMode = SmoothingMode.None;
@@ -81,7 +79,6 @@ namespace CapaPresentacion
                 g.DrawRectangle(penBorde, 0, 0, ctrl.Width - 1, ctrl.Height - 1);
             }
         }
-
         private void DgvStockCritico_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             // Resalta con fondo rojo suave las celdas de stock bajo
@@ -92,7 +89,7 @@ namespace CapaPresentacion
                 e.CellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             }
         }
-
+        //Momentáneo
         public void CargarDatosMuestra()
         {
             // Métricas KPI
@@ -124,7 +121,6 @@ namespace CapaPresentacion
             dgvStockCritico.Rows.Add("DI-CUT", "Disco Corte Acero 115mm", "4", "15");
             dgvStockCritico.ClearSelection();
         }
-
         private Image GenerarIconoDashboard(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -146,7 +142,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void BtnActualizar_Click(object sender, EventArgs e)
         {
             CargarDatosMuestra();

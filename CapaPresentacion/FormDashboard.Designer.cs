@@ -76,7 +76,6 @@
             this.colStockMinimo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.btnActualizar = new System.Windows.Forms.Button();
             this.Load += new System.EventHandler(this.FormDashboard_Load);
-
             this.pnlFondo.SuspendLayout();
             this.pnlEncabezado.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pbIconoTitulo)).BeginInit();
@@ -110,25 +109,31 @@
             this.pnlEncabezado.Controls.Add(this.pbIconoTitulo);
             this.pnlEncabezado.Padding = new System.Windows.Forms.Padding(0, 0, 0, 8);
             this.pnlEncabezado.Controls.Add(this.btnActualizar);
+            //
             // pbIconoTitulo
+            //
             this.pbIconoTitulo.Location = new System.Drawing.Point(0, 3);
             this.pbIconoTitulo.Size = new System.Drawing.Size(32, 32);
             this.pbIconoTitulo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.pbIconoTitulo.BackColor = System.Drawing.Color.Transparent;
+            //
             // lblTituloPrincipal
+            //
             this.lblTituloPrincipal.Text = "PANEL DE CONTROL GENERAL";
             this.lblTituloPrincipal.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.lblTituloPrincipal.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             this.lblTituloPrincipal.Location = new System.Drawing.Point(38, 2);
-            this.lblTituloPrincipal.AutoSize = true;
+            this.lblTituloPrincipal.AutoSize = true; 
+            //
             // lblSubtituloPrincipal
+            //
             this.lblSubtituloPrincipal.Text = "Resumen operativo del día y estado de inventario";
             this.lblSubtituloPrincipal.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Italic);
             this.lblSubtituloPrincipal.ForeColor = System.Drawing.Color.FromArgb(100, 100, 100);
             this.lblSubtituloPrincipal.Location = new System.Drawing.Point(39, 23);
             this.lblSubtituloPrincipal.AutoSize = true;
             // 
-            // btnActualizar (Se posiciona a la derecha mediante Dock = Right y márgenes prolijos)
+            // btnActualizar
             // 
             this.btnActualizar.Dock = System.Windows.Forms.DockStyle.None;
             this.btnActualizar.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
@@ -263,14 +268,15 @@
             this.lblKpiStockSub.Font = new System.Drawing.Font("Segoe UI", 8F);
             this.lblKpiStockSub.ForeColor = System.Drawing.Color.Gray;
             this.lblKpiStockSub.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-
+            //
+            // pnlKpiStock
+            //
             this.pnlKpiStock.Controls.Clear();
             this.pnlKpiStock.Controls.Add(this.lblKpiStockSub);
             this.pnlKpiStock.Controls.Add(this.lblKpiStockValor);
             this.pnlKpiStock.Controls.Add(this.lblKpiStockTitulo);
-
             // 
-            // tlpCuerpo (Split 60% / 40%)
+            // tlpCuerpo
             // 
             this.tlpCuerpo.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tlpCuerpo.ColumnCount = 2;
@@ -281,7 +287,6 @@
             this.tlpCuerpo.Controls.Add(this.pnlCardIzquierda, 0, 0);
             this.tlpCuerpo.Controls.Add(this.pnlCardDerecha, 1, 0);
             this.tlpCuerpo.Padding = new System.Windows.Forms.Padding(0, 8, 0, 0);
-
             // 
             // pnlCardIzquierda (Últimas Ventas)
             // 
@@ -291,14 +296,17 @@
             this.pnlCardIzquierda.Padding = new System.Windows.Forms.Padding(14);
             this.pnlCardIzquierda.Controls.Add(this.dgvUltimasVentas);
             this.pnlCardIzquierda.Controls.Add(this.lblTituloVentas);
-
+            //
+            // lblTituloVentas
+            //
             this.lblTituloVentas.Text = "ÚLTIMAS VENTAS REGISTRADAS";
             this.lblTituloVentas.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.lblTituloVentas.ForeColor = System.Drawing.Color.FromArgb(212, 131, 53);
             this.lblTituloVentas.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblTituloVentas.Height = 26;
-
+            //
             // dgvUltimasVentas
+            //
             this.dgvUltimasVentas.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvUltimasVentas.AllowUserToAddRows = false;
             this.dgvUltimasVentas.AllowUserToDeleteRows = false;
@@ -310,7 +318,6 @@
             this.dgvUltimasVentas.ColumnHeadersBorderStyle = System.Windows.Forms.DataGridViewHeaderBorderStyle.Single;
             this.dgvUltimasVentas.ColumnHeadersHeight = 28;
             this.dgvUltimasVentas.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
-
             dgvHeaderStyle1.BackColor = System.Drawing.Color.FromArgb(235, 235, 235);
             dgvHeaderStyle1.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             dgvHeaderStyle1.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
@@ -318,7 +325,6 @@
             dgvHeaderStyle1.SelectionForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
             this.dgvUltimasVentas.ColumnHeadersDefaultCellStyle = dgvHeaderStyle1;
             this.dgvUltimasVentas.EnableHeadersVisualStyles = false;
-
             dgvRowStyle1.BackColor = System.Drawing.Color.White;
             dgvRowStyle1.Font = new System.Drawing.Font("Segoe UI", 9F);
             dgvRowStyle1.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
@@ -326,42 +332,51 @@
             dgvRowStyle1.SelectionForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             this.dgvUltimasVentas.DefaultCellStyle = dgvRowStyle1;
             this.dgvUltimasVentas.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
-
+            //
+            // colVentaId
+            //
             this.colVentaId.HeaderText = "ID";
             this.colVentaId.Visible = false;
             this.colVentaId.Name = "colVentaId";
-
+            //
+            // colVentaHora
+            //
             this.colVentaHora.HeaderText = "Hora";
             this.colVentaHora.Width = 70;
             this.colVentaHora.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.colVentaHora.Name = "colVentaHora";
-
+            //
+            // colVentaTicket
+            //
             this.colVentaTicket.HeaderText = "N° Comprobante";
             this.colVentaTicket.Width = 125;
             this.colVentaTicket.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.colVentaTicket.Name = "colVentaTicket";
-
+            //
+            // colVentaCliente
+            //
             this.colVentaCliente.HeaderText = "Cliente";
             this.colVentaCliente.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
             this.colVentaCliente.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.colVentaCliente.Name = "colVentaCliente";
-
+            //
+            // colVentaTotal
+            //
             this.colVentaTotal.HeaderText = "Total ($)";
             this.colVentaTotal.Width = 100;
             this.colVentaTotal.DefaultCellStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
             this.colVentaTotal.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(39, 174, 96);
             this.colVentaTotal.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.colVentaTotal.Name = "colVentaTotal";
-
+            //
+            // dvgUltimasVentas
+            //
             this.dgvUltimasVentas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-                this.colVentaId, this.colVentaHora, this.colVentaTicket, this.colVentaCliente, this.colVentaTotal
-            });
-
+                this.colVentaId, this.colVentaHora, this.colVentaTicket, this.colVentaCliente, this.colVentaTotal});
             this.dgvUltimasVentas.ReadOnly = true;
             this.dgvUltimasVentas.RowHeadersVisible = false;
             this.dgvUltimasVentas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
             this.dgvUltimasVentas.RowTemplate.Height = 28;
-
             // 
             // pnlCardDerecha (Alertas de Stock)
             // 
@@ -371,14 +386,17 @@
             this.pnlCardDerecha.Padding = new System.Windows.Forms.Padding(14);
             this.pnlCardDerecha.Controls.Add(this.dgvStockCritico);
             this.pnlCardDerecha.Controls.Add(this.lblTituloStock);
-
+            //
+            // lblTituloStock
+            //
             this.lblTituloStock.Text = "ATENCIÓN: PRODUCTOS CON BAJO STOCK";
             this.lblTituloStock.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.lblTituloStock.ForeColor = System.Drawing.Color.FromArgb(192, 57, 43); // Rojo alerta
             this.lblTituloStock.Dock = System.Windows.Forms.DockStyle.Top;
             this.lblTituloStock.Height = 26;
-
+            //
             // dgvStockCritico
+            //
             this.dgvStockCritico.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvStockCritico.AllowUserToAddRows = false;
             this.dgvStockCritico.AllowUserToDeleteRows = false;
@@ -499,5 +517,4 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn colStockMinimo;
         private System.Windows.Forms.Button btnActualizar;
     }
-    
 }

@@ -16,16 +16,15 @@ namespace CapaPresentacion
 {
     public partial class FormMisVentas : Form
     {
+        // Declaración de variables 
         private DataTable _dtMisVentas = new DataTable();
         private DataTable _dtDetalleVentas = new DataTable();
         private int _idVentaSeleccionada = 0;
-
         public FormMisVentas()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
-
         private void FormMisVentas_Load(object sender, EventArgs e)
         {
             AsignarIconoTitulo();
@@ -38,7 +37,6 @@ namespace CapaPresentacion
             DGVDetalle.DataSource = null;
             DGVDetalle.Rows.Clear();
         }
-
         private Image DibujarIconoMisVentas(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -63,13 +61,11 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = DibujarIconoMisVentas(Color.FromArgb(212, 131, 53));
         }
-
         private void InicializarComportamiento()
         {
             DTPFechaDesde.Value = DateTime.Now.AddDays(-15);
@@ -115,14 +111,13 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private void CargarDesplegableEstados()
         {
             CBFiltroEstado.Items.Clear();
             CBFiltroEstado.Items.AddRange(new object[] { "Todos", "Cobrado", "Pendiente", "Anulado" });
             CBFiltroEstado.SelectedIndex = 0;
         }
-
+        //Momentáneo
         private void CargarHistorialPersonalSimulado()
         {
             if (_dtMisVentas.Columns.Count == 0)
@@ -185,7 +180,6 @@ namespace CapaPresentacion
             ColDetPrecio.DefaultCellStyle.Format = "C2";
             ColDetSubtotal.DefaultCellStyle.Format = "C2";
         }
-
         private void CargarDetalleArticulos(int idVenta)
         {
             if (_dtDetalleVentas == null) return;
@@ -196,7 +190,6 @@ namespace CapaPresentacion
             DGVDetalle.ClearSelection();
             DGVDetalle.CurrentCell = null;
         }
-
         private void AplicarFiltros()
         {
             if (_dtMisVentas == null || _dtMisVentas.DefaultView == null) return;
@@ -223,7 +216,6 @@ namespace CapaPresentacion
             DGVDetalle.DataSource = null;
             DGVDetalle.Rows.Clear();
         }
-
         private void RecalcularMetricasPersonales()
         {
             decimal totalFacturado = 0m;
@@ -248,7 +240,6 @@ namespace CapaPresentacion
             LValorOperaciones.Text = $"{operacionesCobradas} operaciones";
             LValorComision.Text = comision.ToString("C2");
         }
-
         private void BReimprimirTicket_Click(object sender, EventArgs e)
         {
             if (DGVVentas.CurrentRow == null)
@@ -277,7 +268,6 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al reimprimir comprobante:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        
         private void ImprimirTicket_PrintPage(object sender, PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -316,7 +306,6 @@ namespace CapaPresentacion
                 g.DrawString($"IMPORTE TOTAL: {Convert.ToDecimal(fila.Cells["ColTotal"].Value):C2}", fTitulo, bOcre, x + 300, y);
             }
         }
-
         private void BExportarExcel_Click(object sender, EventArgs e)
         {
             if (_dtMisVentas.Rows.Count == 0)

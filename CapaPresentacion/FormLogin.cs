@@ -242,7 +242,7 @@ namespace CapaPresentacion
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                // ✅ Error de conexión a la API
+                // Error de conexión a la API
                 MessageBox.Show(
                     "No se pudo conectar con el servidor.\n\n" +
                     "Por favor, verifique:\n" +
@@ -262,7 +262,7 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
-                // ✅ Otros errores inesperados
+                // Otros errores inesperados
                 MessageBox.Show(
                     $"Ocurrió un error inesperado:\n\n{ex.Message}",
                     "Error",
@@ -311,9 +311,9 @@ namespace CapaPresentacion
 
                         // Trazo del check / tilde interior
                         PointF[] checkPoints = {
-                    new PointF(35f, 60f),
-                    new PointF(43f, 68f),
-                    new PointF(56f, 50f)
+                        new PointF(35f, 60f),
+                        new PointF(43f, 68f),
+                        new PointF(56f, 50f)
                 };
                         e.Graphics.DrawLines(penCheck, checkPoints);
                     }

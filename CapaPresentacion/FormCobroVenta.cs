@@ -13,6 +13,7 @@ namespace CapaPresentacion
 {
     public partial class FormCobroVenta : Form
     {
+        //Declaración de variables
         private DataTable _dtPendientes = new DataTable();
         private DataTable _dtDetalle = new DataTable();
         private decimal _totalActual = 0m;
@@ -23,7 +24,6 @@ namespace CapaPresentacion
             InitializeComponent();
             InicializarComportamiento();
         }
-
         private void FormCobroVenta_Load(object sender, EventArgs e)
         {
             AsignarIconoTitulo();
@@ -31,7 +31,6 @@ namespace CapaPresentacion
             CargarPedidosPendientesSimulados();
             LimpiarFormularioCobro();
         }
-
         private Image DibujarIconoCobro(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -49,7 +48,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
@@ -66,7 +64,6 @@ namespace CapaPresentacion
                 // Fallback silencioso si no encuentra el recurso
             }
         }
-
         private void InicializarComportamiento()
         {
             // Restricción: solo números y coma en "Paga con"
@@ -100,7 +97,6 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private void CargarDesplegables()
         {
             CBMedioPago.Items.Clear();
@@ -111,7 +107,7 @@ namespace CapaPresentacion
             CBComprobante.Items.AddRange(new object[] { "Ticket / Recibo X", "Factura B (Consumidor Final)", "Factura A (Responsable Inscripto)" });
             CBComprobante.SelectedIndex = 0;
         }
-
+        //Momentáneo
         private void CargarPedidosPendientesSimulados()
         {
             if (_dtPendientes.Columns.Count == 0)
@@ -141,7 +137,6 @@ namespace CapaPresentacion
 
             ConfigurarDetalle();
         }
-
         private void ConfigurarDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -164,7 +159,6 @@ namespace CapaPresentacion
             ColDetSubtotal.DefaultCellStyle.Format = "C2";
             DGVDetalle.DataSource = _dtDetalle;
         }
-
         private void DGVPendientes_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -175,7 +169,7 @@ namespace CapaPresentacion
 
             LTotalMonto.Text = _totalActual.ToString("C2");
 
-            // Cargar renglones simulados del pedido seleccionado
+            // Cargar renglones simulados del pedido seleccionado, momentáneo
             _dtDetalle.Rows.Clear();
             if (_idPedidoSeleccionado == 101)
             {
@@ -193,7 +187,6 @@ namespace CapaPresentacion
 
             TBPagaCon.Text = _totalActual.ToString("0.00");
         }
-
         private void BConfirmarCobro_Click(object sender, EventArgs e)
         {
             if (_idPedidoSeleccionado == 0)
@@ -236,7 +229,6 @@ namespace CapaPresentacion
                 LimpiarFormularioCobro();
             }
         }
-
         private void BAnularPedido_Click(object sender, EventArgs e)
         {
             if (_idPedidoSeleccionado == 0)

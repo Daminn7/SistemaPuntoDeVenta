@@ -19,10 +19,9 @@ namespace CapaPresentacion
         }
         private void FormHistorialVentas_Load(object sender, EventArgs e)
         {
-            // Aquí cargaremos los datos iniciales al arrancar la pantalla
-            pbIconoTitulo.Image = GenerarIconoHistorial(Color.FromArgb(212, 131, 53));
+            // Carga al iniciar
+            PBIconoTitulo.Image = GenerarIconoHistorial(Color.FromArgb(212, 131, 53));
         }
-
         private Image GenerarIconoHistorial(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -43,6 +42,5 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
     }
 }

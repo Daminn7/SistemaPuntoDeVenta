@@ -34,7 +34,6 @@
             System.Windows.Forms.DataGridViewCellStyle dgvDetHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvDetRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvDetAltRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
-
             this.PFondo = new System.Windows.Forms.Panel();
             this.TLPContenido = new System.Windows.Forms.TableLayoutPanel();
             this.SCIzquierda = new System.Windows.Forms.SplitContainer();
@@ -47,7 +46,6 @@
             this.ColCantItems = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColTotal = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColEstado = new System.Windows.Forms.DataGridViewTextBoxColumn();
-
             this.LSubtituloDetalle = new System.Windows.Forms.Label();
             this.DGVDetalle = new System.Windows.Forms.DataGridView();
             this.ColDetCodigo = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -55,7 +53,6 @@
             this.ColDetCant = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColDetPrecio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColDetSubtotal = new System.Windows.Forms.DataGridViewTextBoxColumn();
-
             this.PTarjetaLateral = new System.Windows.Forms.Panel();
             this.PBotonesAccion = new System.Windows.Forms.Panel();
             this.BExportarExcel = new System.Windows.Forms.Button();
@@ -72,7 +69,6 @@
             this.LTituloComision = new System.Windows.Forms.Label();
             this.LSubtituloTarjeta = new System.Windows.Forms.Label();
             this.LTituloTarjeta = new System.Windows.Forms.Label();
-
             this.PBarraFiltros = new System.Windows.Forms.Panel();
             this.BLimpiarFiltros = new System.Windows.Forms.Button();
             this.CBFiltroEstado = new System.Windows.Forms.ComboBox();
@@ -83,11 +79,9 @@
             this.LFechaDesde = new System.Windows.Forms.Label();
             this.TBBuscar = new System.Windows.Forms.TextBox();
             this.LBuscar = new System.Windows.Forms.Label();
-
             this.PEncabezado = new System.Windows.Forms.Panel();
             this.LTituloPrincipal = new System.Windows.Forms.Label();
             this.PBIconoTitulo = new System.Windows.Forms.PictureBox();
-
             this.PFondo.SuspendLayout();
             this.TLPContenido.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.SCIzquierda)).BeginInit();
@@ -106,8 +100,9 @@
             this.PEncabezado.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.PBIconoTitulo)).BeginInit();
             this.SuspendLayout();
-
+            //
             // PFondo
+            //
             this.PFondo.BackColor = System.Drawing.Color.FromArgb(242, 237, 230);
             this.PFondo.Controls.Add(this.TLPContenido);
             this.PFondo.Controls.Add(this.PBarraFiltros);
@@ -118,8 +113,9 @@
             this.PFondo.Padding = new System.Windows.Forms.Padding(21, 15, 21, 15);
             this.PFondo.Size = new System.Drawing.Size(1534, 822);
             this.PFondo.TabIndex = 0;
-
+            //
             // PEncabezado
+            //
             this.PEncabezado.Controls.Add(this.LTituloPrincipal);
             this.PEncabezado.Controls.Add(this.PBIconoTitulo);
             this.PEncabezado.Dock = System.Windows.Forms.DockStyle.Top;
@@ -127,7 +123,9 @@
             this.PEncabezado.Name = "PEncabezado";
             this.PEncabezado.Size = new System.Drawing.Size(1492, 38);
             this.PEncabezado.TabIndex = 2;
-
+            //
+            // PBIconoTitulo
+            //
             this.PBIconoTitulo.BackColor = System.Drawing.Color.Transparent;
             this.PBIconoTitulo.Location = new System.Drawing.Point(0, 2);
             this.PBIconoTitulo.Name = "PBIconoTitulo";
@@ -135,7 +133,9 @@
             this.PBIconoTitulo.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
             this.PBIconoTitulo.TabIndex = 1;
             this.PBIconoTitulo.TabStop = false;
-
+            //
+            // LTituloPrincipal
+            //
             this.LTituloPrincipal.AutoSize = true;
             this.LTituloPrincipal.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
             this.LTituloPrincipal.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
@@ -144,8 +144,9 @@
             this.LTituloPrincipal.Size = new System.Drawing.Size(370, 28);
             this.LTituloPrincipal.TabIndex = 0;
             this.LTituloPrincipal.Text = "MIS VENTAS Y PEDIDOS REALIZADOS";
-
+            //
             // PBarraFiltros
+            //
             this.PBarraFiltros.Controls.Add(this.BLimpiarFiltros);
             this.PBarraFiltros.Controls.Add(this.CBFiltroEstado);
             this.PBarraFiltros.Controls.Add(this.LFiltroEstado);
@@ -160,7 +161,9 @@
             this.PBarraFiltros.Name = "PBarraFiltros";
             this.PBarraFiltros.Size = new System.Drawing.Size(1492, 47);
             this.PBarraFiltros.TabIndex = 1;
-
+            //
+            // LBuscar
+            //
             this.LBuscar.AutoSize = true;
             this.LBuscar.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.LBuscar.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
@@ -169,13 +172,17 @@
             this.LBuscar.Size = new System.Drawing.Size(155, 20);
             this.LBuscar.TabIndex = 0;
             this.LBuscar.Text = "Buscar Comprobante:";
-
+            //
+            // TBBuscar
+            //
             this.TBBuscar.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.TBBuscar.Location = new System.Drawing.Point(165, 11);
             this.TBBuscar.Name = "TBBuscar";
             this.TBBuscar.Size = new System.Drawing.Size(200, 27);
             this.TBBuscar.TabIndex = 1;
-
+            //
+            // LFechaDesde
+            //
             this.LFechaDesde.AutoSize = true;
             this.LFechaDesde.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.LFechaDesde.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
@@ -184,14 +191,18 @@
             this.LFechaDesde.Size = new System.Drawing.Size(56, 20);
             this.LFechaDesde.TabIndex = 2;
             this.LFechaDesde.Text = "Desde:";
-
+            //
+            // DTPFechaDesde
+            //
             this.DTPFechaDesde.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.DTPFechaDesde.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.DTPFechaDesde.Location = new System.Drawing.Point(445, 11);
             this.DTPFechaDesde.Name = "DTPFechaDesde";
             this.DTPFechaDesde.Size = new System.Drawing.Size(115, 27);
             this.DTPFechaDesde.TabIndex = 3;
-
+            //
+            // LFechaHasta
+            //
             this.LFechaHasta.AutoSize = true;
             this.LFechaHasta.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.LFechaHasta.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
@@ -200,14 +211,18 @@
             this.LFechaHasta.Size = new System.Drawing.Size(52, 20);
             this.LFechaHasta.TabIndex = 4;
             this.LFechaHasta.Text = "Hasta:";
-
+            //
+            // DTPFechaHasta
+            //
             this.DTPFechaHasta.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.DTPFechaHasta.Format = System.Windows.Forms.DateTimePickerFormat.Short;
             this.DTPFechaHasta.Location = new System.Drawing.Point(633, 11);
             this.DTPFechaHasta.Name = "DTPFechaHasta";
             this.DTPFechaHasta.Size = new System.Drawing.Size(115, 27);
             this.DTPFechaHasta.TabIndex = 5;
-
+            //
+            // LFiltroEstado
+            //
             this.LFiltroEstado.AutoSize = true;
             this.LFiltroEstado.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.LFiltroEstado.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
@@ -216,14 +231,18 @@
             this.LFiltroEstado.Size = new System.Drawing.Size(59, 20);
             this.LFiltroEstado.TabIndex = 6;
             this.LFiltroEstado.Text = "Estado:";
-
+            //
+            // CBFiltroEstado
+            //
             this.CBFiltroEstado.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CBFiltroEstado.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.CBFiltroEstado.Location = new System.Drawing.Point(830, 11);
             this.CBFiltroEstado.Name = "CBFiltroEstado";
             this.CBFiltroEstado.Size = new System.Drawing.Size(150, 28);
             this.CBFiltroEstado.TabIndex = 7;
-
+            //
+            // BLimpiarFiltros
+            //
             this.BLimpiarFiltros.BackColor = System.Drawing.Color.FromArgb(108, 117, 125);
             this.BLimpiarFiltros.Cursor = System.Windows.Forms.Cursors.Hand;
             this.BLimpiarFiltros.FlatAppearance.BorderSize = 0;
@@ -236,8 +255,9 @@
             this.BLimpiarFiltros.TabIndex = 8;
             this.BLimpiarFiltros.Text = "Limpiar";
             this.BLimpiarFiltros.UseVisualStyleBackColor = false;
-
-            // TLPContenido (Doble Grilla en SplitContainer + Tarjeta Lateral)
+            //
+            // TLPContenido
+            //
             this.TLPContenido.ColumnCount = 2;
             this.TLPContenido.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 72F));
             this.TLPContenido.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28F));
@@ -250,25 +270,30 @@
             this.TLPContenido.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
             this.TLPContenido.Size = new System.Drawing.Size(1492, 707);
             this.TLPContenido.TabIndex = 0;
-
-            // SCIzquierda (Superior: Comprobantes / Inferior: Artículos Vendidos)
+            //
+            // SCIzquierda
+            //
             this.SCIzquierda.Dock = System.Windows.Forms.DockStyle.Fill;
             this.SCIzquierda.Location = new System.Drawing.Point(0, 0);
             this.SCIzquierda.Margin = new System.Windows.Forms.Padding(0, 0, 14, 0);
             this.SCIzquierda.Name = "SCIzquierda";
             this.SCIzquierda.Orientation = System.Windows.Forms.Orientation.Horizontal;
-
-            // Panel 1: Listado de Comprobantes Emitidos
+            //
+            //  SCIzquierda Panel 1: Listado de Comprobantes Emitidos
+            //
             this.SCIzquierda.Panel1.Controls.Add(this.DGVVentas);
             this.SCIzquierda.Panel1.Controls.Add(this.LSubtituloVentas);
-            // Panel 2: Detalle de Artículos del Comprobante
+            //
+            // SCIzquierda Panel 2: Detalle de Artículos del Comprobante
+            //
             this.SCIzquierda.Panel2.Controls.Add(this.DGVDetalle);
             this.SCIzquierda.Panel2.Controls.Add(this.LSubtituloDetalle);
             this.SCIzquierda.Size = new System.Drawing.Size(1060, 707);
             this.SCIzquierda.SplitterDistance = 350;
             this.SCIzquierda.TabIndex = 0;
-
+            //
             // LSubtituloVentas
+            //
             this.LSubtituloVentas.Dock = System.Windows.Forms.DockStyle.Top;
             this.LSubtituloVentas.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.LSubtituloVentas.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
@@ -277,8 +302,9 @@
             this.LSubtituloVentas.Size = new System.Drawing.Size(1060, 24);
             this.LSubtituloVentas.TabIndex = 0;
             this.LSubtituloVentas.Text = "COMPROBANTES Y VENTAS EMITIDAS:";
-
+            //
             // DGVVentas
+            //
             this.DGVVentas.AllowUserToAddRows = false;
             this.DGVVentas.AllowUserToDeleteRows = false;
             this.DGVVentas.AllowUserToResizeColumns = false;
@@ -294,43 +320,34 @@
             this.DGVVentas.RowHeadersVisible = false;
             this.DGVVentas.RowTemplate.Height = 28;
             this.DGVVentas.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-
             dgvHeaderStyle.BackColor = System.Drawing.Color.FromArgb(235, 235, 235);
             dgvHeaderStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
             dgvHeaderStyle.ForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
             dgvHeaderStyle.SelectionBackColor = System.Drawing.Color.FromArgb(235, 235, 235);
             dgvHeaderStyle.SelectionForeColor = System.Drawing.Color.FromArgb(40, 40, 40);
             this.DGVVentas.ColumnHeadersDefaultCellStyle = dgvHeaderStyle;
-
             dgvRowStyle.BackColor = System.Drawing.Color.White;
             dgvRowStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
             dgvRowStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             dgvRowStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             dgvRowStyle.SelectionForeColor = System.Drawing.Color.White;
             this.DGVVentas.DefaultCellStyle = dgvRowStyle;
-
             dgvAltRowStyle.BackColor = System.Drawing.Color.FromArgb(248, 249, 250);
             dgvAltRowStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
             dgvAltRowStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
             dgvAltRowStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             dgvAltRowStyle.SelectionForeColor = System.Drawing.Color.White;
             this.DGVVentas.AlternatingRowsDefaultCellStyle = dgvAltRowStyle;
-
-            this.DGVVentas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-                this.ColIdVenta,
-                this.ColFecha,
-                this.ColComprobante,
-                this.ColCliente,
-                this.ColCantItems,
-                this.ColTotal,
-                this.ColEstado
-            });
+            this.DGVVentas.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {this.ColIdVenta, this.ColFecha,
+                this.ColComprobante, this.ColCliente, this.ColCantItems, this.ColTotal, this.ColEstado});
             this.DGVVentas.Dock = System.Windows.Forms.DockStyle.Fill;
             this.DGVVentas.Location = new System.Drawing.Point(0, 24);
             this.DGVVentas.Name = "DGVVentas";
             this.DGVVentas.Size = new System.Drawing.Size(1060, 326);
             this.DGVVentas.TabIndex = 1;
-
+            //
+            // ColIdVenta
+            //
             this.ColIdVenta.HeaderText = "ID";
             this.ColIdVenta.Name = "ColIdVenta";
             this.ColIdVenta.ReadOnly = true;
@@ -639,7 +656,6 @@
             this.Name = "FormMisVentas";
             this.Text = "Mis Ventas";
             this.Load += new System.EventHandler(this.FormMisVentas_Load);
-
             this.PFondo.ResumeLayout(false);
             this.TLPContenido.ResumeLayout(false);
             this.SCIzquierda.Panel1.ResumeLayout(false);

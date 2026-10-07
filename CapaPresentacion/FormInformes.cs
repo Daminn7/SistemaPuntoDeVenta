@@ -15,13 +15,12 @@ namespace CapaPresentacion
 {
     public partial class FormInformes : Form
     {
+        // Declaración de variables
         private DataTable _dtResumen = new DataTable();
-
         // Datos simulados para los gráficos
         private readonly string[] _meses = { "Mayo", "Junio", "Julio", "Agosto", "Septiembre" };
         private readonly float[] _ventasMes = { 320000f, 450000f, 510000f, 680000f, 850000f };
         private readonly float[] _comprasMes = { 210000f, 310000f, 340000f, 420000f, 510000f };
-
         // Datos del gráfico Donut (Métodos de Pago)
         private readonly string[] _mediosPago = { "Efectivo", "Transferencia", "Cuenta Cte." };
         private readonly float[] _porcentajesPago = { 55f, 30f, 15f };
@@ -30,13 +29,11 @@ namespace CapaPresentacion
             Color.FromArgb(41, 128, 185),  // Azul
             Color.FromArgb(39, 174, 96)   // Verde
         };
-
         public FormInformes()
         {
             InitializeComponent();
             InicializarComponentesAdicionales();
         }
-
         private void FormInformes_Load(object sender, EventArgs e)
         {
             AsignarIconoTitulo();
@@ -47,17 +44,13 @@ namespace CapaPresentacion
             DGVResumen.ClearSelection();
             DGVResumen.CurrentCell = null;
         }
-
         private void InicializarComponentesAdicionales()
         {
             // Redibujar gráficos si la ventana cambia de tamaño
             PPanelGraficoBarras.Resize += (s, e) => PPanelGraficoBarras.Invalidate();
             PPanelGraficoTorta.Resize += (s, e) => PPanelGraficoTorta.Invalidate();
         }
-
-        // =========================================================================
-        // 1. ÍCONO VECTORIAL DE INFORMES (GRÁFICO DE BARRAS CONCRETO)
-        // =========================================================================
+        // Ícono vectorial de informes (Gráfico de barras)
         private Image GenerarIconoInformes(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -79,7 +72,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
@@ -87,7 +79,6 @@ namespace CapaPresentacion
                 PBIconoTitulo.Image = GenerarIconoInformes(Color.FromArgb(212, 131, 53));
             }
         }
-
         private void CargarTiposReporte()
         {
             CBTipoReporte.Items.Clear();
@@ -102,7 +93,7 @@ namespace CapaPresentacion
             DTPFechaDesde.Value = DateTime.Now.AddDays(-30);
             DTPFechaHasta.Value = DateTime.Now;
         }
-
+        //Momentáneo
         private void CargarDatosResumen()
         {
             if (_dtResumen.Columns.Count == 0)
@@ -131,99 +122,93 @@ namespace CapaPresentacion
 
             DGVResumen.DataSource = _dtResumen;
         }
-
+        //Momentáneo
         private void CalcularTotalesResumen()
         {
             LValorFacturado.Text = "$ 2.810.000,00";
             LValorGanancia.Text = "$ 1.020.000,00";
             LValorTickets.Text = "164 facturas";
         }
-
-        // =========================================================================
-        // 2. RENDERIZADO DE GRÁFICO DE BARRAS VECTORIAL (VENTAS VS COMPRAS)
-        // =========================================================================
+        // Renderizado de gráfico de barras vectorial (ventas vs compras)
         private void PPanelGraficoBarras_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
-    g.SmoothingMode = SmoothingMode.AntiAlias;
+            g.SmoothingMode = SmoothingMode.AntiAlias;
 
-    int ancho = PPanelGraficoBarras.Width;
-    int alto = PPanelGraficoBarras.Height;
+            int ancho = PPanelGraficoBarras.Width;
+            int alto = PPanelGraficoBarras.Height;
 
-    // Título superior
-    using (Font fontTitulo = new Font("Segoe UI", 9.5f, FontStyle.Bold))
-    using (Brush brushTexto = new SolidBrush(Color.FromArgb(40, 40, 40)))
-    {
-        g.DrawString("EVOLUCIÓN MENSUAL: INGRESOS VS COSTOS ($)", fontTitulo, brushTexto, 14, 12);
-    }
+            // Título superior
+            using (Font fontTitulo = new Font("Segoe UI", 9.5f, FontStyle.Bold))
+            using (Brush brushTexto = new SolidBrush(Color.FromArgb(40, 40, 40)))
+            {
+                g.DrawString("EVOLUCIÓN MENSUAL: INGRESOS VS COSTOS ($)", fontTitulo, brushTexto, 14, 12);
+            }
 
-    float margenIzq = 45f;
-    float margenDer = 20f;
-    float margenSup = 55f;
-    float margenInf = 45f;
-    float plotAncho = ancho - margenIzq - margenDer;
-    float plotAlto = alto - margenSup - margenInf;
+            float margenIzq = 45f;
+            float margenDer = 20f;
+            float margenSup = 55f;
+            float margenInf = 45f;
+            float plotAncho = ancho - margenIzq - margenDer;
+            float plotAlto = alto - margenSup - margenInf;
 
-    if (plotAncho <= 0 || plotAlto <= 0) return;
+            if (plotAncho <= 0 || plotAlto <= 0) return;
 
-    // Línea base X
-    using (Pen penEje = new Pen(Color.FromArgb(215, 220, 225), 1.5f))
-    {
-        g.DrawLine(penEje, margenIzq, margenSup + plotAlto, margenIzq + plotAncho, margenSup + plotAlto);
-    }
+            // Línea base X
+            using (Pen penEje = new Pen(Color.FromArgb(215, 220, 225), 1.5f))
+            {
+                g.DrawLine(penEje, margenIzq, margenSup + plotAlto, margenIzq + plotAncho, margenSup + plotAlto);
+            }
 
-    // Escala
-    float valorMax = 1000000f; // 1 millón
-    int cantGrupos = _meses.Length;
+            // Escala
+            float valorMax = 1000000f; // 1 millón
+            int cantGrupos = _meses.Length;
 
-    // AGRUPAMIENTO COMPACTO: Limitamos el ancho de cada grupo para que no se separen de más
-    float anchoGrupoIdeal = Math.Min(plotAncho / cantGrupos, 85f);
-    float anchoTotalConjunto = anchoGrupoIdeal * cantGrupos;
-    float inicioXCentrado = margenIzq + ((plotAncho - anchoTotalConjunto) / 2f);
+            // AGRUPAMIENTO COMPACTO: Limitamos el ancho de cada grupo para que no se separen de más
+            float anchoGrupoIdeal = Math.Min(plotAncho / cantGrupos, 85f);
+            float anchoTotalConjunto = anchoGrupoIdeal * cantGrupos;
+            float inicioXCentrado = margenIzq + ((plotAncho - anchoTotalConjunto) / 2f);
 
-    float anchoBarra = 24f; // Ancho sólido y visible para cada barra
+            float anchoBarra = 24f; // Ancho sólido y visible para cada barra
 
-    using (Brush bVenta = new SolidBrush(Color.FromArgb(212, 131, 53))) // Ocre institucional
-    using (Brush bCompra = new SolidBrush(Color.FromArgb(90, 95, 100)))  // Grafito
-    using (Font fLabels = new Font("Segoe UI", 8.5f))
-    using (Brush bTexto = new SolidBrush(Color.FromArgb(70, 70, 70)))
-    {
-        for (int i = 0; i < cantGrupos; i++)
-        {
-            float centroX = inicioXCentrado + (i * anchoGrupoIdeal) + (anchoGrupoIdeal / 2f);
+            using (Brush bVenta = new SolidBrush(Color.FromArgb(212, 131, 53))) // Ocre institucional
+            using (Brush bCompra = new SolidBrush(Color.FromArgb(90, 95, 100)))  // Grafito
+            using (Font fLabels = new Font("Segoe UI", 8.5f))
+            using (Brush bTexto = new SolidBrush(Color.FromArgb(70, 70, 70)))
+            {
+                for (int i = 0; i < cantGrupos; i++)
+                {
+                    float centroX = inicioXCentrado + (i * anchoGrupoIdeal) + (anchoGrupoIdeal / 2f);
 
-            // Alturas relativas
-            float hVenta = (_ventasMes[i] / valorMax) * plotAlto;
-            float hCompra = (_comprasMes[i] / valorMax) * plotAlto;
+                    // Alturas relativas
+                    float hVenta = (_ventasMes[i] / valorMax) * plotAlto;
+                    float hCompra = (_comprasMes[i] / valorMax) * plotAlto;
 
-            // Barra Ventas
-            float xVenta = centroX - anchoBarra - 2f;
-            float yVenta = margenSup + (plotAlto - hVenta);
-            g.FillRectangle(bVenta, xVenta, yVenta, anchoBarra, hVenta);
+                    // Barra Ventas
+                    float xVenta = centroX - anchoBarra - 2f;
+                    float yVenta = margenSup + (plotAlto - hVenta);
+                    g.FillRectangle(bVenta, xVenta, yVenta, anchoBarra, hVenta);
 
-            // Barra Compras
-            float xCompra = centroX + 2f;
-            float yCompra = margenSup + (plotAlto - hCompra);
-            g.FillRectangle(bCompra, xCompra, yCompra, anchoBarra, hCompra);
+                    // Barra Compras
+                    float xCompra = centroX + 2f;
+                    float yCompra = margenSup + (plotAlto - hCompra);
+                    g.FillRectangle(bCompra, xCompra, yCompra, anchoBarra, hCompra);
 
-            // Etiqueta del Mes
-            SizeF sizeMes = g.MeasureString(_meses[i], fLabels);
-            g.DrawString(_meses[i], fLabels, bTexto, centroX - (sizeMes.Width / 2f), margenSup + plotAlto + 8f);
-        }
+                    // Etiqueta del Mes
+                    SizeF sizeMes = g.MeasureString(_meses[i], fLabels);
+                    g.DrawString(_meses[i], fLabels, bTexto, centroX - (sizeMes.Width / 2f), margenSup + plotAlto + 8f);
+                }
 
-        // Leyendas en la esquina superior derecha
-        g.FillRectangle(bVenta, ancho - 165, 14, 10, 10);
-        g.DrawString("Ventas", fLabels, bTexto, ancho - 150, 12);
+                // Leyendas en la esquina superior derecha
+                g.FillRectangle(bVenta, ancho - 165, 14, 10, 10);
+                g.DrawString("Ventas", fLabels, bTexto, ancho - 150, 12);
 
-        g.FillRectangle(bCompra, ancho - 90, 14, 10, 10);
-        g.DrawString("Compras", fLabels, bTexto, ancho - 75, 12);
+                g.FillRectangle(bCompra, ancho - 90, 14, 10, 10);
+                g.DrawString("Compras", fLabels, bTexto, ancho - 75, 12);
     
             }
         }
-
-        // =========================================================================
-        // 3. RENDERIZADO DE GRÁFICO DE DONUT / TORTA (MEDIOS DE COBRO)
-        // =========================================================================
+        // Renderizado de gráfico de donut/torta (medios de cobro)
         private void PPanelGraficoTorta_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -284,10 +269,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // =========================================================================
-        // 4. EXPORTACIÓN A EXCEL (.CSV FORMATO DIRECTO)
-        // =========================================================================
+        // Exportación a excel (.CSV FORMATO) MODIFICAR
         private void BExportarExcel_Click(object sender, EventArgs e)
         {
             if (_dtResumen.Rows.Count == 0)
@@ -335,10 +317,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // =========================================================================
-        // 5. EXPORTACIÓN A PDF / IMPRESIÓN OFICIAL
-        // =========================================================================
+        // Exportación a PDF - impresión oficial
         private void BExportarPDF_Click(object sender, EventArgs e)
         {
             if (_dtResumen.Rows.Count == 0)
@@ -366,7 +345,6 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al generar el PDF/Impresión:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void ImprimirDocumento_PrintPage(object sender, PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -380,14 +358,14 @@ namespace CapaPresentacion
             using (Font fHeader = new Font("Segoe UI", 9, FontStyle.Bold))
             using (Brush bOcre = new SolidBrush(Color.FromArgb(212, 131, 53)))
             using (Brush bGrafito = new SolidBrush(Color.FromArgb(38, 40, 44)))
-            using (Brush bGris = new SolidBrush(Color.Gray)) // <-- Pincel para textos secundarios
+            using (Brush bGris = new SolidBrush(Color.Gray)) 
             using (Pen penLinea = new Pen(Color.FromArgb(200, 205, 210), 1))
             {
                 // Título
                 g.DrawString("HIERRO Y FORJA", fEmpresa, bOcre, x, y);
                 g.DrawString($"INFORME GERENCIAL CONSOLIDADO - Período: {DTPFechaDesde.Value:dd/MM/yyyy} al {DTPFechaHasta.Value:dd/MM/yyyy}", fSub, bGrafito, x, y + 28);
 
-                // CORREGIDO: Usando 'bGris' en lugar de 'Color.Gray'
+                //Usando 'bGris'
                 g.DrawString($"Emitido el: {DateTime.Now:dd/MM/yyyy HH:mm:ss} | Filtro: {CBTipoReporte.Text}", fSub, bGris, x, y + 46);
 
                 y += 75;
@@ -427,11 +405,10 @@ namespace CapaPresentacion
                 g.DrawLine(penLinea, x, y, 750, y);
                 y += 10;
 
-                // CORREGIDO: Usando 'bGris'
+                // Usando 'bGris'
                 g.DrawString("Documento oficial generado por el Sistema de Gestión Hierro y Forja.", fSub, bGris, x, y);
             }
         }
-
         private void BFiltrar_Click(object sender, EventArgs e)
         {
             // Forzar actualización y redibujado de gráficos
