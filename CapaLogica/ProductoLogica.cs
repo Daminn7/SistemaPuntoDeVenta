@@ -60,8 +60,7 @@ namespace CapaLogica
         /// </summary>
         /// <param name="id">ID del producto a actualizar</param>
         /// <param name="p">Datos actualizados del producto</param>
-        public async Task<ProductoDto> Actualizar(int id, ActualizarProductoDto p) => await _apiClient.UpdateProductoAsync(id, p);
-
+        public async Task<ProductoDto> Actualizar(int id, CrearProductoDto p) => await _apiClient.UpdateProductoAsync(id, p);
         /// <summary>
         /// Elimina (desactiva) un producto por su ID.
         /// Se usa en: DELETE /api/productos/{id}

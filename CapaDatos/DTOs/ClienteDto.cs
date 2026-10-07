@@ -63,6 +63,9 @@ namespace CapaDatos.DTOs
         // ✅ NUEVO: Teléfono anidado
         [JsonProperty("telefono")]
         public TelefonoCrearDto Telefono { get; set; }
+
+        [JsonProperty("estado")]
+        public bool? Estado { get; set; }
     }
 
     // ============================================================

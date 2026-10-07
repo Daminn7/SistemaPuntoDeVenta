@@ -60,8 +60,8 @@ namespace CapaLogica
         /// </summary>
         /// <param name="id">ID del proveedor a actualizar</param>
         /// <param name="p">Datos actualizados del proveedor</param>
-        public async Task<ProveedorDto> Actualizar(int id, ActualizarProveedorDto p) => await _apiClient.UpdateProveedorAsync(id, p);
-
+        public async Task<ProveedorDto> Actualizar(int id, CrearProveedorDto p)
+      => await _apiClient.UpdateProveedorAsync(id, p);
         /// <summary>
         /// Elimina (desactiva) un proveedor por su ID.
         /// Se usa en: DELETE /api/proveedores/{id}

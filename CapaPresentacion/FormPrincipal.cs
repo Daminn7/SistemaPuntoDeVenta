@@ -20,6 +20,7 @@ namespace CapaPresentacion
         private Timer _timerReloj;
         private Button _botonMenuActivo = null;
         private bool _cierreConfirmado = false;
+        private bool _cerrandoSesion = false;
         // Paleta de colores
         private readonly Color ColorOcre = Color.FromArgb(212, 131, 53);
         private readonly Color ColorGrafito = Color.FromArgb(38, 40, 44);
@@ -197,7 +198,7 @@ namespace CapaPresentacion
             // Pantalla por defecto para Administrador: Dashboard o Catálogo
             BMenuDashboard_Click(null, EventArgs.Empty);
         }
-        // Simulación usuario
+        /* Simulación usuario
         public static class SesionUsuario
         {
             public static int IdUsuario { get; set; }
@@ -207,7 +208,7 @@ namespace CapaPresentacion
             // Opciones: "ADMINISTRADOR", "VENDEDOR", "CAJERO"
             public static string Rol { get; set; }
         }
-        //
+        */
         private void IniciarReloj()
         {
             _timerReloj = new Timer { Interval = 1000 };
@@ -588,28 +589,69 @@ namespace CapaPresentacion
                 return modal.ShowDialog(this) == DialogResult.Yes;
             }
         }
-        // Intercepta tanto el botón 'X' de Windows como llamadas directas
+        // ============================================================
+        // INTERCEPTA EL CIERRE DE LA VENTANA (X de Windows o Cerrar Sesión)
+        // ============================================================
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {
+            // MODIFICADO: Si es cierre de sesión, no preguntar de nuevo
+            if (_cerrandoSesion) return;
+
+            // Si ya se confirmó salir del programa, permitir
             if (_cierreConfirmado) return;
 
+            // Si el usuario apretó la X de Windows, preguntar si quiere salir
             if (ConfirmarCierreSesion())
             {
                 _cierreConfirmado = true;
-                if (_timerReloj != null)
-                {
-                    _timerReloj.Stop();
-                    _timerReloj.Dispose();
-                }
+                DetenerReloj();
             }
             else
             {
                 e.Cancel = true; // Cancela el cierre de la ventana
             }
         }
+        // ============================================================
+        // ✅ NUEVO: Cuando el form principal se cierra, decidir qué hacer
+        // ============================================================
+        protected override void OnFormClosed(FormClosedEventArgs e)
+        {
+            base.OnFormClosed(e);
+
+            if (_cerrandoSesion)
+            {
+                // ✅ Cierre de sesión → reiniciar la app (vuelve al FormLogin)
+                // Application.Restart() libera toda la memoria del proceso anterior:
+                //   - Token de sesión
+                //   - SesionUsuario (IdUsuario, Nombre, Rol)
+                //   - Formularios abiertos
+                //   - Timers
+                Application.Restart();
+            }
+            // Si NO fue cierre de sesión, la aplicación termina normalmente
+        }
+
+        // ============================================================
+        //  NUEVO: Detener el reloj (evita repetir código)
+        // ============================================================
+        private void DetenerReloj()
+        {
+            if (_timerReloj != null)
+            {
+                _timerReloj.Stop();
+                _timerReloj.Dispose();
+                _timerReloj = null;
+            }
+        }
         private void BCerrarSesion_Click(object sender, EventArgs e)
         {
-            this.Close(); // Dispara automáticamente FormClousing
+            // MODIFICADO: Cerrar sesión (vuelve al login) en lugar de salir del programa
+            if (ConfirmarCierreSesion())
+            {
+                _cerrandoSesion = true;   // Marca que es cierre de sesión
+                DetenerReloj();           // Detiene el timer del reloj
+                this.Close();             // Dispara FormClosing → FormClosed
+            }
         }
         // Eventos de click de navegación
         private void BMenuProductos_Click(object sender, EventArgs e)

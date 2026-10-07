@@ -25,7 +25,7 @@ namespace CapaPresentacion
         private List<ProvinciaDto> _provincias;
         private List<LocalidadDto> _localidades;
 
-        // ✅ NUEVO: Controla qué clientes se muestran (true = activos, false = inactivos)
+        // ✅ Controla qué clientes se muestran (true = activos, false = inactivos)
         private bool _mostrarSoloActivos = true;
 
         // ============================================================
@@ -63,6 +63,9 @@ namespace CapaPresentacion
 
             // Inicializar el texto del botón de estado
             BLimpiarFiltros.Text = "Inactivos";
+
+            // ✅ NUEVO: Estado inicial de los botones (modo nuevo)
+            ActualizarBotonesSegunModo();
         }
 
         // ============================================================
@@ -70,11 +73,10 @@ namespace CapaPresentacion
         // ============================================================
         private void AplicarPermisosPorRol()
         {
-            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
 
             if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
             {
-                // El cajero solo puede consultar la grilla
                 if (PTarjetaLateral != null)
                     PTarjetaLateral.Visible = false;
 
@@ -97,7 +99,6 @@ namespace CapaPresentacion
             }
             else if (rol == "VENDEDOR")
             {
-                // El vendedor no puede dar de baja clientes
                 if (BDesactivar != null)
                     BDesactivar.Visible = false;
 
@@ -194,7 +195,7 @@ namespace CapaPresentacion
             if (e.RowIndex < 0) return;
 
             // El cajero no puede editar clientes
-            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
                 return;
 
@@ -207,6 +208,9 @@ namespace CapaPresentacion
                 _clienteId = id;
                 _esEdicion = true;
                 CargarClienteEnFormulario(id);
+
+                // ✅ NUEVO: Cambiar estado de botones (modo edición)
+                ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
             {
@@ -276,7 +280,6 @@ namespace CapaPresentacion
                 TBPiso.Clear();
                 TBDpto.Clear();
 
-                // Usar DireccionCompleta si está disponible
                 if (cliente.DireccionCompleta != null)
                 {
                     try
@@ -284,7 +287,6 @@ namespace CapaPresentacion
                         var dir = cliente.DireccionCompleta as dynamic;
                         if (dir != null)
                         {
-                            // Intentar diferentes nombres de propiedades
                             if (dir.Calle != null) TBCalle.Text = dir.Calle.ToString();
                             if (dir.calle != null) TBCalle.Text = dir.calle.ToString();
 
@@ -302,7 +304,6 @@ namespace CapaPresentacion
                 }
                 else if (!string.IsNullOrEmpty(cliente.Direccion))
                 {
-                    // Fallback: extraer calle y número del campo Direccion
                     string direccion = cliente.Direccion;
                     int lastSpaceIndex = direccion.LastIndexOf(' ');
                     if (lastSpaceIndex > 0)
@@ -331,10 +332,8 @@ namespace CapaPresentacion
                 {
                     int localidadId = cliente.LocalidadId.Value;
 
-                    // Buscar la localidad en la lista cargada
                     var localidad = _localidades?.FirstOrDefault(l => l.Id == localidadId);
 
-                    // Si no se encuentra, cargar las localidades de esa provincia
                     if (localidad == null && cliente.ProvinciaId.HasValue && cliente.ProvinciaId.Value > 0)
                     {
                         await CargarLocalidadesPorProvinciaAsync(cliente.ProvinciaId.Value);
@@ -346,18 +345,14 @@ namespace CapaPresentacion
                         var provincia = _provincias?.FirstOrDefault(p => p.Id == localidad.ProvinciaId);
                         if (provincia != null)
                         {
-                            //  Seleccionar la provincia
                             CBProvincia.SelectedValue = provincia.Id;
-
-                            //  Esperar a que la cascada cargue las localidades
                             await Task.Delay(300);
-
-                            // Seleccionar la localidad
                             CBLocalidad.SelectedValue = localidadId;
                         }
                     }
                 }
 
+                // ✅ Cargar el estado del cliente en el CheckBox
                 ChBClienteHabilitado.Checked = cliente.Estado;
             }
             catch (Exception ex)
@@ -673,9 +668,7 @@ namespace CapaPresentacion
 
             try
             {
-                //  MODIFICADO: Crear cliente completo en UNA SOLA PETICIÓN
-                // Antes se hacían 4 peticiones separadas (dirección, teléfono, usuario, cliente)
-                // Ahora se envía todo junto al endpoint POST /api/clientes
+                // Crear cliente completo en UNA SOLA PETICIÓN
                 var crearCliente = new CrearClienteDto
                 {
                     Nombre = TBNombreRazonSocial.Text.Trim(),
@@ -683,6 +676,8 @@ namespace CapaPresentacion
                     Dni = TBCodigoInterno.Text.Trim(),
                     CuilCuit = TBCuilCuit.Text.Trim(),
                     Email = TBEmail.Text.Trim(),
+                    // ✅ NUEVO: Enviar estado del CheckBox
+                    Estado = ChBClienteHabilitado.Checked,
                     Direccion = new DireccionCrearDto
                     {
                         Calle = TBCalle.Text.Trim(),
@@ -736,8 +731,6 @@ namespace CapaPresentacion
             try
             {
                 // Actualizar cliente completo en UNA SOLA PETICIÓN
-                // Antes se hacían peticiones separadas para dirección, teléfono y usuario
-                // Ahora se envía todo junto al endpoint PUT /api/clientes/{id}
                 var actualizarCliente = new CrearClienteDto
                 {
                     Nombre = TBNombreRazonSocial.Text.Trim(),
@@ -745,6 +738,8 @@ namespace CapaPresentacion
                     Dni = TBCodigoInterno.Text.Trim(),
                     CuilCuit = TBCuilCuit.Text.Trim(),
                     Email = TBEmail.Text.Trim(),
+                    // ✅ NUEVO: Enviar estado del CheckBox
+                    Estado = ChBClienteHabilitado.Checked,
                     Direccion = new DireccionCrearDto
                     {
                         Calle = TBCalle.Text.Trim(),
@@ -829,7 +824,7 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        //  BOTÓN ESTADO (Alterna entre Activos e Inactivos)
+        // BOTÓN ESTADO (Alterna entre Activos e Inactivos)
         // ============================================================
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
@@ -839,7 +834,7 @@ namespace CapaPresentacion
             // Cambiar el texto del botón para indicar qué se está mostrando
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
 
-            //  Recargar la lista con el filtro aplicado
+            // Recargar la lista con el filtro aplicado
             await CargarClientesAsync();
         }
 
@@ -867,6 +862,28 @@ namespace CapaPresentacion
             ChBClienteHabilitado.Checked = true;
             _esEdicion = false;
             _clienteId = 0;
+
+            // ✅ NUEVO: Actualizar botones (modo nuevo)
+            ActualizarBotonesSegunModo();
+        }
+
+        // ============================================================
+        // 14. ✅ NUEVO: Habilita/Deshabilita botones según el modo
+        // ============================================================
+        private void ActualizarBotonesSegunModo()
+        {
+            if (_esEdicion)
+            {
+                // Modo edición: solo se puede Actualizar
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = true;
+            }
+            else
+            {
+                // Modo nuevo: solo se puede Guardar
+                BGuardar.Enabled = true;
+                BActualizar.Enabled = false;
+            }
         }
 
         // ============================================================

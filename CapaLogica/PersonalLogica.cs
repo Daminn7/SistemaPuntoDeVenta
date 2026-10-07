@@ -67,5 +67,11 @@ namespace CapaLogica
         /// Se usa en: DELETE /api/personal/{id}
         /// </summary>
         public async Task Eliminar(int id) => await _apiClient.DeletePersonalAsync(id);
+
+        /// <summary>
+        /// Restablece la contraseña de un empleado.
+        /// Se usa en: POST /api/personal/{id}/reset-password
+        /// </summary>
+        public async Task<dynamic> ResetPassword(int id) => await _apiClient.ResetPasswordPersonalAsync(id);
     }
 }
