@@ -1,11 +1,11 @@
-﻿using System;
+﻿using CapaDatos.DTOs;
+using CapaLogica;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,423 +13,779 @@ namespace CapaPresentacion
 {
     public partial class FormProveedores : Form
     {
-        private DataTable _dtProveedores = new DataTable();
+        // ============================================================
+        // DECLARACIÓN DE VARIABLES
+        // ============================================================
+        private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
+        private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
+
         private int _idProveedorSeleccionado = 0;
-        private int _proveedorId = 0;
         private bool _esEdicion = false;
+
+        private List<ProvinciaDto> _provincias;
+        private List<LocalidadDto> _localidades;
+
+        // ✅ NUEVO: Controla qué proveedores se muestran (true = activos, false = inactivos)
+        private bool _mostrarSoloActivos = true;
+
+        // ✅ NUEVO: Bandera para el formateo del CUIT en vivo
+        private bool _actualizandoCuit = false;
+
+        // ============================================================
+        // CONSTRUCTOR
+        // ============================================================
         public FormProveedores()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
 
-        private void FormProveedores_Load(object sender, EventArgs e)
+        // ============================================================
+        // CARGA DEL FORMULARIO
+        // ✅ MODIFICADO: Ahora carga de la API
+        // ============================================================
+        private async void FormProveedores_Load(object sender, EventArgs e)
         {
             if (PBIconoTitulo != null)
-            {
-                // Color Ocre (#D48335) para mantener la identidad visual del título
                 PBIconoTitulo.Image = GenerarIconoProveedores(Color.FromArgb(212, 131, 53));
-            }
-            AsignarEstiloEIconos();
-            CargarDesplegablesSimulados();
-            CargarHistorialProveedoresSimulado();
 
-            // Panel lateral en blanco y sin fila marcada
+            AsignarEstiloEIconos();
+            await CargarProvinciasAsync();
+            await CargarProveedoresAsync();
             LimpiarFormulario();
-            DGVProveedores.ClearSelection();
-            DGVProveedores.CurrentCell = null;
+            ActualizarBotonesSegunModo();
+
+            BLimpiarFiltros.Text = "Inactivos";
         }
-        // Ícono vectorial: PROVEEDORES (Camión de distribución y logística)
+
+        // ============================================================
+        // ✅ NUEVO: Carga las provincias desde la API
+        // ============================================================
+        private async Task CargarProvinciasAsync()
+        {
+            try
+            {
+                _provincias = await _tablasLogica.GetProvincias();
+
+                CBProvincia.DataSource = _provincias;
+                CBProvincia.DisplayMember = "Descripcion";
+                CBProvincia.ValueMember = "Id";
+                CBProvincia.SelectedIndex = -1;
+
+                CBFiltroLocalidad.Items.Clear();
+                CBFiltroLocalidad.Items.Add("(Todas)");
+                CBFiltroLocalidad.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar provincias: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // ✅ NUEVO: Carga los proveedores desde la API
+        // ============================================================
+        private async Task CargarProveedoresAsync()
+        {
+            try
+            {
+                var proveedores = await _proveedorLogica.ObtenerTodos();
+
+                DGVProveedores.Rows.Clear();
+                if (proveedores == null || proveedores.Count == 0) return;
+
+                // ✅ Filtrar según _mostrarSoloActivos
+                var filtrados = proveedores
+                    .Where(p => _mostrarSoloActivos ? p.Estado : !p.Estado)
+                    .ToList();
+
+                foreach (var p in filtrados)
+                {
+                    string nombreCompleto = $"{p.Nombre ?? ""} {p.Apellido ?? ""}".Trim();
+                    string estadoMostrar = p.Estado ? "Habilitado" : "Deshabilitado";
+
+                    DGVProveedores.Rows.Add(
+                        p.Id,                  // Columna 0: ID (oculta)
+                        p.CuilCuit ?? "",      // Columna 1: ColCuit
+                        nombreCompleto,        // Columna 2: ColRazonSocial
+                        p.Nombre ?? "",        // Columna 3: ColContacto
+                        p.Telefono ?? "",      // Columna 4: ColTelefono
+                        p.Email ?? "",         // Columna 5: ColEmail
+                        p.Localidad ?? "",     // Columna 6: ColLocalidad
+                        p.Direccion ?? "",     // Columna 7: ColDireccion
+                        estadoMostrar          // Columna 8: ColEstado
+                    );
+                }
+
+                AplicarFiltroGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // Ícono vectorial
+        // ============================================================
         private Image GenerarIconoProveedores(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-
                 using (Pen pen = new Pen(color, 2.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    // Acoplado / Caja de carga del camión (3.5px a 18px)
                     g.DrawRectangle(pen, 3.5f, 8.5f, 15f, 12f);
-
-                    // Cabina de transporte
                     PointF[] cabina = new PointF[]
                     {
-                        new PointF(18.5f, 12.5f), // Unión con acoplado
-                        new PointF(23.5f, 12.5f), // Techo cabina
-                        new PointF(27.5f, 16.5f), // Parabrisas inclinado
-                        new PointF(27.5f, 20.5f), // Paragolpes delantero
-                        new PointF(18.5f, 20.5f)  // Chasis inferior cabina
+                        new PointF(18.5f, 12.5f),
+                        new PointF(23.5f, 12.5f),
+                        new PointF(27.5f, 16.5f),
+                        new PointF(27.5f, 20.5f),
+                        new PointF(18.5f, 20.5f)
                     };
                     g.DrawLines(pen, cabina);
-
-                    // Ventanilla lateral de la cabina
                     g.DrawLine(pen, 20.5f, 14.5f, 24.5f, 14.5f);
-
-                    // Ruedas del camión (delantera y trasera)
                     g.FillEllipse(brush, 6.5f, 20.5f, 5f, 5f);
                     g.FillEllipse(brush, 21.5f, 20.5f, 5f, 5f);
                 }
             }
             return bmp;
         }
-        // Escalado de iconos 
+
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
-
             Bitmap nuevoBitmap = new Bitmap(ancho, alto);
             using (Graphics g = Graphics.FromImage(nuevoBitmap))
             {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.AntiAlias;
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
                 g.DrawImage(imagenOriginal, 0, 0, ancho, alto);
             }
             return nuevoBitmap;
         }
+
         private void AsignarEstiloEIconos()
         {
+            try
+            {
                 BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
                 BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
                 BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
                 BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
+            }
+            catch { }
         }
-        // Restricciones y configuraciones reactivas
+
+        // ============================================================
+        // 2. RESTRICCIONES DE TECLADO Y FILTRADO
+        // ============================================================
         private void InicializarComportamiento()
         {
-            // CUIT solo dígitos y guiones
-            TBCuit.MaxLength = 13;
+            // CUIT: solo dígitos y guiones, con formateo en vivo
+            TBCuit.MaxLength = 15;
             TBCuit.KeyPress += (s, e) =>
             {
                 if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar) && e.KeyChar != '-')
                     e.Handled = true;
             };
+            ConfigurarFormateoCuitEnVivo();
 
-            // TELÉFONO: Solo dígitos sin guiones
+            // Teléfono: solo dígitos, '+' opcional al inicio
             TBTelefono.MaxLength = 18;
             TBTelefono.KeyPress += (s, e) =>
             {
-                // Permite teclas de control
                 if (char.IsControl(e.KeyChar)) return;
-
-                // Permite '+' solo en la primera posición
                 if (e.KeyChar == '+' && TBTelefono.SelectionStart == 0 && !TBTelefono.Text.Contains("+"))
                     return;
-
-                // Bloquea cualquier cosa que no sea número
                 if (!char.IsDigit(e.KeyChar))
                     e.Handled = true;
             };
 
-            // Vinculación en cascada provincia -> localidades
-            CBProvincia.SelectedIndexChanged += (s, e) =>
-            {
-                CBLocalidad.Items.Clear();
+            // Nombre / Razón social: solo letras, números, espacios y puntos
+            TBRazonSocial.KeyPress += SoloLetrasYNumerosYEspacios_KeyPress;
+            TBContacto.KeyPress += SoloLetrasYEspacios_KeyPress;
 
-                if (CBProvincia.SelectedIndex != -1 && _localidadesPorProvincia.ContainsKey(CBProvincia.Text))
+            // Validación de email en vivo
+            ConfigurarValidacionEmailEnVivo();
+
+            // Cascada provincia → localidad desde la API
+            ConfigurarCascadaProvincias();
+
+            // Filtros dinámicos
+            ConfigurarFiltrosDinamicos();
+        }
+
+        // ✅ Formateo CUIT en vivo (XX-XXXXXXXX-X)
+        private void ConfigurarFormateoCuitEnVivo()
+        {
+            TBCuit.TextChanged += (s, e) =>
+            {
+                if (_actualizandoCuit) return;
+
+                string digitos = new string(TBCuit.Text.Where(char.IsDigit).ToArray());
+                if (digitos.Length > 11) digitos = digitos.Substring(0, 11);
+
+                string textoFormateado = digitos;
+                if (digitos.Length > 10)
                 {
-                    CBLocalidad.Items.AddRange(_localidadesPorProvincia[CBProvincia.Text]);
-                    CBLocalidad.Enabled = true;
-                    CBLocalidad.SelectedIndex = -1;
+                    textoFormateado = $"{digitos.Substring(0, 2)}-{digitos.Substring(2, 8)}-{digitos.Substring(10, 1)}";
+                }
+                else if (digitos.Length > 2)
+                {
+                    textoFormateado = $"{digitos.Substring(0, 2)}-{digitos.Substring(2)}";
+                }
+
+                _actualizandoCuit = true;
+                TBCuit.Text = textoFormateado;
+                TBCuit.SelectionStart = TBCuit.Text.Length;
+                _actualizandoCuit = false;
+            };
+        }
+
+        // ✅ Validación de email en vivo
+        private void ConfigurarValidacionEmailEnVivo()
+        {
+            string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+
+            TBEmail.TextChanged += (s, e) =>
+            {
+                string email = TBEmail.Text.Trim();
+                if (string.IsNullOrEmpty(email))
+                {
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+                    return;
+                }
+                TBEmail.ForeColor = Regex.IsMatch(email, patronEmail)
+                    ? Color.FromArgb(39, 174, 96)
+                    : Color.FromArgb(38, 40, 44);
+            };
+
+            TBEmail.Leave += (s, e) =>
+            {
+                string email = TBEmail.Text.Trim();
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                    LEmail.Text = "Correo Electrónico * (Obligatorio)";
+                    LEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                }
+                else if (!Regex.IsMatch(email, patronEmail))
+                {
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                    LEmail.Text = "Correo Electrónico (Formato: ej@dominio.com)";
+                    LEmail.ForeColor = Color.FromArgb(192, 57, 43);
                 }
                 else
                 {
-                    CBLocalidad.Enabled = false;
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+                    LEmail.Text = "Correo Electrónico:";
+                    LEmail.ForeColor = Color.FromArgb(70, 70, 70);
                 }
             };
 
-            ConfigurarFiltrosDinamicos();
+            TBEmail.Enter += (s, e) =>
+            {
+                LEmail.Text = "Correo Electrónico:";
+                LEmail.ForeColor = Color.FromArgb(70, 70, 70);
+                TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+            };
+        }
+
+        private void SoloLetrasYEspacios_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
+                e.Handled = true;
+        }
+
+        private void SoloLetrasYNumerosYEspacios_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsLetterOrDigit(e.KeyChar) && !char.IsControl(e.KeyChar)
+                && !char.IsWhiteSpace(e.KeyChar) && e.KeyChar != '.' && e.KeyChar != ',')
+                e.Handled = true;
+        }
+
+        // ✅ Cascada provincia → localidad desde la API
+        private void ConfigurarCascadaProvincias()
+        {
+            CBProvincia.SelectedIndexChanged += async (s, e) =>
+            {
+                try
+                {
+                    if (CBProvincia.SelectedItem == null)
+                    {
+                        CBLocalidad.DataSource = null;
+                        CBLocalidad.Items.Clear();
+                        return;
+                    }
+
+                    if (CBProvincia.SelectedItem is ProvinciaDto provincia)
+                    {
+                        await CargarLocalidadesPorProvinciaAsync(provincia.Id);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error en cascada: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+        }
+
+        private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia)
+        {
+            try
+            {
+                _localidades = await _tablasLogica.GetLocalidadesByProvincia(idProvincia);
+                if (_localidades == null || _localidades.Count == 0)
+                {
+                    CBLocalidad.DataSource = null;
+                    CBLocalidad.Items.Clear();
+                    return;
+                }
+
+                CBLocalidad.DataSource = _localidades;
+                CBLocalidad.DisplayMember = "Descripcion";
+                CBLocalidad.ValueMember = "Id";
+                CBLocalidad.SelectedIndex = -1;
+
+                // ✅ También actualizamos el combo de filtro
+                CBFiltroLocalidad.Items.Clear();
+                CBFiltroLocalidad.Items.Add("(Todas)");
+                foreach (var loc in _localidades)
+                    CBFiltroLocalidad.Items.Add(loc.Descripcion);
+                CBFiltroLocalidad.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar localidades: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
             CBFiltroLocalidad.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
-            BLimpiarFiltros.Click += (s, e) =>
-            {
-                TBBuscar.Clear();
-                CBFiltroLocalidad.SelectedIndex = -1;
-                AplicarFiltroGrilla();
-            };
+            BLimpiarFiltros.Click += BLimpiarFiltros_Click;
         }
 
         private void AplicarFiltroGrilla()
         {
-            if (_dtProveedores == null || _dtProveedores.DefaultView == null) return;
+            string texto = TBBuscar.Text.Trim().ToLower();
+            string localidadFiltro = CBFiltroLocalidad.Text;
 
-            string texto = TBBuscar.Text.Trim().Replace("'", "''");
-            string filtro = "";
+            bool filtrarPorLocalidad = !string.IsNullOrEmpty(localidadFiltro) && localidadFiltro != "(Todas)";
 
-            if (!string.IsNullOrEmpty(texto))
+            foreach (DataGridViewRow row in DGVProveedores.Rows)
             {
-                filtro += $"(ColCuit LIKE '%{texto}%' OR ColRazonSocial LIKE '%{texto}%' OR ColContacto LIKE '%{texto}%')";
-            }
+                if (row.IsNewRow) continue;
 
-            if (CBFiltroLocalidad.SelectedIndex != -1 && !string.IsNullOrEmpty(CBFiltroLocalidad.Text))
-            {
-                string loc = CBFiltroLocalidad.Text.Replace("'", "''");
-                if (filtro.Length > 0) filtro += " AND ";
-                filtro += $"ColLocalidad = '{loc}'";
-            }
+                string cuit = row.Cells["ColCuit"].Value?.ToString().ToLower() ?? "";
+                string razon = row.Cells["ColRazonSocial"].Value?.ToString().ToLower() ?? "";
+                string contacto = row.Cells["ColContacto"].Value?.ToString().ToLower() ?? "";
+                string localidad = row.Cells["ColLocalidad"].Value?.ToString() ?? "";
 
-            _dtProveedores.DefaultView.RowFilter = filtro;
+                bool coincideTexto = string.IsNullOrEmpty(texto) ||
+                                     cuit.Contains(texto) ||
+                                     razon.Contains(texto) ||
+                                     contacto.Contains(texto);
+
+                bool coincideLocalidad = !filtrarPorLocalidad ||
+                                         localidad.Equals(localidadFiltro, StringComparison.OrdinalIgnoreCase);
+
+                row.Visible = coincideTexto && coincideLocalidad;
+            }
         }
 
-        // =========================================================================
-        // 3. DATOS SIMULADOS PARA REVISIÓN VISUAL
-        // =========================================================================
-        private void CargarDesplegablesSimulados()
+        // ============================================================
+        // BOTÓN QUE ALTERNA ACTIVOS/INACTIVOS
+        // ============================================================
+        private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
-            // Carga de Provincias
-            CBProvincia.Items.Clear();
-            CBProvincia.Items.AddRange(_localidadesPorProvincia.Keys.ToArray());
-            CBProvincia.SelectedIndex = -1;
-
-            // Localidades arranca vacío hasta que se elija una provincia
-            CBLocalidad.Items.Clear();
-            CBLocalidad.Enabled = false;
-
-            // Filtro superior de la barra (aquí listamos todas las localidades para búsqueda global)
-            CBFiltroLocalidad.Items.Clear();
-            var todasLasLocalidades = _localidadesPorProvincia.Values.SelectMany(x => x).Distinct().OrderBy(x => x).ToArray();
-            CBFiltroLocalidad.Items.AddRange(todasLasLocalidades);
-            CBFiltroLocalidad.SelectedIndex = -1;
+            _mostrarSoloActivos = !_mostrarSoloActivos;
+            BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
+            await CargarProveedoresAsync();
         }
 
-        private void CargarHistorialProveedoresSimulado()
-        {
-            if (_dtProveedores.Columns.Count == 0)
-            {
-                _dtProveedores.Columns.Add("ColIdProveedor", typeof(int));
-                _dtProveedores.Columns.Add("ColCuit", typeof(string));
-                _dtProveedores.Columns.Add("ColRazonSocial", typeof(string));
-                _dtProveedores.Columns.Add("ColContacto", typeof(string));
-                _dtProveedores.Columns.Add("ColTelefono", typeof(string));
-                _dtProveedores.Columns.Add("ColEmail", typeof(string));
-                _dtProveedores.Columns.Add("ColLocalidad", typeof(string));
-                _dtProveedores.Columns.Add("ColDireccion", typeof(string));
-                _dtProveedores.Columns.Add("ColEstado", typeof(string));
-
-                _dtProveedores.Rows.Add(1, "30-50001091-2", "Acindar S.A.", "Ing. Carlos Mendoza", "01143209000", "ventas@acindar.com.ar", "Rosario", "Av. San Martín 450", "Habilitado");
-                _dtProveedores.Rows.Add(2, "30-54628472-5", "Siderca Techint", "Martín Gómez", "01140182000", "pedidos@tenaris.com", "Buenos Aires", "Leandro N. Alem 1067", "Habilitado");
-                _dtProveedores.Rows.Add(3, "30-71452899-4", "Distribuidora Metalúrgica S.R.L.", "Alejandro Varela", "3624458921", "contacto@distrimetal.com.ar", "Resistencia", "Av. Alvear 1850", "Habilitado");
-            }
-
-            DGVProveedores.AutoGenerateColumns = false;
-            ColIdProveedor.DataPropertyName = "ColIdProveedor";
-            ColCuit.DataPropertyName = "ColCuit";
-            ColRazonSocial.DataPropertyName = "ColRazonSocial";
-            ColContacto.DataPropertyName = "ColContacto";
-            ColTelefono.DataPropertyName = "ColTelefono";
-            ColEmail.DataPropertyName = "ColEmail";
-            ColLocalidad.DataPropertyName = "ColLocalidad";
-            ColDireccion.DataPropertyName = "ColDireccion";
-            ColEstado.DataPropertyName = "ColEstado";
-
-            DGVProveedores.DataSource = _dtProveedores;
-        }
-        // Estructura en memoria que simula la relación 1 a N de la base de datos
-        private readonly Dictionary<string, string[]> _localidadesPorProvincia = new Dictionary<string, string[]>()
-        {
-            { "Chaco", new[] { "Resistencia", "Barranqueras", "Fontana", "Presidencia Roque Sáenz Peña", "Villa Ángela", "Charata" } },
-            { "Corrientes", new[] { "Corrientes Capital", "Goya", "Paso de los Libres", "Curuzú Cuatiá", "Mercedes", "Bella Vista" } },
-            { "Misiones", new[] { "Posadas", "Oberá", "Eldorado", "Puerto Iguazú", "Apóstoles" } },
-            { "Santa Fe", new[] { "Santa Fe Capital", "Rosario", "Rafaela", "Venado Tuerto", "Reconquista" } },
-            { "Buenos Aires", new[] { "La Plata", "Mar del Plata", "Bahía Blanca", "Tandil", "San Nicolás" , "Buenos Aires", "CABA"} },
-        };
-
-        // =========================================================================
-        // 4. ACCIONES DE BOTONES
-        // =========================================================================
+        // ============================================================
+        // VALIDACIÓN
+        // ============================================================
         private bool ValidarFormulario(out string mensajeError)
         {
             mensajeError = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(TBCuit.Text))
+            // CUIT obligatorio, 11 dígitos
+            string cuitDigitos = new string(TBCuit.Text.Where(char.IsDigit).ToArray());
+            if (string.IsNullOrWhiteSpace(TBCuit.Text) || cuitDigitos.Length != 11)
             {
-                mensajeError = "Debe ingresar el CUIT del proveedor.";
+                mensajeError = "Debe ingresar un CUIT válido (11 dígitos, formato XX-XXXXXXXX-X).";
                 TBCuit.Focus();
                 return false;
             }
 
+            // Razón social obligatoria
             if (string.IsNullOrWhiteSpace(TBRazonSocial.Text))
             {
-                mensajeError = "Debe ingresar la Razón Social o Nombre del proveedor.";
+                mensajeError = "Debe ingresar la Razón Social del proveedor.";
                 TBRazonSocial.Focus();
+                return false;
+            }
+
+            // Email obligatorio y válido
+            string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+            if (string.IsNullOrWhiteSpace(TBEmail.Text.Trim()) ||
+                !Regex.IsMatch(TBEmail.Text.Trim(), patronEmail))
+            {
+                mensajeError = "Debe ingresar un Correo Electrónico válido.";
+                TBEmail.Focus();
+                return false;
+            }
+
+            // Provincia obligatoria si se carga dirección
+            if (!string.IsNullOrWhiteSpace(TBCalle.Text) && CBProvincia.SelectedIndex == -1)
+            {
+                mensajeError = "Debe seleccionar una Provincia.";
+                CBProvincia.Focus();
+                return false;
+            }
+
+            // Localidad obligatoria si se carga dirección
+            if (!string.IsNullOrWhiteSpace(TBCalle.Text) && CBLocalidad.SelectedIndex == -1)
+            {
+                mensajeError = "Debe seleccionar una Localidad.";
+                CBLocalidad.Focus();
                 return false;
             }
 
             return true;
         }
 
-        private void BGuardar_Click(object sender, EventArgs e)
+        // ============================================================
+        // BOTONES DE ACCIÓN
+        // ✅ MODIFICADO: Deshabilitar botones durante la operación
+        // ============================================================
+        private async void BGuardar_Click(object sender, EventArgs e)
         {
+            if (_esEdicion)
+            {
+                MessageBox.Show("Está en modo edición. Use el botón 'Actualizar'.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             if (!ValidarFormulario(out string error))
             {
                 MessageBox.Show(error, "Validación de Proveedor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            // Simulamos alta en memoria para validación visual
-            string estado = ChBProveedorHabilitado.Checked ? "Habilitado" : "Deshabilitado";
-            string direccionCompleta = $"{TBCalle.Text.Trim()} {TBNro.Text.Trim()}".Trim();
+            // ✅ NUEVO: Deshabilitar botones durante el guardado
+            BGuardar.Enabled = false;
+            BActualizar.Enabled = false;
 
-            _dtProveedores.Rows.Add(
-                _dtProveedores.Rows.Count + 1,
-                TBCuit.Text.Trim(),
-                TBRazonSocial.Text.Trim(),
-                TBContacto.Text.Trim(),
-                TBTelefono.Text.Trim(),
-                TBEmail.Text.Trim(),
-                CBLocalidad.Text,
-                direccionCompleta,
-                estado
-            );
+            try
+            {
+                string telCompleto = TBTelefono.Text.Trim();
+                string caracteristica = "";
+                long numero = 0;
 
-            MessageBox.Show("Proveedor registrado con éxito en la vista previa.", "Proveedores", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LimpiarFormulario();
+                if (!string.IsNullOrEmpty(telCompleto))
+                {
+                    string digitosTel = new string(telCompleto.Where(char.IsDigit).ToArray());
+                    if (digitosTel.Length > 7)
+                    {
+                        caracteristica = digitosTel.Substring(0, digitosTel.Length - 7);
+                        long.TryParse(digitosTel.Substring(digitosTel.Length - 7), out numero);
+                    }
+                    else
+                    {
+                        long.TryParse(digitosTel, out numero);
+                    }
+                }
+
+                var nuevo = new CrearProveedorDto
+                {
+                    Nombre = TBRazonSocial.Text.Trim(),
+                    Apellido = TBContacto.Text.Trim(),
+                    CuilCuit = TBCuit.Text.Trim(),
+                    Email = TBEmail.Text.Trim(),
+                    Estado = ChBProveedorHabilitado.Checked,
+                    Direccion = new DireccionCrearDto
+                    {
+                        Calle = TBCalle.Text.Trim(),
+                        Numero = string.IsNullOrWhiteSpace(TBNro.Text) ? (int?)null : int.Parse(TBNro.Text),
+                        Edificio = null,
+                        Piso = null,
+                        Departamento = "",
+                        Descripcion = null,
+                        LocalidadId = CBLocalidad.SelectedValue != null ? (int)CBLocalidad.SelectedValue : 0
+                    },
+                    Telefono = !string.IsNullOrEmpty(telCompleto) ? new TelefonoCrearDto
+                    {
+                        Caracteristica = caracteristica,
+                        Numero = numero
+                    } : null
+                };
+
+                await _proveedorLogica.Crear(nuevo);
+
+                MessageBox.Show("Proveedor creado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await CargarProveedoresAsync();
+                LimpiarFormulario();
+
+                // ✅ NUEVO: Actualización explícita del estado de botones
+                ActualizarBotonesSegunModo();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // ✅ Rehabilitar botones en caso de error
+                BGuardar.Enabled = true;
+                BActualizar.Enabled = false;
+            }
+        }
+
+        private async void BActualizar_Click(object sender, EventArgs e)
+        {
+            if (!_esEdicion || _idProveedorSeleccionado <= 0)
+            {
+                MessageBox.Show("Seleccione un proveedor de la grilla para actualizar.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!ValidarFormulario(out string error))
+            {
+                MessageBox.Show(error, "Validación de Proveedor", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // ✅ NUEVO: Deshabilitar botones durante la operación
+            BGuardar.Enabled = false;
+            BActualizar.Enabled = false;
+
+            try
+            {
+                string telCompleto = TBTelefono.Text.Trim();
+                string caracteristica = "";
+                long numero = 0;
+
+                if (!string.IsNullOrEmpty(telCompleto))
+                {
+                    string digitosTel = new string(telCompleto.Where(char.IsDigit).ToArray());
+                    if (digitosTel.Length > 7)
+                    {
+                        caracteristica = digitosTel.Substring(0, digitosTel.Length - 7);
+                        long.TryParse(digitosTel.Substring(digitosTel.Length - 7), out numero);
+                    }
+                    else
+                    {
+                        long.TryParse(digitosTel, out numero);
+                    }
+                }
+
+                var actualizar = new CrearProveedorDto
+                {
+                    Nombre = TBRazonSocial.Text.Trim(),
+                    Apellido = TBContacto.Text.Trim(),
+                    CuilCuit = TBCuit.Text.Trim(),
+                    Email = TBEmail.Text.Trim(),
+                    Estado = ChBProveedorHabilitado.Checked,
+                    Direccion = new DireccionCrearDto
+                    {
+                        Calle = TBCalle.Text.Trim(),
+                        Numero = string.IsNullOrWhiteSpace(TBNro.Text) ? (int?)null : int.Parse(TBNro.Text),
+                        Edificio = null,
+                        Piso = null,
+                        Departamento = "",
+                        Descripcion = null,
+                        LocalidadId = CBLocalidad.SelectedValue != null ? (int)CBLocalidad.SelectedValue : 0
+                    },
+                    Telefono = !string.IsNullOrEmpty(telCompleto) ? new TelefonoCrearDto
+                    {
+                        Caracteristica = caracteristica,
+                        Numero = numero
+                    } : null
+                };
+
+                await _proveedorLogica.Actualizar(_idProveedorSeleccionado, actualizar);
+
+                MessageBox.Show("Proveedor actualizado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await CargarProveedoresAsync();
+                LimpiarFormulario();
+
+                // ✅ NUEVO: Actualización explícita del estado de botones
+                ActualizarBotonesSegunModo();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                // ✅ Rehabilitar botones en caso de error (mantener modo edición)
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = true;
+            }
+        }
+
+        private async void BDesactivar_Click(object sender, EventArgs e)
+        {
+            if (_idProveedorSeleccionado <= 0)
+            {
+                MessageBox.Show("Seleccione un proveedor de la grilla para dar de baja.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (MessageBox.Show("¿Está seguro de dar de baja a este proveedor?",
+                "Dar de Baja", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                // ✅ NUEVO: Deshabilitar botones durante la operación
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = false;
+                BDesactivar.Enabled = false;
+
+                try
+                {
+                    await _proveedorLogica.Eliminar(_idProveedorSeleccionado);
+                    MessageBox.Show("Proveedor dado de baja exitosamente", "Éxito",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await CargarProveedoresAsync();
+                    LimpiarFormulario();
+                    BDesactivar.Enabled = true;
+
+                    // ✅ NUEVO: Actualización explícita del estado de botones
+                    ActualizarBotonesSegunModo();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                    // ✅ Rehabilitar botones en caso de error
+                    BDesactivar.Enabled = true;
+                    ActualizarBotonesSegunModo();
+                }
+            }
         }
 
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarFormulario();
+            _esEdicion = false;
+            _idProveedorSeleccionado = 0;
+            ActualizarBotonesSegunModo();
             TBCuit.Focus();
         }
 
-        private void BActualizar_Click(object sender, EventArgs e)
+        // ============================================================
+        // SELECCIÓN EN LA GRILLA
+        // ============================================================
+        private async void DGVProveedores_CellClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (DGVProveedores.CurrentRow == null || DGVProveedores.CurrentRow.Index < 0)
-            {
-                MessageBox.Show("Seleccione un proveedor de la grilla para actualizar sus datos.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
+            if (e.RowIndex < 0) return;
 
             try
             {
-                var idValue = DGVProveedores.CurrentRow.Cells[0].Value;
-                if (idValue != null && idValue != DBNull.Value)
+                var fila = DGVProveedores.Rows[e.RowIndex];
+                int id = Convert.ToInt32(fila.Cells["ColIdProveedor"].Value ?? 0);
+
+                _idProveedorSeleccionado = id;
+                _esEdicion = true;
+
+                var proveedor = await _proveedorLogica.ObtenerPorId(id);
+                if (proveedor != null)
                 {
-                    int id = Convert.ToInt32(idValue);
-                    _proveedorId = id;
-                    _esEdicion = true;
-                    CargarProveedorEnFormulario(id);
+                    TBRazonSocial.Text = proveedor.Nombre ?? "";
+                    TBContacto.Text = proveedor.Apellido ?? "";
+                    TBCuit.Text = proveedor.CuilCuit ?? "";
+                    TBEmail.Text = proveedor.Email ?? "";
+                    TBTelefono.Text = proveedor.Telefono ?? "";
+
+                    // ✅ Cargar dirección
+                    string dir = proveedor.Direccion ?? "";
+                    if (!string.IsNullOrEmpty(dir))
+                    {
+                        int lastSpace = dir.LastIndexOf(' ');
+                        if (lastSpace > 0 && int.TryParse(dir.Substring(lastSpace + 1), out _))
+                        {
+                            TBCalle.Text = dir.Substring(0, lastSpace);
+                            TBNro.Text = dir.Substring(lastSpace + 1);
+                        }
+                        else
+                        {
+                            TBCalle.Text = dir;
+                            TBNro.Clear();
+                        }
+                    }
+                    else
+                    {
+                        TBCalle.Clear();
+                        TBNro.Clear();
+                    }
+
+                    // ✅ Cargar provincia y localidad
+                    if (proveedor.LocalidadId > 0)
+                    {
+                        var localidad = _localidades?.FirstOrDefault(l => l.Id == proveedor.LocalidadId);
+
+                        if (localidad == null)
+                        {
+                            foreach (var prov in _provincias)
+                            {
+                                var locs = await _tablasLogica.GetLocalidadesByProvincia(prov.Id);
+                                localidad = locs.FirstOrDefault(l => l.Id == proveedor.LocalidadId);
+                                if (localidad != null)
+                                {
+                                    CBProvincia.SelectedValue = prov.Id;
+                                    await Task.Delay(200);
+                                    break;
+                                }
+                            }
+                        }
+                        else
+                        {
+                            var provincia = _provincias?.FirstOrDefault(p => p.Id == localidad.ProvinciaId);
+                            if (provincia != null)
+                                CBProvincia.SelectedValue = provincia.Id;
+
+                            await Task.Delay(300);
+                        }
+
+                        if (localidad != null && CBLocalidad.DataSource != null)
+                            CBLocalidad.SelectedValue = proveedor.LocalidadId;
+                    }
+
+                    ChBProveedorHabilitado.Checked = proveedor.Estado;
                 }
+
+                ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar datos del proveedor: {ex.Message}", "Error",
+                MessageBox.Show($"Error al cargar proveedor: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private void BDesactivar_Click(object sender, EventArgs e)
-        {
-            if (_idProveedorSeleccionado <= 0)
-            {
-                MessageBox.Show("Seleccione un proveedor de la grilla para dar de baja.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            DialogResult confirmacion = MessageBox.Show(
-                $"¿Está seguro de dar de baja al proveedor {TBRazonSocial.Text}?",
-                "Dar de Baja",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning
-            );
-
-            if (confirmacion == DialogResult.Yes)
-            {
-                foreach (DataRow fila in _dtProveedores.Rows)
-                {
-                    if (Convert.ToInt32(fila["ColIdProveedor"]) == _idProveedorSeleccionado)
-                    {
-                        fila["ColEstado"] = "Deshabilitado";
-                        break;
-                    }
-                }
-                LimpiarFormulario();
-            }
-        }
-
-        private void DGVProveedores_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            DataGridViewRow fila = DGVProveedores.Rows[e.RowIndex];
-            _idProveedorSeleccionado = Convert.ToInt32(fila.Cells["ColIdProveedor"].Value ?? 0);
-
-            TBCuit.Text = fila.Cells["ColCuit"].Value?.ToString() ?? "";
-            TBRazonSocial.Text = fila.Cells["ColRazonSocial"].Value?.ToString() ?? "";
-            TBContacto.Text = fila.Cells["ColContacto"].Value?.ToString() ?? "";
-            TBTelefono.Text = fila.Cells["ColTelefono"].Value?.ToString() ?? "";
-            TBEmail.Text = fila.Cells["ColEmail"].Value?.ToString() ?? "";
-
-            // Obtener localidad seleccionada
-            string localidadGuardada = fila.Cells["ColLocalidad"].Value?.ToString() ?? "";
-
-            // Buscar a qué provincia pertenece para sincronizar ambos combos
-            string provEncontrada = _localidadesPorProvincia
-                .FirstOrDefault(kvp => kvp.Value.Contains(localidadGuardada)).Key;
-
-            if (!string.IsNullOrEmpty(provEncontrada))
-            {
-                CBProvincia.Text = provEncontrada;
-                CBLocalidad.Text = localidadGuardada;
-            }
-            else
-            {
-                CBProvincia.SelectedIndex = -1;
-                CBLocalidad.Text = localidadGuardada;
-            }
-
-            string dir = fila.Cells["ColDireccion"].Value?.ToString() ?? "";
-            TBCalle.Text = dir;
-            TBNro.Clear();
-
-            string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "Habilitado";
-            ChBProveedorHabilitado.Checked = (estado == "Habilitado");
-        }
-        private void CargarProveedorEnFormulario(int id)
-        {
-            if (DGVProveedores.CurrentRow == null) return;
-
-            DataGridViewRow fila = DGVProveedores.CurrentRow;
-
-            // Carga de campos fiscales y de contacto
-            TBCuit.Text = fila.Cells["ColCuit"].Value?.ToString() ?? "";
-            TBRazonSocial.Text = fila.Cells["ColRazonSocial"].Value?.ToString() ?? "";
-            TBContacto.Text = fila.Cells["ColContacto"].Value?.ToString() ?? "";
-            TBTelefono.Text = fila.Cells["ColTelefono"].Value?.ToString() ?? "";
-            TBEmail.Text = fila.Cells["ColEmail"].Value?.ToString() ?? "";
-
-            // Carga de domicilio
-            TBCalle.Text = fila.Cells["ColCalle"].Value?.ToString() ?? "";
-            TBNro.Text = fila.Cells["ColNro"].Value?.ToString() ?? "";
-
-            // Combos de ubicación
-            if (CBProvincia.Items.Count > 0)
-            {
-                string prov = fila.Cells["ColProvincia"].Value?.ToString() ?? "";
-                CBProvincia.SelectedIndex = CBProvincia.FindStringExact(prov);
-            }
-
-            if (CBLocalidad.Items.Count > 0)
-            {
-                string loc = fila.Cells["ColLocalidad"].Value?.ToString() ?? "";
-                CBLocalidad.SelectedIndex = CBLocalidad.FindStringExact(loc);
-            }
-
-            // Estado habilitado
-            string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "";
-            ChBProveedorHabilitado.Checked = estado.Equals("Activo", StringComparison.OrdinalIgnoreCase) ||
-                                            estado.Equals("Habilitado", StringComparison.OrdinalIgnoreCase);
-        }
-
+        // ============================================================
+        // LIMPIAR FORMULARIO
+        // ============================================================
         private void LimpiarFormulario()
         {
             _idProveedorSeleccionado = 0;
+            _esEdicion = false;
+
             TBCuit.Clear();
             TBRazonSocial.Clear();
             TBContacto.Clear();
@@ -439,14 +795,41 @@ namespace CapaPresentacion
             TBNro.Clear();
 
             CBProvincia.SelectedIndex = -1;
+            CBLocalidad.DataSource = null;
             CBLocalidad.Items.Clear();
-            CBLocalidad.Enabled = false;
 
             ChBProveedorHabilitado.Checked = true;
+
+            // ✅ Restaurar color del label de email
+            TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+            LEmail.Text = "Correo Electrónico:";
+            LEmail.ForeColor = Color.FromArgb(70, 70, 70);
 
             DGVProveedores.ClearSelection();
             if (DGVProveedores.CurrentCell != null)
                 DGVProveedores.CurrentCell = null;
+
+            // ✅ Asegurar botón Dar de Baja habilitado por defecto
+            BDesactivar.Enabled = true;
+
+            ActualizarBotonesSegunModo();
+        }
+
+        // ============================================================
+        // HABILITAR/DESHABILITAR BOTONES SEGÚN MODO
+        // ============================================================
+        private void ActualizarBotonesSegunModo()
+        {
+            if (_esEdicion)
+            {
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = true;
+            }
+            else
+            {
+                BGuardar.Enabled = true;
+                BActualizar.Enabled = false;
+            }
         }
     }
 }

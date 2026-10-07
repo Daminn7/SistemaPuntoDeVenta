@@ -120,19 +120,41 @@ namespace CapaDatos.Services
 
         public async Task<PersonalDto> CreatePersonalAsync(CrearPersonalDto personal)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(personal), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(personal);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/personal: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/personal", content);
-            response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
             return JsonConvert.DeserializeObject<PersonalDto>(responseContent);
         }
 
         public async Task<PersonalDto> UpdatePersonalAsync(int id, ActualizarPersonalDto personal)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(personal), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(personal);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/personal/{id}: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync($"/api/personal/{id}", content);
-            response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
             return JsonConvert.DeserializeObject<PersonalDto>(responseContent);
         }
 
@@ -140,6 +162,15 @@ namespace CapaDatos.Services
         {
             var response = await _httpClient.DeleteAsync($"/api/personal/{id}");
             response.EnsureSuccessStatusCode();
+        }
+
+        // Reset Password
+        public async Task<dynamic> ResetPasswordPersonalAsync(int id)
+        {
+            var response = await _httpClient.PostAsync($"/api/personal/{id}/reset-password", null);
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<dynamic>(content);
         }
 
         // ============================================================
@@ -170,12 +201,23 @@ namespace CapaDatos.Services
             return JsonConvert.DeserializeObject<ProductoDto>(responseContent);
         }
 
-        public async Task<ProductoDto> UpdateProductoAsync(int id, ActualizarProductoDto producto)
+        public async Task<ProductoDto> UpdateProductoAsync(int id, CrearProductoDto producto)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(producto), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(producto);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/productos/{id}: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync($"/api/productos/{id}", content);
-            response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
             return JsonConvert.DeserializeObject<ProductoDto>(responseContent);
         }
 
@@ -255,18 +297,16 @@ namespace CapaDatos.Services
             var content = await response.Content.ReadAsStringAsync();
             return JsonConvert.DeserializeObject<DireccionDto>(content);
         }
+
         public async Task<DireccionDto> CreateDireccionAsync(CrearDireccionDto direccion)
         {
             var json = JsonConvert.SerializeObject(direccion);
-
             System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/direcciones: {json}");
 
             var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/direcciones", content);
 
             var responseContent = await response.Content.ReadAsStringAsync();
-
-            // ✅ Mostrar más detalles
             System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
             System.Diagnostics.Debug.WriteLine($"Respuesta: '{responseContent}'");
             System.Diagnostics.Debug.WriteLine($"Headers: {response.Headers}");
@@ -386,6 +426,7 @@ namespace CapaDatos.Services
 
         // ============================================================
         // PROVEEDORES
+        // ✅ ÚNICO BLOQUE (sin duplicados)
         // ============================================================
         public async Task<List<ProveedorDto>> GetProveedoresAsync()
         {
@@ -405,19 +446,41 @@ namespace CapaDatos.Services
 
         public async Task<ProveedorDto> CreateProveedorAsync(CrearProveedorDto proveedor)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(proveedor), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(proveedor);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/proveedores: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PostAsync("/api/proveedores", content);
-            response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
             return JsonConvert.DeserializeObject<ProveedorDto>(responseContent);
         }
 
-        public async Task<ProveedorDto> UpdateProveedorAsync(int id, ActualizarProveedorDto proveedor)
+        public async Task<ProveedorDto> UpdateProveedorAsync(int id, CrearProveedorDto proveedor)
         {
-            var content = new StringContent(JsonConvert.SerializeObject(proveedor), Encoding.UTF8, "application/json");
+            var json = JsonConvert.SerializeObject(proveedor);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/proveedores/{id}: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
             var response = await _httpClient.PutAsync($"/api/proveedores/{id}", content);
-            response.EnsureSuccessStatusCode();
+
             var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
             return JsonConvert.DeserializeObject<ProveedorDto>(responseContent);
         }
 
@@ -576,13 +639,8 @@ namespace CapaDatos.Services
         }
 
         // ============================================================
-        // TABLAS MAESTRAS (CON MAPEO MANUAL - SIN DEPURACIÓN)
+        // TABLAS MAESTRAS
         // ============================================================
-
-        /// <summary>
-        /// Obtiene todas las provincias usando mapeo manual.
-        /// Se usa en: GET /api/provincias
-        /// </summary>
         public async Task<List<ProvinciaDto>> GetProvinciasAsync()
         {
             var response = await _httpClient.GetAsync("/api/provincias");
@@ -615,10 +673,6 @@ namespace CapaDatos.Services
             return provincias;
         }
 
-        /// <summary>
-        /// Obtiene localidades filtradas por provincia.
-        /// Se usa en: GET /api/localidades/provincia/{id}
-        /// </summary>
         public async Task<List<LocalidadDto>> GetLocalidadesByProvinciaAsync(int provinciaId)
         {
             var response = await _httpClient.GetAsync($"/api/localidades/provincia/{provinciaId}");

@@ -1,49 +1,100 @@
 ﻿using System;
+using Newtonsoft.Json;
 
 namespace CapaDatos.DTOs
 {
     // ============================================================
     // 1. PROVEEDOR DTO - PARA CONSULTAS (GET)
-    //    Se usa en: GET /api/proveedores, GET /api/proveedores/{id}
+    //    ✅ MODIFICADO: Alineado con la respuesta real de la API
     // ============================================================
     public class ProveedorDto
     {
+        [JsonProperty("idProveedor")]
         public int Id { get; set; }
-        public string Nombre { get; set; }
-        public string Cuit { get; set; }
-        public string Telefono { get; set; }
-        public string Email { get; set; }
-        public string Direccion { get; set; }
+
+        [JsonProperty("usuarioId")]
+        public int UsuarioId { get; set; }
+
+        [JsonProperty("estado")]
         public bool Estado { get; set; }
+
+        [JsonProperty("estadoDescripcion")]
+        public string EstadoDescripcion { get; set; }
+
+        [JsonProperty("fechaAlta")]
         public DateTime FechaAlta { get; set; }
+
+        [JsonProperty("fechaBaja")]
         public DateTime? FechaBaja { get; set; }
-        public DateTime? FechaModificacion { get; set; }
+
+        [JsonProperty("nombre")]
+        public string Nombre { get; set; }
+
+        [JsonProperty("apellido")]
+        public string Apellido { get; set; }
+
+        [JsonProperty("email")]
+        public string Email { get; set; }
+
+        [JsonProperty("dni")]
+        public string Dni { get; set; }
+
+        [JsonProperty("cuilCuit")]
+        public string CuilCuit { get; set; }
+
+        [JsonProperty("direccion")]
+        public string Direccion { get; set; }
+
+        [JsonProperty("localidadId")]
+        public int LocalidadId { get; set; }
+
+        [JsonProperty("localidad")]
+        public string Localidad { get; set; }
+
+        [JsonProperty("provincia")]
+        public string Provincia { get; set; }
+
+        [JsonProperty("telefono")]
+        public string Telefono { get; set; }
     }
 
     // ============================================================
-    // 2. CREAR PROVEEDOR DTO - PARA CREACIÓN (POST)
-    //    Se usa en: POST /api/proveedores
+    // 2. CREAR PROVEEDOR DTO - PARA POST Y PUT
+    //    ✅ MODIFICADO: Estructura anidada con Direccion y Telefono
     // ============================================================
     public class CrearProveedorDto
     {
+        [JsonProperty("nombre")]
         public string Nombre { get; set; }
-        public string Cuit { get; set; }
-        public string Telefono { get; set; }
+
+        [JsonProperty("apellido")]
+        public string Apellido { get; set; }
+
+        [JsonProperty("dni")]
+        public string Dni { get; set; }
+
+        [JsonProperty("cuilCuit")]
+        public string CuilCuit { get; set; }
+
+        [JsonProperty("email")]
         public string Email { get; set; }
-        public string Direccion { get; set; }
+
+        [JsonProperty("direccion")]
+        public DireccionCrearDto Direccion { get; set; }
+
+        [JsonProperty("telefono")]
+        public TelefonoCrearDto Telefono { get; set; }
+
+        [JsonProperty("estado")]
+        public bool? Estado { get; set; }
     }
 
     // ============================================================
-    // 3. ACTUALIZAR PROVEEDOR DTO - PARA MODIFICACIÓN (PUT)
-    //    Se usa en: PUT /api/proveedores/{id}
+    // 3. ACTUALIZAR PROVEEDOR DTO
+    //    ✅ MODIFICADO: Ahora es alias de CrearProveedorDto
+    //    (la API usa el mismo DTO para PUT)
     // ============================================================
-    public class ActualizarProveedorDto
+    public class ActualizarProveedorDto : CrearProveedorDto
     {
-        public string Nombre { get; set; }
-        public string Cuit { get; set; }
-        public string Telefono { get; set; }
-        public string Email { get; set; }
-        public string Direccion { get; set; }
-        public bool Estado { get; set; }
     }
 }

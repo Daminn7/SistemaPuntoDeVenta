@@ -1,125 +1,171 @@
-﻿using System;
+﻿using CapaDatos.DTOs;
+using CapaLogica;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
-using CapaLogica;
-using CapaDatos.DTOs;
 
 namespace CapaPresentacion
 {
     public partial class FormProductos : Form
     {
-        // Declaración de variables
+        // ============================================================
+        // DECLARACIÓN DE VARIABLES
+        // ============================================================
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
-        private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();        
+        private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
-        private bool _esEdicion = false;
+
         private int _productoId = 0;
+        private bool _esEdicion = false;
+
         private List<CategoriaDto> _categorias;
+        private List<ProveedorDto> _proveedores;
         private List<ProductoDto> _productosOriginales;
-        private List<ProveedorDto> _todosLosProveedores;
-        // Constructor
+
+        // ✅ NUEVO: Controla qué productos se muestran (true = activos, false = inactivos)
+        private bool _mostrarSoloActivos = true;
+
+        // ============================================================
+        // CONSTRUCTOR
+        // ============================================================
         public FormProductos()
         {
             InitializeComponent();
+            InicializarComportamiento();
+        }
+
+        private void InicializarComportamiento()
+        {
             AsignarEstiloEIconos();
+            ConfigurarFiltrosDinamicos();
         }
-
-        private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
+        // ============================================================
+        // ✅ NUEVO: Al cambiar la categoría, se puede filtrar el combo de proveedores
+        //    (por ahora solo limpia el proveedor seleccionado)
+        // ============================================================
+        private void CBCategoria_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (imagenOriginal == null) return null;
+            // Si no hay categoría seleccionada, no hacer nada
+            if (CBCategoria.SelectedIndex == -1) return;
 
-            Bitmap nuevoBitmap = new Bitmap(ancho, alto);
-            using (Graphics g = Graphics.FromImage(nuevoBitmap))
-            {
-                g.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                g.DrawImage(imagenOriginal, 0, 0, ancho, alto);
-            }
-            return nuevoBitmap;
+            // Aquí podrías filtrar proveedores por categoría si quisieras
+            // Por ahora, dejamos el combo de proveedores como está
         }
-
-        private void AsignarEstiloEIconos()
-        {
-            try
-            {
-                BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
-                BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
-                BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
-                BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
-            }
-            catch
-            {
-                // Fallback silencioso
-            }
-        }
-        // Carga de formulario
+        // ============================================================
+        // CARGA DEL FORMULARIO
+        // ============================================================
         private async void FormProductos_Load(object sender, EventArgs e)
         {
             AplicarRestriccionesPorRol();
 
-            // Cargar datos desde la lógica asíncrona
             await CargarCategoriasAsync();
             await CargarProveedoresAsync();
             await CargarProductosAsync();
+
+            LimpiarCampos();
+            ActualizarBotonesSegunModo();
+
+            BLimpiarFiltros.Text = "Inactivos";
         }
 
+        // ============================================================
+        // PERMISOS POR ROL
+        // ============================================================
         private void AplicarRestriccionesPorRol()
         {
-            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
 
             if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
             {
-                // Ocultar tarjeta lateral de carga / modificación
                 PTarjetaLateral.Visible = false;
 
-                // Expandir grilla al 100% del ancho del TableLayoutPanel
                 TLPContenido.ColumnStyles[0].SizeType = SizeType.Percent;
                 TLPContenido.ColumnStyles[0].Width = 100F;
                 TLPContenido.ColumnStyles[1].SizeType = SizeType.Percent;
                 TLPContenido.ColumnStyles[1].Width = 0F;
 
-                // Bloquear edición en la grilla (solo consulta)
                 DGVProductos.ReadOnly = true;
                 DGVProductos.AllowUserToAddRows = false;
                 DGVProductos.AllowUserToDeleteRows = false;
                 DGVProductos.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
                 DGVProductos.MultiSelect = false;
 
-                // Quitar la selección inicial
                 DGVProductos.ClearSelection();
                 DGVProductos.CurrentCell = null;
 
-                // Cambiar título
-                Control[] lblTitulo = this.Controls.Find("LTituloPrincipal", true);
-                if (lblTitulo.Length > 0)
-                {
-                    lblTitulo[0].Text = "CATÁLOGO DE PRODUCTOS";
-                }
+                if (LTituloPrincipal != null)
+                    LTituloPrincipal.Text = "CATÁLOGO DE PRODUCTOS";
             }
         }
-        // Carga de categorías
+
+        // ============================================================
+        // CARGA DE CATEGORÍAS
+        // ============================================================
         private async Task CargarCategoriasAsync()
         {
             try
             {
                 _categorias = await _categoriaLogica.ObtenerTodos();
                 if (_categorias == null || _categorias.Count == 0) return;
+
                 CBCategoria.DataSource = _categorias;
                 CBCategoria.DisplayMember = "Descripcion";
                 CBCategoria.ValueMember = "Id";
                 CBCategoria.SelectedIndex = -1;
+
+                // Filtro de categorías con opción "Todas"
+                var categoriasFiltro = new List<CategoriaDto>();
+                categoriasFiltro.Add(new CategoriaDto { Id = 0, Descripcion = "(Todas)" });
+                categoriasFiltro.AddRange(_categorias);
+
+                CBFiltroCategoria.DataSource = categoriasFiltro;
+                CBFiltroCategoria.DisplayMember = "Descripcion";
+                CBFiltroCategoria.ValueMember = "Id";
+                CBFiltroCategoria.SelectedIndex = 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar categorías: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al cargar categorías: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // Carga de productos
+
+        // ============================================================
+        // CARGA DE PROVEEDORES
+        // ============================================================
+        private async Task CargarProveedoresAsync()
+        {
+            try
+            {
+                var proveedores = await _proveedorLogica.ObtenerTodos();
+
+                // ✅ Solo proveedores activos
+                _proveedores = proveedores?.Where(p => p.Estado).ToList() ?? new List<ProveedorDto>();
+
+                // Agregar opción "(Sin proveedor)"
+                var proveedoresCombo = new List<ProveedorDto>();
+                proveedoresCombo.Add(new ProveedorDto { Id = 0, Nombre = "(Sin proveedor)" });
+                proveedoresCombo.AddRange(_proveedores);
+
+                CBProveedor.DataSource = proveedoresCombo;
+                CBProveedor.DisplayMember = "Nombre";
+                CBProveedor.ValueMember = "Id";
+                CBProveedor.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // CARGA DE PRODUCTOS
+        // ============================================================
         private async Task CargarProductosAsync()
         {
             try
@@ -136,15 +182,24 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // Mostrar productos en datagrid
+
+        // ============================================================
+        // MOSTRAR PRODUCTOS EN LA GRILLA
+        // ============================================================
         private void MostrarProductos(List<ProductoDto> productos)
         {
             DGVProductos.Rows.Clear();
 
-            foreach (var producto in productos)
+            // ✅ Filtrar según _mostrarSoloActivos
+            var filtrados = productos
+                .Where(p => _mostrarSoloActivos ? p.Estado : !p.Estado)
+                .ToList();
+
+            foreach (var producto in filtrados)
             {
                 DGVProductos.Rows.Add(
                     producto.Id,
@@ -158,18 +213,21 @@ namespace CapaPresentacion
                     producto.Estado ? "Activo" : "Inactivo"
                 );
             }
+
+            AplicarFiltroGrilla();
         }
-        // Selección de producto en el datagrid
+
+        // ============================================================
+        // SELECCIÓN DE PRODUCTO EN LA GRILLA
+        // ============================================================
         private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
 
-            // Si es Vendedor o Cajero, solo permitimos navegar y consultar
-            string rol = (FormPrincipal.SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+            // Si es Vendedor o Cajero, solo consulta
+            string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
-            {
                 return;
-            }
 
             try
             {
@@ -187,6 +245,9 @@ namespace CapaPresentacion
                 _productoId = id;
                 _esEdicion = true;
                 CargarProductoEnFormulario(id);
+
+                // ✅ NUEVO: Cambiar botones a modo edición
+                ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
             {
@@ -194,7 +255,10 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // Cargar producto en el formulario para editar
+
+        // ============================================================
+        // CARGAR PRODUCTO EN EL FORMULARIO
+        // ============================================================
         private async void CargarProductoEnFormulario(int id)
         {
             try
@@ -215,12 +279,46 @@ namespace CapaPresentacion
                 TPrecioMinorista.Text = producto.PrecioMinorista.ToString("0.00");
                 TPrecioMayorista.Text = producto.PrecioMayorista?.ToString("0.00") ?? "";
 
-                if (producto.CategoriaId > 0)
+                // ✅ Cargar categoría
+                if (producto.CategoriaId > 0 && CBCategoria.DataSource != null)
+                {
                     CBCategoria.SelectedValue = producto.CategoriaId;
-                // Disparar o esperar el llenado de proveedores y marcar el proveedor del producto
+
+                    if (CBCategoria.SelectedIndex == -1)
+                    {
+                        for (int i = 0; i < CBCategoria.Items.Count; i++)
+                        {
+                            var cat = CBCategoria.Items[i] as CategoriaDto;
+                            if (cat != null && cat.Id == producto.CategoriaId)
+                            {
+                                CBCategoria.SelectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+
+                // ✅ Cargar proveedor
                 if (producto.ProveedorId.HasValue && producto.ProveedorId.Value > 0)
                 {
                     CBProveedor.SelectedValue = producto.ProveedorId.Value;
+
+                    if (CBProveedor.SelectedIndex == -1)
+                    {
+                        for (int i = 0; i < CBProveedor.Items.Count; i++)
+                        {
+                            var prov = CBProveedor.Items[i] as ProveedorDto;
+                            if (prov != null && prov.Id == producto.ProveedorId.Value)
+                            {
+                                CBProveedor.SelectedIndex = i;
+                                break;
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    CBProveedor.SelectedIndex = 0; // (Sin proveedor)
                 }
 
                 NUDStockActual.Value = producto.StockActual;
@@ -233,103 +331,14 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        // Validaciones
+
+        // ============================================================
+        // VALIDACIONES
+        // ============================================================
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
-            {
                 e.Handled = true;
-            }
-        }
-
-        private bool ValidarCamposProducto()
-        {
-            if (string.IsNullOrWhiteSpace(TCodigoInterno.Text) || !long.TryParse(TCodigoInterno.Text.Trim(), out _))
-            {
-                MessageBox.Show("El Código Interno es obligatorio y debe ser exclusivamente numérico.",
-                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TCodigoInterno.Focus();
-                return false;
-            }
-
-            if (!string.IsNullOrWhiteSpace(TCodBarras.Text) && !long.TryParse(TCodBarras.Text.Trim(), out _))
-            {
-                MessageBox.Show("El Código de Barras debe ser numérico.",
-                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TCodBarras.Focus();
-                return false;
-            }
-
-            if (string.IsNullOrWhiteSpace(TNombreProducto.Text) || TNombreProducto.Text.Trim().Length < 3)
-            {
-                MessageBox.Show("Debe ingresar un Nombre de Producto válido (mínimo 3 caracteres).",
-                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TNombreProducto.Focus();
-                return false;
-            }
-
-            if (CBCategoria.SelectedIndex == -1)
-            {
-                MessageBox.Show("Debe seleccionar una Categoría.",
-                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                CBCategoria.Focus();
-                return false;
-            }
-
-            if (!IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista) || precioMinorista <= 0)
-            {
-                MessageBox.Show("Ingrese un Precio Minorista válido mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TPrecioMinorista.Focus();
-                return false;
-            }
-
-            if (!IntentarConvertirDecimal(TPrecioMayorista.Text, out decimal precioMayorista) || precioMayorista <= 0)
-            {
-                MessageBox.Show("Ingrese un Precio Mayorista válido mayor a 0.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TPrecioMayorista.Focus();
-                return false;
-            }
-
-            if (precioMayorista > precioMinorista)
-            {
-                MessageBox.Show("El precio mayorista no puede superar al precio minorista.",
-                                "Error de Precios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TPrecioMayorista.Focus();
-                return false;
-            }
-
-            if (NUDStockMinimo.Value <= 0)
-            {
-                MessageBox.Show("El Stock Mínimo debe ser de al menos 1 unidad para activar alertas de reposición.",
-                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                NUDStockMinimo.Focus();
-                return false;
-            }
-
-            if (NUDStockActual.Value < NUDStockMinimo.Value)
-            {
-                DialogResult res = MessageBox.Show(
-                    "El Stock Actual ingresado es menor al Stock Mínimo requerido.\n¿Desea registrar el producto bajo nivel crítico de reposición?",
-                    "Aviso de Stock Crítico",
-                    MessageBoxButtons.YesNo,
-                    MessageBoxIcon.Question
-                );
-
-                if (res == DialogResult.No)
-                {
-                    NUDStockActual.Focus();
-                    return false;
-                }
-            }
-
-            if (TDescripcion.Text.Trim().Length > 300)
-            {
-                MessageBox.Show("La descripción no puede exceder los 300 caracteres.",
-                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                TDescripcion.Focus();
-                return false;
-            }
-            return true;
         }
 
         private void ValidarDecimal_KeyPress(object sender, KeyPressEventArgs e)
@@ -337,10 +346,7 @@ namespace CapaPresentacion
             TextBox txt = sender as TextBox;
             if (txt == null) return;
 
-            if (char.IsControl(e.KeyChar))
-            {
-                return;
-            }
+            if (char.IsControl(e.KeyChar)) return;
 
             if (e.KeyChar == '.' || e.KeyChar == ',')
             {
@@ -410,18 +416,128 @@ namespace CapaPresentacion
                 txt.Text = valor.ToString("0.00");
             }
         }
-        // Botones
+
+        private bool ValidarCamposProducto()
+        {
+            if (string.IsNullOrWhiteSpace(TCodigoInterno.Text))
+            {
+                MessageBox.Show("El Código Interno es obligatorio.",
+                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                TCodigoInterno.Focus();
+                return false;
+            }
+
+            if (string.IsNullOrWhiteSpace(TNombreProducto.Text) || TNombreProducto.Text.Trim().Length < 3)
+            {
+                MessageBox.Show("Debe ingresar un Nombre de Producto válido (mínimo 3 caracteres).",
+                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                TNombreProducto.Focus();
+                return false;
+            }
+
+            if (CBCategoria.SelectedIndex == -1)
+            {
+                MessageBox.Show("Debe seleccionar una Categoría.",
+                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CBCategoria.Focus();
+                return false;
+            }
+
+            if (!IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista) || precioMinorista <= 0)
+            {
+                MessageBox.Show("Ingrese un Precio Minorista válido mayor a 0.",
+                    "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                TPrecioMinorista.Focus();
+                return false;
+            }
+
+            if (!string.IsNullOrWhiteSpace(TPrecioMayorista.Text))
+            {
+                if (!IntentarConvertirDecimal(TPrecioMayorista.Text, out decimal precioMayorista) || precioMayorista <= 0)
+                {
+                    MessageBox.Show("Ingrese un Precio Mayorista válido mayor a 0, o déjelo vacío.",
+                        "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    TPrecioMayorista.Focus();
+                    return false;
+                }
+
+                if (precioMayorista > precioMinorista)
+                {
+                    MessageBox.Show("El precio mayorista no puede superar al precio minorista.",
+                                    "Error de Precios", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    TPrecioMayorista.Focus();
+                    return false;
+                }
+            }
+
+            if (NUDStockMinimo.Value <= 0)
+            {
+                MessageBox.Show("El Stock Mínimo debe ser de al menos 1 unidad.",
+                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                NUDStockMinimo.Focus();
+                return false;
+            }
+
+            if (NUDStockActual.Value < NUDStockMinimo.Value)
+            {
+                DialogResult res = MessageBox.Show(
+                    "El Stock Actual es menor al Stock Mínimo.\n¿Desea registrar el producto bajo nivel crítico?",
+                    "Aviso de Stock Crítico",
+                    MessageBoxButtons.YesNo,
+                    MessageBoxIcon.Question
+                );
+
+                if (res == DialogResult.No)
+                {
+                    NUDStockActual.Focus();
+                    return false;
+                }
+            }
+
+            if (TDescripcion.Text.Trim().Length > 300)
+            {
+                MessageBox.Show("La descripción no puede exceder los 300 caracteres.",
+                                "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                TDescripcion.Focus();
+                return false;
+            }
+
+            return true;
+        }
+
+        // ============================================================
+        // BOTÓN GUARDAR (SOLO CREAR)
+        // ============================================================
         private async void BGuardar_Click(object sender, EventArgs e)
         {
+            if (_esEdicion)
+            {
+                MessageBox.Show("Está en modo edición. Use el botón 'Actualizar'.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             if (!ValidarCamposProducto())
                 return;
-            int? idProveedor = (CBProveedor.SelectedIndex != -1 && CBProveedor.SelectedValue != null)
-            ? (int?)Convert.ToInt32(CBProveedor.SelectedValue)
-            : null;
+
+            // ✅ Deshabilitar botones durante la operación
+            BGuardar.Enabled = false;
+            BActualizar.Enabled = false;
 
             try
             {
-                var producto = new CrearProductoDto
+                int? idProveedor = ObtenerIdProveedorSeleccionado();
+
+                // ✅ Parsear precios
+                IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista);
+                decimal? precioMayorista = null;
+                if (!string.IsNullOrWhiteSpace(TPrecioMayorista.Text) &&
+                    IntentarConvertirDecimal(TPrecioMayorista.Text, out decimal pm))
+                {
+                    precioMayorista = pm;
+                }
+
+                var nuevoProducto = new CrearProductoDto
                 {
                     CodigoInterno = TCodigoInterno.Text.Trim(),
                     CodBarras = string.IsNullOrWhiteSpace(TCodBarras.Text) ? null : TCodBarras.Text.Trim(),
@@ -433,88 +549,103 @@ namespace CapaPresentacion
                     StockMinimo = (int)NUDStockMinimo.Value,
                     StockMaximo = 1000,
                     Costo = 0,
-                    PrecioMinorista = decimal.Parse(TPrecioMinorista.Text.Replace(',', '.'),
-                        System.Globalization.CultureInfo.InvariantCulture),
-                    PrecioMayorista = string.IsNullOrWhiteSpace(TPrecioMayorista.Text) ? (decimal?)null :
-                        decimal.Parse(TPrecioMayorista.Text.Replace(',', '.'),
-                        System.Globalization.CultureInfo.InvariantCulture)
+                    PrecioMinorista = precioMinorista,
+                    PrecioMayorista = precioMayorista
                 };
 
-                if (_esEdicion)
-                {
-                    var actualizarProducto = new ActualizarProductoDto
-                    {
-                        Nombre = producto.Nombre,
-                        CodBarras = producto.CodBarras,
-                        CodigoInterno = producto.CodigoInterno,
-                        Descripcion = producto.Descripcion,
-                        Costo = producto.Costo,
-                        PrecioMinorista = producto.PrecioMinorista,
-                        PrecioMayorista = producto.PrecioMayorista,
-                        StockActual = producto.StockActual,
-                        StockMinimo = producto.StockMinimo,
-                        StockMaximo = producto.StockMaximo,
-                        ProveedorId = producto.ProveedorId,
-                        CategoriaId = producto.CategoriaId,
-                        Estado = ChBProductoHabilitado.Checked
-                    };
-                    await _productoLogica.Actualizar(_productoId, actualizarProducto);
-                    MessageBox.Show("Producto actualizado exitosamente", "Éxito",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
-                else
-                {
-                    await _productoLogica.Crear(producto);
-                    MessageBox.Show("Producto creado exitosamente", "Éxito",
-                        MessageBoxButtons.OK, MessageBoxIcon.Information);
-                }
+                await _productoLogica.Crear(nuevoProducto);
+
+                MessageBox.Show("Producto creado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                 await CargarProductosAsync();
                 LimpiarCampos();
+                ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                BGuardar.Enabled = true;
+                BActualizar.Enabled = false;
             }
         }
 
-        private void BNuevo_Click(object sender, EventArgs e)
+        // ============================================================
+        // BOTÓN ACTUALIZAR
+        // ============================================================
+        private async void BActualizar_Click(object sender, EventArgs e)
         {
-            LimpiarCampos();
-        }
-
-        private void BActualizar_Click(object sender, EventArgs e)
-        {
-            if (DGVProductos.SelectedRows.Count == 0)
+            if (!_esEdicion || _productoId <= 0)
             {
-                MessageBox.Show("Seleccione un producto para actualizar", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione un producto de la grilla para actualizar.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
+            if (!ValidarCamposProducto())
+                return;
+
+            // ✅ Deshabilitar botones durante la operación
+            BGuardar.Enabled = false;
+            BActualizar.Enabled = false;
+
             try
             {
-                var idValue = DGVProductos.SelectedRows[0].Cells[0].Value;
-                if (idValue != null && idValue != DBNull.Value)
+                int? idProveedor = ObtenerIdProveedorSeleccionado();
+
+                IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista);
+                decimal? precioMayorista = null;
+                if (!string.IsNullOrWhiteSpace(TPrecioMayorista.Text) &&
+                    IntentarConvertirDecimal(TPrecioMayorista.Text, out decimal pm))
                 {
-                    _productoId = Convert.ToInt32(idValue);
-                    _esEdicion = true;
-                    CargarProductoEnFormulario(_productoId);
+                    precioMayorista = pm;
                 }
+
+                var actualizarProducto = new CrearProductoDto
+                {
+                    Nombre = TNombreProducto.Text.Trim(),
+                    CodBarras = string.IsNullOrWhiteSpace(TCodBarras.Text) ? null : TCodBarras.Text.Trim(),
+                    CodigoInterno = TCodigoInterno.Text.Trim(),
+                    Descripcion = TDescripcion.Text.Trim(),
+                    Costo = 0,
+                    PrecioMinorista = precioMinorista,
+                    PrecioMayorista = precioMayorista,
+                    StockActual = (int)NUDStockActual.Value,
+                    StockMinimo = (int)NUDStockMinimo.Value,
+                    StockMaximo = 1000,
+                    ProveedorId = idProveedor,
+                    CategoriaId = (int)CBCategoria.SelectedValue
+                };
+
+                await _productoLogica.Actualizar(_productoId, actualizarProducto);
+
+                MessageBox.Show("Producto actualizado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                await CargarProductosAsync();
+                LimpiarCampos();
+                ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar producto: {ex.Message}", "Error",
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = true;
             }
         }
 
+        // ============================================================
+        // BOTÓN DESACTIVAR
+        // ============================================================
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (DGVProductos.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Seleccione un producto para desactivar", "Aviso",
+                MessageBox.Show("Seleccione un producto para dar de baja", "Aviso",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
@@ -522,33 +653,121 @@ namespace CapaPresentacion
             try
             {
                 var idValue = DGVProductos.SelectedRows[0].Cells[0].Value;
-                if (idValue == null || idValue == DBNull.Value)
-                {
-                    MessageBox.Show("No se pudo obtener el ID del producto.", "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
+                if (idValue == null || idValue == DBNull.Value) return;
 
                 int id = Convert.ToInt32(idValue);
                 string nombre = DGVProductos.SelectedRows[0].Cells[3].Value?.ToString() ?? "";
 
-                if (MessageBox.Show($"¿Desea desactivar el producto '{nombre}'?",
+                if (MessageBox.Show($"¿Desea dar de baja el producto '{nombre}'?",
                     "Confirmar", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
+                    BGuardar.Enabled = false;
+                    BActualizar.Enabled = false;
+                    BDesactivar.Enabled = false;
+
                     await _productoLogica.Eliminar(id);
-                    MessageBox.Show("Producto desactivado exitosamente", "Éxito",
+
+                    MessageBox.Show("Producto dado de baja exitosamente", "Éxito",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
+
                     await CargarProductosAsync();
                     LimpiarCampos();
+                    BDesactivar.Enabled = true;
+                    ActualizarBotonesSegunModo();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al desactivar: {ex.Message}", "Error",
+                MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
+
+                BDesactivar.Enabled = true;
+                ActualizarBotonesSegunModo();
             }
         }
-        // Limpiar campos
+
+        // ============================================================
+        // BOTÓN NUEVO
+        // ============================================================
+        private void BNuevo_Click(object sender, EventArgs e)
+        {
+            LimpiarCampos();
+            _esEdicion = false;
+            _productoId = 0;
+            ActualizarBotonesSegunModo();
+            TCodigoInterno.Focus();
+        }
+
+        // ============================================================
+        // BOTÓN NUEVA CATEGORÍA
+        // ============================================================
+        private async void BNuevaCategoria_Click(object sender, EventArgs e)
+        {
+            using (FormModalCategoria modal = new FormModalCategoria())
+            {
+                if (modal.ShowDialog(this) == DialogResult.OK)
+                {
+                    await CargarCategoriasAsync();
+
+                    if (modal.IdCategoriaCreada > 0 && CBCategoria.DataSource != null)
+                    {
+                        CBCategoria.SelectedValue = modal.IdCategoriaCreada;
+                    }
+                }
+            }
+        }
+
+        // ============================================================
+        // FILTROS DINÁMICOS
+        // ============================================================
+        private void ConfigurarFiltrosDinamicos()
+        {
+            TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
+            CBFiltroCategoria.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
+            BLimpiarFiltros.Click += BLimpiarFiltros_Click;
+        }
+
+        private void AplicarFiltroGrilla()
+        {
+            string texto = TBBuscar.Text.Trim().ToLower();
+            string categoriaFiltro = (CBFiltroCategoria.SelectedItem as CategoriaDto)?.Descripcion ?? "";
+
+            bool filtrarPorCategoria = !string.IsNullOrEmpty(categoriaFiltro) && categoriaFiltro != "(Todas)";
+
+            foreach (DataGridViewRow row in DGVProductos.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                string codInterno = row.Cells["ColCodInterno"].Value?.ToString().ToLower() ?? "";
+                string codBarras = row.Cells["ColCodBarras"].Value?.ToString().ToLower() ?? "";
+                string nombre = row.Cells["ColNombre"].Value?.ToString().ToLower() ?? "";
+                string categoria = row.Cells["ColCategoria"].Value?.ToString() ?? "";
+
+                bool coincideTexto = string.IsNullOrEmpty(texto) ||
+                                     codInterno.Contains(texto) ||
+                                     codBarras.Contains(texto) ||
+                                     nombre.Contains(texto);
+
+                bool coincideCategoria = !filtrarPorCategoria ||
+                                         categoria.Equals(categoriaFiltro, StringComparison.OrdinalIgnoreCase);
+
+                row.Visible = coincideTexto && coincideCategoria;
+            }
+        }
+
+        // ============================================================
+        // BOTÓN QUE ALTERNA ACTIVOS/INACTIVOS
+        // ============================================================
+        private async void BLimpiarFiltros_Click(object sender, EventArgs e)
+        {
+            _mostrarSoloActivos = !_mostrarSoloActivos;
+            BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
+            await CargarProductosAsync();
+        }
+
+        // ============================================================
+        // LIMPIAR CAMPOS
+        // ============================================================
         private void LimpiarCampos()
         {
             TCodigoInterno.Clear();
@@ -557,69 +776,81 @@ namespace CapaPresentacion
             TDescripcion.Clear();
             TPrecioMinorista.Clear();
             TPrecioMayorista.Clear();
-            CBCategoria.SelectedIndex = -1;
-            CBProveedor.DataSource = null;
-            CBProveedor.Items.Clear();
+
+            if (CBCategoria.DataSource != null)
+                CBCategoria.SelectedIndex = -1;
+
+            if (CBProveedor.DataSource != null)
+                CBProveedor.SelectedIndex = 0; // (Sin proveedor)
+
             NUDStockActual.Value = 0;
             NUDStockMinimo.Value = 1;
             ChBProductoHabilitado.Checked = true;
+
             _esEdicion = false;
             _productoId = 0;
-            TCodigoInterno.Focus();
+
+            DGVProductos.ClearSelection();
+            if (DGVProductos.CurrentCell != null)
+                DGVProductos.CurrentCell = null;
+
+            ActualizarBotonesSegunModo();
         }
-        private async Task CargarProveedoresAsync()
-        { 
+
+        // ============================================================
+        // HABILITAR/DESHABILITAR BOTONES SEGÚN MODO
+        // ============================================================
+        private void ActualizarBotonesSegunModo()
+        {
+            if (_esEdicion)
+            {
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = true;
+            }
+            else
+            {
+                BGuardar.Enabled = true;
+                BActualizar.Enabled = false;
+            }
+        }
+
+        // ============================================================
+        // HELPERS
+        // ============================================================
+        private int? ObtenerIdProveedorSeleccionado()
+        {
+            if (CBProveedor.SelectedItem is ProveedorDto prov && prov.Id > 0)
+                return prov.Id;
+
+            return null;
+        }
+
+        // ============================================================
+        // ÍCONOS
+        // ============================================================
+        private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
+        {
+            if (imagenOriginal == null) return null;
+            Bitmap nuevoBitmap = new Bitmap(ancho, alto);
+            using (Graphics g = Graphics.FromImage(nuevoBitmap))
+            {
+                g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+                g.SmoothingMode = SmoothingMode.AntiAlias;
+                g.DrawImage(imagenOriginal, 0, 0, ancho, alto);
+            }
+            return nuevoBitmap;
+        }
+
+        private void AsignarEstiloEIconos()
+        {
             try
             {
-                _todosLosProveedores = await _proveedorLogica.ObtenerTodos();
+                BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
+                BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
+                BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
+                BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void CBCategoria_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            //Verificar si ya hay un método de filtrado en dbo para quitarlo de la memoria
-            if (CBCategoria.SelectedValue == null || !int.TryParse(CBCategoria.SelectedValue.ToString(), out int idCategoria))
-            {
-                CBProveedor.DataSource = null;
-                CBProveedor.Items.Clear();
-                return;
-            }
-
-            if (_todosLosProveedores == null || _todosLosProveedores.Count == 0)
-            {
-                CBProveedor.DataSource = null;
-                return;
-            }
-
-            // Filtrar proveedores asociados a esta categoría
-            // (Ajustar la propiedad según DTO)
-            var proveedoresFiltrados = _todosLosProveedores
-                //.Where(p => p.CategoriaId == idCategoria || p.Estado == true)
-                .ToList();
-
-            CBProveedor.DataSource = null;
-            CBProveedor.DataSource = proveedoresFiltrados;
-            CBProveedor.DisplayMember = "RazonSocial"; // O "Nombre" según ProveedorDto
-            CBProveedor.ValueMember = "Id";
-            CBProveedor.SelectedIndex = -1;
-        }
-        private async void BNuevaCategoria_Click(object sender, EventArgs e)
-        {
-            using (FormModalCategoria modal = new FormModalCategoria())
-            {
-                if (modal.ShowDialog(this) == DialogResult.OK)
-                {
-                    await CargarCategoriasAsync();
-                    if (modal.IdCategoriaCreada > 0)
-                    {
-                        CBCategoria.SelectedValue = modal.IdCategoriaCreada;
-                    }
-                }
-            }
+            catch { }
         }
     }
 }

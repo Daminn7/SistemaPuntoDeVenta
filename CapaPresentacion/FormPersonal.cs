@@ -1,11 +1,10 @@
-﻿using System;
+﻿using CapaDatos.DTOs;
+using CapaLogica;
+using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,34 +12,122 @@ namespace CapaPresentacion
 {
     public partial class FormPersonal : Form
     {
-        private DataTable _dtPersonal = new DataTable();
-        private int _idUsuarioSeleccionado = 0;
-        private int _usuarioId = 0;
-        private bool _esEdicion = false;
-        // ID del usuario que tiene la sesión activa (ej: Gastón, Administrador con ID = 1)
-        // Al conectar la Capa Negocio/Sesión, se alimentará de SesionUsuario.IdUsuario
-        public int IdUsuarioActualEnSesion { get; set; } = 1;
+        // ============================================================
+        // DECLARACIÓN DE VARIABLES
+        // ============================================================
+        private readonly PersonalLogica _personalLogica = new PersonalLogica();
+        private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
 
+        private int _idPersonalSeleccionado = 0;
+        private bool _esEdicion = false;
+
+        private List<PerfilDto> _perfiles;
+
+        private bool _mostrarSoloActivos = true;
+
+        // ✅ NUEVO: Bandera para el formateo del CUIL en vivo (evita loop infinito)
+        private bool _actualizandoCuil = false;
+
+        // ============================================================
+        // CONSTRUCTOR
+        // ============================================================
         public FormPersonal()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
 
-        private void FormPersonal_Load(object sender, EventArgs e)
+        // ============================================================
+        // CARGA DEL FORMULARIO
+        // ============================================================
+        private async void FormPersonal_Load(object sender, EventArgs e)
         {
             AsignarEstiloEIconos();
-            CargarDesplegablesSimulados();
-            CargarHistorialPersonalSimulado();
-
+            await CargarPerfilesAsync();
+            await CargarPersonalAsync();
             LimpiarFormulario();
-            DGVPersonal.ClearSelection();
-            DGVPersonal.CurrentCell = null;
+            ActualizarBotonesSegunModo();
+
+            BLimpiarFiltros.Text = "Inactivos";
         }
 
-        // =========================================================================
+        // ============================================================
+        // Carga la lista de perfiles desde la API
+        // ============================================================
+        private async Task CargarPerfilesAsync()
+        {
+            try
+            {
+                _perfiles = await _tablasLogica.GetPerfiles();
+
+                // ✅ Configurar el combo de roles del formulario
+                CBRol.DataSource = _perfiles;
+                CBRol.DisplayMember = "Nombre";
+                CBRol.ValueMember = "Id";
+                CBRol.SelectedIndex = -1;
+
+                // ✅ Combo de filtro con opción "Todos"
+                var perfilesFiltro = new List<PerfilDto>();
+                perfilesFiltro.Add(new PerfilDto { Id = 0, Nombre = "(Todos)" });
+                perfilesFiltro.AddRange(_perfiles);
+
+                CBFiltroRol.DataSource = perfilesFiltro;
+                CBFiltroRol.DisplayMember = "Nombre";
+                CBFiltroRol.ValueMember = "Id";
+                CBFiltroRol.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar perfiles: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // Carga el personal desde la API
+        // ============================================================
+        private async Task CargarPersonalAsync()
+        {
+            try
+            {
+                var personal = await _personalLogica.ObtenerTodos();
+
+                DGVPersonal.Rows.Clear();
+                if (personal == null || personal.Count == 0) return;
+
+                var filtrados = personal
+                    .Where(p => _mostrarSoloActivos ? p.Estado : !p.Estado)
+                    .ToList();
+
+                foreach (var p in filtrados)
+                {
+                    string nombreCompleto = $"{p.Nombre ?? ""} {p.Apellido ?? ""}".Trim();
+                    string estadoMostrar = p.Estado ? "Habilitado" : "Deshabilitado";
+
+                    DGVPersonal.Rows.Add(
+                        p.IdPersonal,          // Columna 0: ID (oculta)
+                        p.Dni ?? "",           // Columna 1: ColDni
+                        p.CuilCuit ?? "",      // Columna 2: ColCuil
+                        nombreCompleto,        // Columna 3: ColNombreCompleto
+                        p.Perfil ?? "",        // Columna 4: ColRol
+                        p.Telefono ?? "",      // Columna 5: ColTelefono
+                        p.Email ?? "",         // Columna 6: ColEmail
+                        estadoMostrar          // Columna 7: ColEstado
+                    );
+                }
+
+                AplicarFiltroGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar personal: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
         // 1. ÍCONO VECTORIAL DE PERSONAL Y ESCALADO DE BOTONERA
-        // =========================================================================
+        // ============================================================
         private Image GenerarIconoPersonal(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -50,16 +137,9 @@ namespace CapaPresentacion
                 using (Pen pen = new Pen(color, 2.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    // Credencial / Marco de carnet
                     g.DrawRectangle(pen, 4.5f, 5.5f, 23f, 22f);
-
-                    // Ranura superior para la cinta/llavero
                     g.DrawLine(pen, 12f, 8.5f, 20f, 8.5f);
-
-                    // Cabeza / Usuario
                     g.FillEllipse(brush, 12.5f, 11f, 7f, 7f);
-
-                    // Busto / hombros
                     PointF[] busto = new PointF[]
                     {
                         new PointF(9.5f, 23.5f),
@@ -76,7 +156,6 @@ namespace CapaPresentacion
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
-
             Bitmap nuevoBitmap = new Bitmap(ancho, alto);
             using (Graphics g = Graphics.FromImage(nuevoBitmap))
             {
@@ -92,27 +171,25 @@ namespace CapaPresentacion
             try
             {
                 if (PBIconoTitulo != null)
-                {
                     PBIconoTitulo.Image = GenerarIconoPersonal(Color.FromArgb(212, 131, 53));
-                }
 
                 BNuevo.Image = EscalarIcono(Properties.Resources.boton_nuevo_blanco, 32, 32);
                 BGuardar.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
                 BActualizar.Image = EscalarIcono(Properties.Resources.boton_limpiar_blanco, 32, 32);
                 BDesactivar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             }
-            catch
-            {
-                // Fallback silencioso
-            }
+            catch { }
         }
 
-        // =========================================================================
+        // ============================================================
         // 2. RESTRICCIONES DE TECLADO Y FILTRADO
-        // =========================================================================
+        // ✅ MODIFICADO: Se agregaron todas las restricciones de FormClientes
+        // ============================================================
         private void InicializarComportamiento()
         {
-            // DNI: solo dígitos
+            // ============================================================
+            // DNI: solo dígitos, máximo 8
+            // ============================================================
             TBDni.MaxLength = 8;
             TBDni.KeyPress += (s, e) =>
             {
@@ -120,15 +197,21 @@ namespace CapaPresentacion
                     e.Handled = true;
             };
 
-            // CUIL: dígitos y guiones
-            TBCuil.MaxLength = 13;
+            // ============================================================
+            // ✅ NUEVO: CUIL/CUIT: solo dígitos y guiones, con formateo en vivo
+            //    MaxLength = 15 para permitir el formateo XX-XXXXXXXX-X
+            // ============================================================
+            TBCuil.MaxLength = 15;
             TBCuil.KeyPress += (s, e) =>
             {
                 if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar) && e.KeyChar != '-')
                     e.Handled = true;
             };
+            ConfigurarFormateoCuilEnVivo();
 
+            // ============================================================
             // Teléfono: dígitos continuos y '+' opcional al principio
+            // ============================================================
             TBTelefono.MaxLength = 18;
             TBTelefono.KeyPress += (s, e) =>
             {
@@ -139,105 +222,179 @@ namespace CapaPresentacion
                     e.Handled = true;
             };
 
+            // ============================================================
+            // ✅ NUEVO: Nombre y Apellido: solo letras y espacios
+            // ============================================================
+            TBNombre.KeyPress += SoloLetrasYEspacios_KeyPress;
+            TBApellido.KeyPress += SoloLetrasYEspacios_KeyPress;
+
+            // ============================================================
+            // ✅ NUEVO: CodUsuario: máximo 7 caracteres (límite de la API)
+            // ============================================================
+            TBUsuario.MaxLength = 7;
+
+            // ============================================================
+            // ✅ NUEVO: Validación de email en vivo (verde/rojo)
+            // ============================================================
+            ConfigurarValidacionEmailEnVivo();
+
+            // ============================================================
+            // Filtros dinámicos de la grilla
+            // ============================================================
             ConfigurarFiltrosDinamicos();
+        }
+
+        // ============================================================
+        // ✅ NUEVO: Restricción solo letras y espacios
+        // ============================================================
+        private void SoloLetrasYEspacios_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
+                e.Handled = true;
+        }
+
+        // ============================================================
+        // ✅ NUEVO: Formateo CUIL en vivo (XX-XXXXXXXX-X)
+        // ============================================================
+        private void ConfigurarFormateoCuilEnVivo()
+        {
+            TBCuil.TextChanged += (s, e) =>
+            {
+                if (_actualizandoCuil) return;
+
+                string digitos = new string(TBCuil.Text.Where(char.IsDigit).ToArray());
+                if (digitos.Length > 11) digitos = digitos.Substring(0, 11);
+
+                string textoFormateado = digitos;
+                if (digitos.Length > 10)
+                {
+                    textoFormateado = $"{digitos.Substring(0, 2)}-{digitos.Substring(2, 8)}-{digitos.Substring(10, 1)}";
+                }
+                else if (digitos.Length > 2)
+                {
+                    textoFormateado = $"{digitos.Substring(0, 2)}-{digitos.Substring(2)}";
+                }
+
+                _actualizandoCuil = true;
+                TBCuil.Text = textoFormateado;
+                TBCuil.SelectionStart = TBCuil.Text.Length;
+                _actualizandoCuil = false;
+            };
+        }
+
+        // ============================================================
+        // ✅ NUEVO: Validación de email en vivo (verde si es válido, rojo si no)
+        // ============================================================
+        private void ConfigurarValidacionEmailEnVivo()
+        {
+            string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+
+            TBEmail.TextChanged += (s, e) =>
+            {
+                string email = TBEmail.Text.Trim();
+                if (string.IsNullOrEmpty(email))
+                {
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+                    return;
+                }
+                TBEmail.ForeColor = System.Text.RegularExpressions.Regex.IsMatch(email, patronEmail)
+                    ? Color.FromArgb(39, 174, 96)   // Verde si es válido
+                    : Color.FromArgb(38, 40, 44);   // Color normal si no
+            };
+
+            TBEmail.Leave += (s, e) =>
+            {
+                string email = TBEmail.Text.Trim();
+                if (string.IsNullOrWhiteSpace(email))
+                {
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                    LEmail.Text = "Correo Electrónico * (Obligatorio)";
+                    LEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                }
+                else if (!System.Text.RegularExpressions.Regex.IsMatch(email, patronEmail))
+                {
+                    TBEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                    LEmail.Text = "Correo Electrónico (Formato: ej@dominio.com)";
+                    LEmail.ForeColor = Color.FromArgb(192, 57, 43);
+                }
+                else
+                {
+                    TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+                    LEmail.Text = "Correo Electrónico:";
+                    LEmail.ForeColor = Color.FromArgb(70, 70, 70);
+                }
+            };
+
+            TBEmail.Enter += (s, e) =>
+            {
+                LEmail.Text = "Correo Electrónico:";
+                LEmail.ForeColor = Color.FromArgb(70, 70, 70);
+                TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+            };
         }
 
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
             CBFiltroRol.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
-            BLimpiarFiltros.Click += (s, e) =>
-            {
-                TBBuscar.Clear();
-                CBFiltroRol.SelectedIndex = -1;
-                AplicarFiltroGrilla();
-            };
+            BLimpiarFiltros.Click += BLimpiarFiltros_Click;
         }
 
+        // ============================================================
+        // Filtro sobre la grilla (texto + rol)
+        // ============================================================
         private void AplicarFiltroGrilla()
         {
-            if (_dtPersonal == null || _dtPersonal.DefaultView == null) return;
+            string texto = TBBuscar.Text.Trim().ToLower();
+            string rolFiltro = (CBFiltroRol.SelectedItem as PerfilDto)?.Nombre ?? "";
 
-            string texto = TBBuscar.Text.Trim().Replace("'", "''");
-            string filtro = "";
+            bool filtrarPorRol = !string.IsNullOrEmpty(rolFiltro) && rolFiltro != "(Todos)";
 
-            if (!string.IsNullOrEmpty(texto))
+            foreach (DataGridViewRow row in DGVPersonal.Rows)
             {
-                filtro += $"(ColDni LIKE '%{texto}%' OR ColNombreCompleto LIKE '%{texto}%')";
-            }
+                if (row.IsNewRow) continue;
 
-            if (CBFiltroRol.SelectedIndex != -1 && !string.IsNullOrEmpty(CBFiltroRol.Text))
-            {
-                string rol = CBFiltroRol.Text.Replace("'", "''");
-                if (filtro.Length > 0) filtro += " AND ";
-                filtro += $"ColRol = '{rol}'";
-            }
+                string dni = row.Cells["ColDni"].Value?.ToString().ToLower() ?? "";
+                string nombre = row.Cells["ColNombreCompleto"].Value?.ToString().ToLower() ?? "";
+                string rol = row.Cells["ColRol"].Value?.ToString() ?? "";
 
-            _dtPersonal.DefaultView.RowFilter = filtro;
+                bool coincideTexto = string.IsNullOrEmpty(texto) ||
+                                     dni.Contains(texto) ||
+                                     nombre.Contains(texto);
+
+                bool coincideRol = !filtrarPorRol ||
+                                   rol.Equals(rolFiltro, StringComparison.OrdinalIgnoreCase);
+
+                row.Visible = coincideTexto && coincideRol;
+            }
         }
 
-        // =========================================================================
-        // 3. DATOS EN MEMORIA
-        // =========================================================================
-        private void CargarDesplegablesSimulados()
+        // ============================================================
+        // Botón que alterna entre activos e inactivos
+        // ============================================================
+        private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
-            string[] roles = { "ADMINISTRADOR", "SUPERVISOR", "CAJERO / OPERADOR", "ENCARGADO DE STOCK" };
-
-            CBRol.Items.Clear();
-            CBRol.Items.AddRange(roles);
-            CBRol.SelectedIndex = -1;
-
-            CBFiltroRol.Items.Clear();
-            CBFiltroRol.Items.AddRange(roles);
-            CBFiltroRol.SelectedIndex = -1;
+            _mostrarSoloActivos = !_mostrarSoloActivos;
+            BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
+            await CargarPersonalAsync();
         }
 
-        private void CargarHistorialPersonalSimulado()
-        {
-            if (_dtPersonal.Columns.Count == 0)
-            {
-                _dtPersonal.Columns.Add("ColIdUsuario", typeof(int));
-                _dtPersonal.Columns.Add("ColDni", typeof(string));
-                _dtPersonal.Columns.Add("ColCuil", typeof(string));
-                _dtPersonal.Columns.Add("ColNombreCompleto", typeof(string));
-                _dtPersonal.Columns.Add("ColRol", typeof(string));
-                _dtPersonal.Columns.Add("ColTelefono", typeof(string));
-                _dtPersonal.Columns.Add("ColEmail", typeof(string));
-                _dtPersonal.Columns.Add("ColEstado", typeof(string));
-
-                // Datos de prueba con el Administrador actual (ID = 1)
-                _dtPersonal.Rows.Add(1, "38541200", "20-38541200-4", "Gastón Administrador", "ADMINISTRADOR", "3624501122", "gaston@hierroyforja.com", "Habilitado");
-                _dtPersonal.Rows.Add(2, "41250390", "27-41250390-3", "Luciana Fernández", "CAJERO / OPERADOR", "3624890011", "luciana.f@hierroyforja.com", "Habilitado");
-                _dtPersonal.Rows.Add(3, "39981240", "20-39981240-8", "Marcos Benítez", "ENCARGADO DE STOCK", "3794125588", "marcos.b@hierroyforja.com", "Habilitado");
-            }
-
-            DGVPersonal.AutoGenerateColumns = false;
-            ColIdUsuario.DataPropertyName = "ColIdUsuario";
-            ColDni.DataPropertyName = "ColDni";
-            ColCuil.DataPropertyName = "ColCuil";
-            ColNombreCompleto.DataPropertyName = "ColNombreCompleto";
-            ColRol.DataPropertyName = "ColRol";
-            ColTelefono.DataPropertyName = "ColTelefono";
-            ColEmail.DataPropertyName = "ColEmail";
-            ColEstado.DataPropertyName = "ColEstado";
-
-            DGVPersonal.DataSource = _dtPersonal;
-        }
-
-        // =========================================================================
-        // 4. ACCIONES DE BOTONES Y VALIDACIÓN DE AUTO-ELIMINACIÓN
-        // =========================================================================
+        // ============================================================
+        // 3. VALIDACIÓN
+        // ============================================================
         private bool ValidarFormulario(out string mensajeError)
         {
             mensajeError = string.Empty;
 
-            if (string.IsNullOrWhiteSpace(TBDni.Text) || TBDni.Text.Length < 7)
+            // DNI
+            if (string.IsNullOrWhiteSpace(TBDni.Text) || TBDni.Text.Length < 7 || !TBDni.Text.All(char.IsDigit))
             {
                 mensajeError = "Debe ingresar un DNI válido (mínimo 7 u 8 dígitos).";
                 TBDni.Focus();
                 return false;
             }
 
+            // Nombre
             if (string.IsNullOrWhiteSpace(TBNombre.Text))
             {
                 mensajeError = "Debe ingresar el nombre del personal.";
@@ -245,6 +402,7 @@ namespace CapaPresentacion
                 return false;
             }
 
+            // Apellido
             if (string.IsNullOrWhiteSpace(TBApellido.Text))
             {
                 mensajeError = "Debe ingresar el apellido del personal.";
@@ -252,13 +410,37 @@ namespace CapaPresentacion
                 return false;
             }
 
-            if (CBRol.SelectedIndex == -1)
+            // Email
+            string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
+            if (string.IsNullOrWhiteSpace(TBEmail.Text.Trim()) ||
+                !System.Text.RegularExpressions.Regex.IsMatch(TBEmail.Text.Trim(), patronEmail))
             {
-                mensajeError = "Debe seleccionar un Rol para el usuario.";
+                mensajeError = "Debe ingresar un Correo Electrónico válido (ejemplo: usuario@dominio.com).";
+                TBEmail.Focus();
+                return false;
+            }
+
+            // CUIL/CUIT (opcional pero si se ingresa debe tener 11 dígitos)
+            if (!string.IsNullOrWhiteSpace(TBCuil.Text))
+            {
+                string digitosCuil = new string(TBCuil.Text.Where(char.IsDigit).ToArray());
+                if (digitosCuil.Length != 11)
+                {
+                    mensajeError = "El CUIL/CUIT debe contener 11 dígitos (formato: XX-XXXXXXXX-X).";
+                    TBCuil.Focus();
+                    return false;
+                }
+            }
+
+            // Rol
+            if (CBRol.SelectedIndex == -1 || CBRol.SelectedValue == null || (int)CBRol.SelectedValue <= 0)
+            {
+                mensajeError = "Debe seleccionar un Rol válido para el usuario.";
                 CBRol.Focus();
                 return false;
             }
 
+            // CodUsuario
             if (string.IsNullOrWhiteSpace(TBUsuario.Text))
             {
                 mensajeError = "Debe asignar un nombre de usuario para el login.";
@@ -266,18 +448,32 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // REGLA CRÍTICA DE ADMINISTRADOR SOBRE SÍ MISMO
-            if (_idUsuarioSeleccionado == IdUsuarioActualEnSesion)
+            if (TBUsuario.Text.Trim().Length > 7)
             {
-                // No puede cambiarse el rol a uno no-administrador
-                if (CBRol.Text != "ADMINISTRADOR")
+                mensajeError = "El nombre de usuario (CodUsuario) no puede tener más de 7 caracteres.";
+                TBUsuario.Focus();
+                return false;
+            }
+
+            // Contraseña (solo al crear)
+            if (!_esEdicion && string.IsNullOrWhiteSpace(TBPassword.Text))
+            {
+                mensajeError = "Debe asignar una contraseña para el nuevo usuario.";
+                TBPassword.Focus();
+                return false;
+            }
+
+            // Regla: el admin no puede revocarse privilegios a sí mismo
+            if (_idPersonalSeleccionado > 0 &&
+                _idPersonalSeleccionado == SesionUsuario.IdUsuario)
+            {
+                if (CBRol.Text != "Administrador")
                 {
                     mensajeError = "No puede revocar sus propios privilegios de ADMINISTRADOR mientras mantenga la sesión activa.";
-                    CBRol.Text = "ADMINISTRADOR";
+                    CBRol.Text = "Administrador";
                     return false;
                 }
 
-                // No puede deshabilitarse a sí mismo
                 if (!ChBUsuarioHabilitado.Checked)
                 {
                     mensajeError = "No puede deshabilitar su propia cuenta mientras esté en sesión.";
@@ -289,36 +485,230 @@ namespace CapaPresentacion
             return true;
         }
 
-        private void BGuardar_Click(object sender, EventArgs e)
+        // ============================================================
+        // 4. ACCIONES DE BOTONES
+        // ============================================================
+        private async void BGuardar_Click(object sender, EventArgs e)
         {
+            if (_esEdicion)
+            {
+                MessageBox.Show("Está en modo edición. Use el botón 'Actualizar'.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             if (!ValidarFormulario(out string error))
             {
                 MessageBox.Show(error, "Validación de Personal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string estado = ChBUsuarioHabilitado.Checked ? "Habilitado" : "Deshabilitado";
-            string nombreCompleto = $"{TBNombre.Text.Trim()} {TBApellido.Text.Trim()}";
+            try
+            {
+                var nuevo = new CrearPersonalDto
+                {
+                    Nombre = TBNombre.Text.Trim(),
+                    Apellido = TBApellido.Text.Trim(),
+                    Dni = TBDni.Text.Trim(),
+                    CuilCuit = TBCuil.Text.Trim(),
+                    Email = TBEmail.Text.Trim(),
+                    CodUsuario = TBUsuario.Text.Trim(),
+                    Contrasena = TBPassword.Text,
+                    PerfilId = CBRol.SelectedValue != null ? (int?)CBRol.SelectedValue : null,
+                    EsPersonal = true
+                };
 
-            _dtPersonal.Rows.Add(
-                _dtPersonal.Rows.Count + 1,
-                TBDni.Text.Trim(),
-                TBCuil.Text.Trim(),
-                nombreCompleto,
-                CBRol.Text,
-                TBTelefono.Text.Trim(),
-                TBEmail.Text.Trim(),
-                estado
-            );
+                await _personalLogica.Crear(nuevo);
 
-            MessageBox.Show("Personal registrado con éxito en la vista previa.", "Personal", MessageBoxButtons.OK, MessageBoxIcon.Information);
-            LimpiarFormulario();
+                MessageBox.Show("Personal creado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await CargarPersonalAsync();
+                LimpiarFormulario();
+                ActualizarBotonesSegunModo();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void BActualizar_Click(object sender, EventArgs e)
+        {
+            if (!_esEdicion || _idPersonalSeleccionado <= 0)
+            {
+                MessageBox.Show("Seleccione un usuario de la grilla para actualizar.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (!ValidarFormulario(out string error))
+            {
+                MessageBox.Show(error, "Validación de Personal", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                var actualizar = new ActualizarPersonalDto
+                {
+                    Nombre = TBNombre.Text.Trim(),
+                    Apellido = TBApellido.Text.Trim(),
+                    Dni = TBDni.Text.Trim(),
+                    CuilCuit = TBCuil.Text.Trim(),
+                    Email = TBEmail.Text.Trim(),
+                    CodUsuario = TBUsuario.Text.Trim(),
+                    PerfilId = CBRol.SelectedValue != null ? (int?)CBRol.SelectedValue : null,
+                    Estado = ChBUsuarioHabilitado.Checked
+                };
+
+                if (!string.IsNullOrWhiteSpace(TBPassword.Text))
+                    actualizar.NuevaContrasena = TBPassword.Text;
+
+                await _personalLogica.Actualizar(_idPersonalSeleccionado, actualizar);
+
+                MessageBox.Show("Personal actualizado exitosamente", "Éxito",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                await CargarPersonalAsync();
+                LimpiarFormulario();
+                ActualizarBotonesSegunModo();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        private async void BDesactivar_Click(object sender, EventArgs e)
+        {
+            if (_idPersonalSeleccionado <= 0)
+            {
+                MessageBox.Show("Seleccione un usuario de la grilla para dar de baja.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            if (_idPersonalSeleccionado == SesionUsuario.IdUsuario)
+            {
+                MessageBox.Show(
+                    "Operación denegada: Un Administrador no puede darse de baja ni eliminar su propia cuenta en uso.",
+                    "Restricción de Seguridad",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Hand);
+                return;
+            }
+
+            if (MessageBox.Show("¿Está seguro de dar de baja a este usuario?",
+                "Dar de Baja Personal", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
+            {
+                try
+                {
+                    await _personalLogica.Eliminar(_idPersonalSeleccionado);
+                    MessageBox.Show("Personal dado de baja exitosamente", "Éxito",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await CargarPersonalAsync();
+                    LimpiarFormulario();
+                    ActualizarBotonesSegunModo();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
 
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarFormulario();
-            _usuarioId = 0;
+            _esEdicion = false;
+            _idPersonalSeleccionado = 0;
+            ActualizarBotonesSegunModo();
+            TBDni.Focus();
+        }
+
+        // ============================================================
+        // 5. SELECCIÓN EN LA GRILLA
+        // ============================================================
+        private async void DGVPersonal_CellClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+
+            try
+            {
+                var fila = DGVPersonal.Rows[e.RowIndex];
+                int id = Convert.ToInt32(fila.Cells["ColIdUsuario"].Value ?? 0);
+
+                System.Diagnostics.Debug.WriteLine($"=== CellClick ===");
+                System.Diagnostics.Debug.WriteLine($"ID leído de la grilla: {id}");
+                System.Diagnostics.Debug.WriteLine($"ColIdUsuario.Value: {fila.Cells["ColIdUsuario"].Value}");
+                System.Diagnostics.Debug.WriteLine($"Nombre en la fila: {fila.Cells["ColNombreCompleto"].Value}");
+                _idPersonalSeleccionado = id;
+                _esEdicion = true;
+
+                var personal = await _personalLogica.ObtenerPorId(id);
+                if (personal != null)
+                {
+                    TBDni.Text = personal.Dni ?? "";
+                    TBCuil.Text = personal.CuilCuit ?? "";
+                    TBNombre.Text = personal.Nombre ?? "";
+                    TBApellido.Text = personal.Apellido ?? "";
+                    TBEmail.Text = personal.Email ?? "";
+                    TBUsuario.Text = personal.CodUsuario ?? "";
+                    TBTelefono.Text = personal.Telefono ?? "";
+                    TBPassword.Clear();
+
+                    // ✅ Seleccionar el perfil en el combo
+                    if (personal.PerfilId > 0)
+                    {
+                        CBRol.SelectedValue = personal.PerfilId;
+
+                        // ✅ Fallback: si no matcheó por ValueMember, buscar manualmente
+                        if (CBRol.SelectedIndex == -1)
+                        {
+                            for (int i = 0; i < CBRol.Items.Count; i++)
+                            {
+                                var perfil = CBRol.Items[i] as PerfilDto;
+                                if (perfil != null && perfil.Id == personal.PerfilId)
+                                {
+                                    CBRol.SelectedIndex = i;
+                                    break;
+                                }
+                            }
+                        }
+                    }
+
+                    ChBUsuarioHabilitado.Checked = personal.Estado;
+                }
+
+                BDesactivar.Enabled = (_idPersonalSeleccionado != SesionUsuario.IdUsuario);
+                ActualizarBotonesSegunModo();
+            }
+            catch (Exception ex)
+            {
+                // ✅ Mostrar el error completo con inner exception
+                string mensajeCompleto = $"Error al cargar personal:\n\n" +
+                                         $"Mensaje: {ex.Message}\n\n" +
+                                         $"Tipo: {ex.GetType().Name}\n\n" +
+                                         $"StackTrace: {ex.StackTrace}";
+
+                if (ex.InnerException != null)
+                {
+                    mensajeCompleto += $"\n\nInner Exception:\n{ex.InnerException.Message}";
+                }
+
+                MessageBox.Show(mensajeCompleto, "Error Detallado",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // 6. LIMPIAR FORMULARIO
+        // ============================================================
+        private void LimpiarFormulario()
+        {
+            _idPersonalSeleccionado = 0;
             _esEdicion = false;
 
             TBDni.Clear();
@@ -332,176 +722,35 @@ namespace CapaPresentacion
             CBRol.SelectedIndex = -1;
             ChBUsuarioHabilitado.Checked = true;
 
-            DGVPersonal.ClearSelection();
-            if (DGVPersonal.CurrentCell != null)
-                DGVPersonal.CurrentCell = null;
+            // ✅ Restaurar color del label de email
+            TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
+            LEmail.Text = "Correo Electrónico:";
+            LEmail.ForeColor = Color.FromArgb(70, 70, 70);
 
-            TBDni.Focus();
-        }
-
-        private void BActualizar_Click(object sender, EventArgs e)
-        {
-            if (DGVPersonal.CurrentRow == null || DGVPersonal.CurrentRow.Index < 0)
-            {
-                MessageBox.Show("Seleccione un usuario de la grilla para actualizar sus datos.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            try
-            {
-                var idValue = DGVPersonal.CurrentRow.Cells[0].Value;
-                if (idValue != null && idValue != DBNull.Value)
-                {
-                    int id = Convert.ToInt32(idValue);
-                    _usuarioId = id;
-                    _esEdicion = true;
-                    CargarPersonalEnFormulario(id);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al cargar usuario: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        private void BDesactivar_Click(object sender, EventArgs e)
-        {
-            if (_idUsuarioSeleccionado <= 0)
-            {
-                MessageBox.Show("Seleccione un usuario de la grilla para dar de baja.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            // REGLA: El administrador no puede darse de baja a sí mismo
-            if (_idUsuarioSeleccionado == IdUsuarioActualEnSesion)
-            {
-                MessageBox.Show(
-                    "Operación denegada: Un Administrador no puede darse de baja ni eliminar su propia cuenta en uso.",
-                    "Restricción de Seguridad",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Hand
-                );
-                return;
-            }
-
-            DialogResult confirmacion = MessageBox.Show(
-                $"¿Está seguro de dar de baja a este usuario?",
-                "Dar de Baja Personal",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Warning
-            );
-
-            if (confirmacion == DialogResult.Yes)
-            {
-                foreach (DataRow fila in _dtPersonal.Rows)
-                {
-                    if (Convert.ToInt32(fila["ColIdUsuario"]) == _idUsuarioSeleccionado)
-                    {
-                        fila["ColEstado"] = "Deshabilitado";
-                        break;
-                    }
-                }
-                LimpiarFormulario();
-            }
-        }
-
-        private void BLimpiar_Click(object sender, EventArgs e)
-        {
-            LimpiarFormulario();
-        }
-
-        private void DGVPersonal_CellClick(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex < 0) return;
-
-            DataGridViewRow fila = DGVPersonal.Rows[e.RowIndex];
-            _idUsuarioSeleccionado = Convert.ToInt32(fila.Cells["ColIdUsuario"].Value ?? 0);
-
-            TBDni.Text = fila.Cells["ColDni"].Value?.ToString() ?? "";
-            TBCuil.Text = fila.Cells["ColCuil"].Value?.ToString() ?? "";
-
-            // Desglose tentativo de Nombre y Apellido
-            string nombreCompleto = fila.Cells["ColNombreCompleto"].Value?.ToString() ?? "";
-            string[] partes = nombreCompleto.Split(new[] { ' ' }, 2);
-            TBNombre.Text = partes.Length > 0 ? partes[0] : "";
-            TBApellido.Text = partes.Length > 1 ? partes[1] : "";
-
-            CBRol.Text = fila.Cells["ColRol"].Value?.ToString() ?? "";
-            TBTelefono.Text = fila.Cells["ColTelefono"].Value?.ToString() ?? "";
-            TBEmail.Text = fila.Cells["ColEmail"].Value?.ToString() ?? "";
-
-            TBUsuario.Text = TBNombre.Text.ToLower().Trim();
-            TBPassword.Clear();
-
-            string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "Habilitado";
-            ChBUsuarioHabilitado.Checked = (estado == "Habilitado");
-
-            // Si el seleccionado es el Administrador actual, se bloquea el botón Dar de Baja
-            BDesactivar.Enabled = (_idUsuarioSeleccionado != IdUsuarioActualEnSesion);
-        }
-        private void CargarPersonalEnFormulario(int id)
-        {
-            if (DGVPersonal.CurrentRow == null) return;
-
-            DataGridViewRow fila = DGVPersonal.CurrentRow;
-
-            TBDni.Text = fila.Cells["ColDni"].Value?.ToString() ?? "";
-            TBCuil.Text = fila.Cells["ColCuil"].Value?.ToString() ?? "";
-
-            // Si Nombre y Apellido se muestran combinados en la grilla
-            string nombreCompleto = fila.Cells["ColNombreCompleto"].Value?.ToString() ?? "";
-            string[] partes = nombreCompleto.Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
-            if (partes.Length > 1)
-            {
-                TBNombre.Text = partes[0];
-                TBApellido.Text = string.Join(" ", partes.Skip(1));
-            }
-            else
-            {
-                TBNombre.Text = nombreCompleto;
-                TBApellido.Clear();
-            }
-
-            TBTelefono.Text = fila.Cells["ColTelefono"].Value?.ToString() ?? "";
-            TBEmail.Text = fila.Cells["ColEmail"].Value?.ToString() ?? "";
-            CBRol.Text = fila.Cells["ColRol"].Value?.ToString() ?? "";
-
-            // El nombre de usuario suele coincidir con el DNI o la columna correspondiente
-            if (string.IsNullOrWhiteSpace(TBUsuario.Text))
-            {
-                TBUsuario.Text = fila.Cells["ColDni"].Value?.ToString() ?? "";
-            }
-
-            // Estado (Habilitado / Inactivo)
-            string estado = fila.Cells["ColEstado"].Value?.ToString() ?? "";
-            ChBUsuarioHabilitado.Checked = (estado.Equals("Activo", StringComparison.OrdinalIgnoreCase) ||
-                                           estado.Equals("Habilitado", StringComparison.OrdinalIgnoreCase));
-
-            // La contraseña se deja vacía para no modificarla a menos que el admin escriba una nueva
-            TBPassword.Clear();
-        }
-        private void LimpiarFormulario()
-        {
-            _idUsuarioSeleccionado = 0;
-            TBDni.Clear();
-            TBCuil.Clear();
-            TBNombre.Clear();
-            TBApellido.Clear();
-            TBTelefono.Clear();
-            TBEmail.Clear();
-            CBRol.SelectedIndex = -1;
-            TBUsuario.Clear();
-            TBPassword.Clear();
-            ChBUsuarioHabilitado.Checked = true;
-
-            // Habilita el botón de baja por defecto
             BDesactivar.Enabled = true;
 
             DGVPersonal.ClearSelection();
             if (DGVPersonal.CurrentCell != null)
                 DGVPersonal.CurrentCell = null;
+
+            ActualizarBotonesSegunModo();
+        }
+
+        // ============================================================
+        // Habilita/Deshabilita botones según el modo
+        // ============================================================
+        private void ActualizarBotonesSegunModo()
+        {
+            if (_esEdicion)
+            {
+                BGuardar.Enabled = false;
+                BActualizar.Enabled = true;
+            }
+            else
+            {
+                BGuardar.Enabled = true;
+                BActualizar.Enabled = false;
+            }
         }
     }
 }
