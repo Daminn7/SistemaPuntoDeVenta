@@ -432,7 +432,7 @@ namespace CapaPresentacion
             // Razón social obligatoria
             if (string.IsNullOrWhiteSpace(TBRazonSocial.Text))
             {
-                mensajeError = "Debe ingresar la Razón Social del proveedor.";
+                mensajeError = "Debe ingresar el Nombre del proveedor.";
                 TBRazonSocial.Focus();
                 return false;
             }

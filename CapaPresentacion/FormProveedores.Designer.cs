@@ -310,7 +310,7 @@
             this.ColCuit.ReadOnly = true;
 
             this.ColRazonSocial.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.ColRazonSocial.HeaderText = "Proveedor / Razón Social";
+            this.ColRazonSocial.HeaderText = "Nombre / Razón Social";
             this.ColRazonSocial.Name = "ColRazonSocial";
             this.ColRazonSocial.ReadOnly = true;
 
@@ -458,7 +458,7 @@
             this.LRazonSocial.Location = new System.Drawing.Point(0, 0);
             this.LRazonSocial.Name = "LRazonSocial";
             this.LRazonSocial.Size = new System.Drawing.Size(191, 22);
-            this.LRazonSocial.Text = "Razón Social / Empresa:";
+            this.LRazonSocial.Text = "Nombre / Razón Social:";
 
             this.TBRazonSocial.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBRazonSocial.Font = new System.Drawing.Font("Segoe UI", 9F);
