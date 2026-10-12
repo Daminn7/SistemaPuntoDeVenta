@@ -6,8 +6,8 @@ namespace CapaDatos.DTOs
     // ============================================================
     // 1. PRODUCTO DTO - PARA CONSULTAS (GET)
     //    ✅ MODIFICADO: Alineado con la respuesta real de la API
-    //    La API devuelve "categoria" y "proveedor" como string,
-    //    no los IDs.
+    //    La API ahora devuelve "categoria" y "proveedor" como string
+    //    Y TAMBIÉN "categoriaId" y "proveedorId" como int.
     // ============================================================
     public class ProductoDto
     {
@@ -55,12 +55,12 @@ namespace CapaDatos.DTOs
         [JsonProperty("estado")]
         public bool Estado { get; set; }
 
-        // ⚠️ La API no devuelve estos campos en el GET
-        //    (hasta que modifiquemos el controller)
-        [JsonIgnore]
+        // ✅ MODIFICADO: La API SÍ devuelve estos campos ahora
+        //    Se quitaron los [JsonIgnore] para que el POV los reciba
+        [JsonProperty("categoriaId")]
         public int CategoriaId { get; set; }
 
-        [JsonIgnore]
+        [JsonProperty("proveedorId")]
         public int? ProveedorId { get; set; }
     }
 
@@ -106,6 +106,8 @@ namespace CapaDatos.DTOs
 
         [JsonProperty("proveedorId")]
         public int? ProveedorId { get; set; }
+        [JsonProperty("estado")]
+        public bool? Estado { get; set; }
     }
 
     // ✅ Eliminado: ActualizarProductoDto (la API usa CrearProductoDto para PUT)

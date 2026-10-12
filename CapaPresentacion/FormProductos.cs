@@ -182,7 +182,17 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
+                // ✅ DEBUG: mostrar error completo
+                string msg = $"Error al cargar productos:\n\n" +
+                             $"Mensaje: {ex.Message}\n\n" +
+                             $"Tipo: {ex.GetType().Name}\n\n";
+
+                if (ex.InnerException != null)
+                    msg += $"Inner: {ex.InnerException.Message}\n\n";
+
+                msg += $"StackTrace: {ex.StackTrace}";
+
+                MessageBox.Show(msg, "Error Completo",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
@@ -272,6 +282,13 @@ namespace CapaPresentacion
                     return;
                 }
 
+                // ✅ DEBUG temporal
+                System.Diagnostics.Debug.WriteLine($"=== CargarProductoEnFormulario({id}) ===");
+                System.Diagnostics.Debug.WriteLine($"Nombre: {producto.Nombre}");
+                System.Diagnostics.Debug.WriteLine($"CategoriaId: {producto.CategoriaId}");
+                System.Diagnostics.Debug.WriteLine($"ProveedorId: {producto.ProveedorId}");
+                System.Diagnostics.Debug.WriteLine($"Items en CBProveedor: {CBProveedor.Items.Count}");
+
                 TCodigoInterno.Text = producto.CodigoInterno ?? "";
                 TCodBarras.Text = producto.CodBarras ?? "";
                 TNombreProducto.Text = producto.Nombre ?? "";
@@ -279,7 +296,7 @@ namespace CapaPresentacion
                 TPrecioMinorista.Text = producto.PrecioMinorista.ToString("0.00");
                 TPrecioMayorista.Text = producto.PrecioMayorista?.ToString("0.00") ?? "";
 
-                // ✅ Cargar categoría
+                // ✅ Cargar categoría con fallback
                 if (producto.CategoriaId > 0 && CBCategoria.DataSource != null)
                 {
                     CBCategoria.SelectedValue = producto.CategoriaId;
@@ -296,13 +313,17 @@ namespace CapaPresentacion
                             }
                         }
                     }
+
+                    System.Diagnostics.Debug.WriteLine($"Categoria seleccionada index: {CBCategoria.SelectedIndex}");
                 }
 
-                // ✅ Cargar proveedor
+                // ✅ Cargar proveedor con fallback más robusto
                 if (producto.ProveedorId.HasValue && producto.ProveedorId.Value > 0)
                 {
+                    // Intento 1: SelectedValue
                     CBProveedor.SelectedValue = producto.ProveedorId.Value;
 
+                    // Intento 2: buscar por índice
                     if (CBProveedor.SelectedIndex == -1)
                     {
                         for (int i = 0; i < CBProveedor.Items.Count; i++)
@@ -315,6 +336,8 @@ namespace CapaPresentacion
                             }
                         }
                     }
+
+                    System.Diagnostics.Debug.WriteLine($"Proveedor seleccionado index: {CBProveedor.SelectedIndex}");
                 }
                 else
                 {
@@ -550,7 +573,8 @@ namespace CapaPresentacion
                     StockMaximo = 1000,
                     Costo = 0,
                     PrecioMinorista = precioMinorista,
-                    PrecioMayorista = precioMayorista
+                    PrecioMayorista = precioMayorista,
+                    Estado = ChBProductoHabilitado.Checked
                 };
 
                 await _productoLogica.Crear(nuevoProducto);
@@ -616,7 +640,8 @@ namespace CapaPresentacion
                     StockMinimo = (int)NUDStockMinimo.Value,
                     StockMaximo = 1000,
                     ProveedorId = idProveedor,
-                    CategoriaId = (int)CBCategoria.SelectedValue
+                    CategoriaId = (int)CBCategoria.SelectedValue,
+                    Estado = ChBProductoHabilitado.Checked
                 };
 
                 await _productoLogica.Actualizar(_productoId, actualizarProducto);
