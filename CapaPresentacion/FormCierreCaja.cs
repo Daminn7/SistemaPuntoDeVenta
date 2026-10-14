@@ -9,6 +9,8 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CapaLogica;
+using CapaDatos.DTOs;
 using static CapaPresentacion.FormPrincipal;
 
 namespace CapaPresentacion
@@ -18,11 +20,14 @@ namespace CapaPresentacion
         // =========================================================================
         // VARIABLES Y ESTADO DEL TURNO
         // =========================================================================
+        private readonly CajaLogica _cajaLogica = new CajaLogica();
+        private readonly MovimientoCajaLogica _movimientoLogica = new MovimientoCajaLogica();
+
         private bool _cajaAbierta = false;
         private int _idTurnoCaja = 0;
         private string _nombreCajero = "Operador";
 
-        // Acumuladores contables del turno
+        // Acumuladores contables del turno (se leen de la API)
         private decimal _fondoInicial = 0m;
         private decimal _ventasEfectivo = 0m;
         private decimal _cobrosDigitales = 0m;
@@ -75,27 +80,55 @@ namespace CapaPresentacion
             return bmp;
         }
 
+        // =========================================================================
+        // CONSULTAR ESTADO DEL TURNO ACTUAL (CONTRA LA API)
+        // =========================================================================
         private async Task ConsultarEstadoTurnoActualAsync()
         {
             try
             {
-                // Conexión futura con _cajaLogica.ObtenerTurnoActivoAsync()
-                await Task.Delay(100);
+                // ✅ NUEVO: Se obtiene la caja activa desde la API
+                var cajaActiva = await _cajaLogica.ObtenerActiva();
 
-                _cajaAbierta = false;
-                _idTurnoCaja = 1042;
-
-                _fondoInicial = 20000.00m;
-                _ventasEfectivo = 85400.00m;
-                _cobrosDigitales = 42000.00m;
-                _cobrosTarjetas = 31500.00m;
-                _egresosMenores = 5000.00m;
+                if (cajaActiva == null)
+                {
+                    // No hay caja abierta
+                    _cajaAbierta = false;
+                    _idTurnoCaja = 0;
+                    _fondoInicial = 0m;
+                    _ventasEfectivo = 0m;
+                    _cobrosDigitales = 0m;
+                    _cobrosTarjetas = 0m;
+                    _egresosMenores = 0m;
+                }
+                else
+                {
+                    // Hay caja abierta: cargar sus datos
+                    _cajaAbierta = true;
+                    _idTurnoCaja = cajaActiva.Id;
+                    _fondoInicial = cajaActiva.FondoInicial;
+                    _ventasEfectivo = cajaActiva.TotalVentas;
+                    _cobrosDigitales = cajaActiva.TotalIngresos;
+                    _cobrosTarjetas = 0m;
+                    _egresosMenores = cajaActiva.TotalEgresos;
+                }
 
                 RecalcularMetricasVisuales();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar el turno de caja: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                // ✅ Si la API devuelve 404 (no hay caja activa), se maneja como "sin caja"
+                System.Diagnostics.Debug.WriteLine($"No hay caja activa o error: {ex.Message}");
+
+                _cajaAbierta = false;
+                _idTurnoCaja = 0;
+                _fondoInicial = 0m;
+                _ventasEfectivo = 0m;
+                _cobrosDigitales = 0m;
+                _cobrosTarjetas = 0m;
+                _egresosMenores = 0m;
+
+                RecalcularMetricasVisuales();
             }
         }
 
@@ -151,7 +184,7 @@ namespace CapaPresentacion
         }
 
         // =========================================================================
-        // ACCIÓN 1: APERTURA DE TURNO (C# PURO CON MODAL NATIVO)
+        // ACCIÓN 1: APERTURA DE TURNO (CONTRA LA API)
         // =========================================================================
         private async void BAbrirTurno_Click(object sender, EventArgs e)
         {
@@ -163,12 +196,18 @@ namespace CapaPresentacion
                     {
                         decimal fondo = modalApertura.FondoInicial;
 
-                        // Conexión futura con _cajaLogica.AbrirTurnoAsync(fondo, usuarioId)
-                        await Task.Delay(150);
+                        // ✅ NUEVO: Se abre la caja en la API
+                        var nuevaCaja = new CrearCajaDto
+                        {
+                            PersonalId = SesionUsuario.IdUsuario,
+                            FondoInicial = fondo
+                        };
 
-                        _fondoInicial = fondo;
+                        var cajaCreada = await _cajaLogica.Abrir(nuevaCaja);
+
+                        _fondoInicial = cajaCreada.FondoInicial;
                         _cajaAbierta = true;
-                        _idTurnoCaja = new Random().Next(1000, 9999);
+                        _idTurnoCaja = cajaCreada.Id;
 
                         RecalcularMetricasVisuales();
                         ActualizarInterfazSegunEstado();
@@ -185,9 +224,9 @@ namespace CapaPresentacion
         }
 
         // =========================================================================
-        // ACCIÓN 2: REGISTRO DE MOVIMIENTO MENOR (C# PURO CON MODAL NATIVO)
+        // ACCIÓN 2: REGISTRO DE MOVIMIENTO MENOR (CONTRA LA API)
         // =========================================================================
-        private void BMovimientoMenor_Click(object sender, EventArgs e)
+        private async void BMovimientoMenor_Click(object sender, EventArgs e)
         {
             decimal maximoDisponible = _fondoInicial + _ventasEfectivo - _egresosMenores;
 
@@ -198,17 +237,37 @@ namespace CapaPresentacion
                     decimal monto = modalMov.MontoEgreso;
                     string motivo = modalMov.MotivoEgreso;
 
-                    _egresosMenores += monto;
-                    RecalcularMetricasVisuales();
+                    try
+                    {
+                        // ✅ NUEVO: Se registra el movimiento en la API
+                        var movimiento = new CrearMovimientoCajaDto
+                        {
+                            CajaId = _idTurnoCaja,
+                            PersonalId = SesionUsuario.IdUsuario,
+                            TipoMovimientoId = 2, // 2 = Egreso
+                            Monto = monto,
+                            Descripcion = motivo
+                        };
 
-                    MessageBox.Show($"Egreso registrado por $ {monto:N2}.\nConcepto: {motivo}",
-                                    "Comprobante de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        await _movimientoLogica.Registrar(movimiento);
+
+                        _egresosMenores += monto;
+                        RecalcularMetricasVisuales();
+
+                        MessageBox.Show($"Egreso registrado por $ {monto:N2}.\nConcepto: {motivo}",
+                                        "Comprobante de Caja", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Error al registrar movimiento: {ex.Message}", "Error",
+                            MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }
 
         // =========================================================================
-        // ACCIÓN 3: ARQUEO Y CIERRE DE TURNO
+        // ACCIÓN 3: ARQUEO Y CIERRE DE TURNO (CONTRA LA API)
         // =========================================================================
         private async void BCerrarTurno_Click(object sender, EventArgs e)
         {
@@ -224,8 +283,8 @@ namespace CapaPresentacion
 
                     try
                     {
-                        // Conexión futura con _cajaLogica.CerrarTurnoAsync(...)
-                        await Task.Delay(200);
+                        // ✅ NUEVO: Se cierra la caja en la API
+                        await _cajaLogica.Cerrar(_idTurnoCaja);
 
                         string balance = diferencia == 0m
                             ? "Caja Cuadrada"
@@ -251,11 +310,10 @@ namespace CapaPresentacion
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"Error al asentar el cierre en la base de datos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                        MessageBox.Show($"Error al cerrar el turno en la base de datos: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     }
                 }
             }
         }
     }
 }
-

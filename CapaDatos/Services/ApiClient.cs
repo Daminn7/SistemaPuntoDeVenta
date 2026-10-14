@@ -278,7 +278,84 @@ namespace CapaDatos.Services
             var response = await _httpClient.DeleteAsync($"/api/clientes/{id}");
             response.EnsureSuccessStatusCode();
         }
+        // ============================================================
+        // ORDENES DE VENTA (PreVenta → Caja)
+        // ============================================================
+        public async Task<List<OrdenVentaDto>> GetOrdenesVentaAsync()
+        {
+            var response = await _httpClient.GetAsync("/api/ordenesventa");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<OrdenVentaDto>>(content);
+        }
 
+        public async Task<OrdenVentaDto> GetOrdenVentaAsync(int id)
+        {
+            var response = await _httpClient.GetAsync($"/api/ordenesventa/{id}");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<OrdenVentaDto>(content);
+        }
+
+        public async Task<List<OrdenVentaDto>> GetOrdenesVentaConfirmadasAsync()
+        {
+            var response = await _httpClient.GetAsync("/api/ordenesventa/confirmadas");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<OrdenVentaDto>>(content);
+        }
+
+        public async Task<CrearOrdenVentaResponseDto> CreateOrdenVentaAsync(CrearOrdenVentaDto orden)
+        {
+            var json = JsonConvert.SerializeObject(orden);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/ordenesventa: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("/api/ordenesventa", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<CrearOrdenVentaResponseDto>(responseContent);
+        }
+
+        public async Task<dynamic> ConfirmarOrdenVentaAsync(int id)
+        {
+            var response = await _httpClient.PutAsync($"/api/ordenesventa/{id}/confirmar", null);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Confirmar orden {id} - Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
+
+        public async Task<dynamic> CancelarOrdenVentaAsync(int id)
+        {
+            var response = await _httpClient.PutAsync($"/api/ordenesventa/{id}/cancelar", null);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Cancelar orden {id} - Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
         // ============================================================
         // DIRECCIONES
         // ============================================================

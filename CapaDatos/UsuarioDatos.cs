@@ -10,7 +10,6 @@ namespace CapaDatos
     {
         private readonly ApiClient _apiClient;
 
-        // URL base de tu API (cambiala si es necesario)
         private const string API_BASE_URL = "https://api.serverlabservices.bot.cd";
 
         public UsuarioDatos()
@@ -20,15 +19,19 @@ namespace CapaDatos
 
         /// <summary>
         /// Autentica al usuario contra la API REST.
+        /// ✅ MODIFICADO: Se agregó el parámetro out int personalId
         /// </summary>
-        public bool Autenticar(string codigoAcceso, string password, out string rol, out string nombreCompleto)
+        public bool Autenticar(string codigoAcceso, string password,
+                               out string rol,
+                               out string nombreCompleto,
+                               out int personalId)
         {
             rol = string.Empty;
             nombreCompleto = string.Empty;
+            personalId = 0;
 
             try
             {
-                // Llamada sincrona a la API (para no romper la firma existente)
                 var task = Task.Run(async () => await _apiClient.LoginAsync(codigoAcceso, password));
                 var result = task.Result;
 
@@ -36,6 +39,7 @@ namespace CapaDatos
                 {
                     rol = result.Perfil ?? "Usuario";
                     nombreCompleto = result.NombreCompleto ?? codigoAcceso;
+                    personalId = result.PersonalId ?? 0;   // ✅ NUEVO
                     return true;
                 }
 
@@ -43,43 +47,31 @@ namespace CapaDatos
             }
             catch (AggregateException ex) when (ex.InnerException is System.Net.Http.HttpRequestException)
             {
-                // ✅ Error de conexión a la API
                 System.Diagnostics.Debug.WriteLine($"Error de conexión en autenticación: {ex.InnerException.Message}");
                 throw new System.Net.Http.HttpRequestException("No se pudo conectar con el servidor. Verifique su conexión.");
             }
             catch (System.Net.Http.HttpRequestException)
             {
-                // ✅ Error de conexión a la API
                 System.Diagnostics.Debug.WriteLine("Error de conexión en autenticación");
                 throw;
             }
             catch (Exception ex)
             {
-                // Otros errores
                 System.Diagnostics.Debug.WriteLine($"Error en autenticacion API: {ex.Message}");
                 return false;
             }
         }
 
-        /// <summary>
-        /// Obtiene el token actual del usuario autenticado.
-        /// </summary>
         public string ObtenerToken()
         {
             return TokenManager.Token;
         }
 
-        /// <summary>
-        /// Verifica si el token actual es valido.
-        /// </summary>
         public bool TokenValido()
         {
             return TokenManager.IsTokenValid();
         }
 
-        /// <summary>
-        /// Cierra la sesion actual limpiando el token.
-        /// </summary>
         public void CerrarSesion()
         {
             TokenManager.ClearToken();

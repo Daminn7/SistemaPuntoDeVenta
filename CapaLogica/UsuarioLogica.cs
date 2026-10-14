@@ -37,11 +37,16 @@ namespace CapaLogica
 
         /// <summary>
         /// Valida las credenciales de un usuario contra la API.
+        /// ✅ MODIFICADO: Se agregó el parámetro out int personalId
         /// </summary>
-        public string ValidarLogin(string usuario, string password, out string rol, out string nombreCompleto)
+        public string ValidarLogin(string usuario, string password,
+                                   out string rol,
+                                   out string nombreCompleto,
+                                   out int personalId)
         {
             rol = string.Empty;
             nombreCompleto = string.Empty;
+            personalId = 0;
 
             // Validaciones de entrada
             if (string.IsNullOrWhiteSpace(usuario))
@@ -58,7 +63,11 @@ namespace CapaLogica
 
             try
             {
-                bool autenticado = _usuarioDatos.Autenticar(usuario, password, out rol, out nombreCompleto);
+                // ✅ MODIFICADO: Se pasan los 5 argumentos (incluyendo personalId)
+                bool autenticado = _usuarioDatos.Autenticar(usuario, password,
+                                                             out rol,
+                                                             out nombreCompleto,
+                                                             out personalId);
 
                 if (!autenticado)
                     return "Código de usuario o contraseña incorrectos.";

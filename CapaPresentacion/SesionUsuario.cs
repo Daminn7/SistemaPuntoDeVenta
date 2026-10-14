@@ -8,6 +8,7 @@
     public static class SesionUsuario
     {
         public static int IdUsuario { get; set; }
+        public static int IdPersonal { get; set; }
         public static string Nombre { get; set; }
         public static string Rol { get; set; }
     }

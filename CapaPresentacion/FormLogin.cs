@@ -193,7 +193,6 @@ namespace CapaPresentacion
 
             bool hayError = false;
 
-            // Validación individual previa antes de procesar
             if (string.IsNullOrWhiteSpace(usuario))
             {
                 LErrorUsuario.Visible = true;
@@ -215,11 +214,19 @@ namespace CapaPresentacion
 
             try
             {
-                // Validación estricta a través de la Capa Lógica
-                string error = _usuarioLogica.ValidarLogin(usuario, clave, out string rol, out string nombreCompleto);
+                // ✅ MODIFICADO: Ahora recibe out int personalId
+                string error = _usuarioLogica.ValidarLogin(usuario, clave,
+                                                            out string rol,
+                                                            out string nombreCompleto,
+                                                            out int personalId);
 
                 if (string.IsNullOrEmpty(error))
                 {
+                    // ✅ NUEVO: Asignar datos a la sesión global
+                    SesionUsuario.IdPersonal = personalId;
+                    SesionUsuario.Nombre = nombreCompleto;
+                    SesionUsuario.Rol = rol;
+
                     MostrarBienvenidaFlotante(nombreCompleto, rol);
 
                     this.Hide();
@@ -242,7 +249,6 @@ namespace CapaPresentacion
             }
             catch (System.Net.Http.HttpRequestException ex)
             {
-                // ✅ Error de conexión a la API
                 MessageBox.Show(
                     "No se pudo conectar con el servidor.\n\n" +
                     "Por favor, verifique:\n" +
@@ -252,23 +258,19 @@ namespace CapaPresentacion
                     $"Detalle técnico: {ex.Message}",
                     "Error de Conexión",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
+                    MessageBoxIcon.Error);
 
-                // Restablecer campos después del error
                 RestablecerCampos();
                 ValidarCamposEnTiempoReal();
                 TUsuario.Focus();
             }
             catch (Exception ex)
             {
-                // ✅ Otros errores inesperados
                 MessageBox.Show(
                     $"Ocurrió un error inesperado:\n\n{ex.Message}",
                     "Error",
                     MessageBoxButtons.OK,
-                    MessageBoxIcon.Error
-                );
+                    MessageBoxIcon.Error);
 
                 RestablecerCampos();
                 ValidarCamposEnTiempoReal();

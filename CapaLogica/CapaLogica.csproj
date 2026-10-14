@@ -50,6 +50,7 @@
     <Compile Include="CategoriaLogica.cs" />
     <Compile Include="DetalleVentaLogica.cs" />
     <Compile Include="MovimientoCajaLogica.cs" />
+    <Compile Include="OrdenVentaLogica.cs" />
     <Compile Include="PersonalLogica.cs" />
     <Compile Include="ProveedorLogica.cs" />
     <Compile Include="TelefonoLogica.cs" />
