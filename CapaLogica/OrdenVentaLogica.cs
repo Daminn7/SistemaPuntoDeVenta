@@ -61,5 +61,11 @@ namespace CapaLogica
         /// </summary>
         public async Task<dynamic> Cancelar(int id)
             => await _apiClient.CancelarOrdenVentaAsync(id);
+        /// <summary>
+        /// Anula una orden Finalizada (repone stock + anula venta asociada).
+        /// Se usa en: PUT /api/ordenesventa/{id}/anular
+        /// </summary>
+        public async Task<dynamic> Anular(int id)
+            => await _apiClient.AnularOrdenVentaAsync(id);
     }
 }

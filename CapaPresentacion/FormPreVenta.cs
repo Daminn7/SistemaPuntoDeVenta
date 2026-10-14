@@ -10,12 +10,13 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static CapaPresentacion.FormPrincipal;
+using CapaLogica;
+using CapaDatos.DTOs;
 
 namespace CapaPresentacion
 {
     public partial class FormPreVenta : Form
     {
-        // Estructura interna para el catálogo de insumos
         private class ArticuloCatalogo
         {
             public int Id { get; set; }
@@ -25,23 +26,37 @@ namespace CapaPresentacion
             public decimal PrecioMinorista { get; set; }
             public decimal PrecioMayorista { get; set; }
         }
+
         private List<ArticuloCatalogo> _catalogoInsumos = new List<ArticuloCatalogo>();
         private DataTable _dtDetalle = new DataTable();
-        private ArticuloCatalogo _insumoSeleccionado = null; // se declara a nivel de clase 
+        private ArticuloCatalogo _insumoSeleccionado = null;
+
+        // ✅ Clientes reales
+        private readonly ClienteLogica _clienteLogica = new ClienteLogica();
+        private List<ClienteResponseDto> _clientes;
+
+        // ✅ Productos reales
+        private readonly ProductoLogica _productoLogica = new ProductoLogica();
+        private List<ProductoDto> _productos;
+
+        // ✅ Órdenes de venta (API)
+        private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
+
         public FormPreVenta()
         {
             InitializeComponent();
-            InicializarCatalogoSimulado();
             ConfigurarBuscadorReactivo();
         }
-        private void FormPreVenta_Load(object sender, EventArgs e)
+
+        private async void FormPreVenta_Load(object sender, EventArgs e)
         {
             AsignarIconoTitulo();
-            CargarClientesSimulados();
+            await CargarClientesAsync();
+            await CargarProductosAsync();
             ConfigurarEstructuraDetalle();
             LimpiarFormulario();
         }
-        // Ícono vectorial de preventa
+
         private Image DibujarIconoPreVenta(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -51,7 +66,6 @@ namespace CapaPresentacion
                 using (Pen pen = new Pen(color, 2.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
-                    // Carro de compras simplificado
                     g.DrawLines(pen, new[] {
                         new Point(3, 7), new Point(8, 7), new Point(12, 21),
                         new Point(24, 21), new Point(27, 11), new Point(9, 11)
@@ -62,93 +76,133 @@ namespace CapaPresentacion
             }
             return bmp;
         }
+
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = DibujarIconoPreVenta(Color.FromArgb(212, 131, 53));
         }
-        // Catálogo en memoria y autocompletado, para visualizar funcionalidad
-        private void InicializarCatalogoSimulado()
+
+        // ============================================================
+        // ✅ Carga productos desde la API y los pone en el ComboBox
+        // ============================================================
+        private async Task CargarProductosAsync()
         {
-            _catalogoInsumos = new List<ArticuloCatalogo>
+            try
             {
-                new ArticuloCatalogo { Id = 1, Codigo = "HI-014", Descripcion = "Hierro Ángulo 1 1/2 x 1/8", Stock = 18, PrecioMinorista = 14500m, PrecioMayorista = 12900m },
-                new ArticuloCatalogo { Id = 2, Codigo = "EL-6013", Descripcion = "Electrodo Punta Azul 2.5mm (Kg)", Stock = 45, PrecioMinorista = 9200m, PrecioMayorista = 8100m },
-                new ArticuloCatalogo { Id = 3, Codigo = "CH-C20", Descripcion = "Chapa Negra Lisa C20 (1x2m)", Stock = 12, PrecioMinorista = 38500m, PrecioMayorista = 34900m },
-                new ArticuloCatalogo { Id = 4, Codigo = "DI-CUT", Descripcion = "Disco Corte Acero 115x1.0mm", Stock = 120, PrecioMinorista = 1850m, PrecioMayorista = 1500m },
-                new ArticuloCatalogo { Id = 5, Codigo = "TU-4040", Descripcion = "Tubo Estructural 40x40x1.6mm (6m)", Stock = 24, PrecioMinorista = 24800m, PrecioMayorista = 22100m },
-                new ArticuloCatalogo { Id = 6, Codigo = "PL-114", Descripcion = "Planchuela 1 1/4 x 3/16 (6m)", Stock = 30, PrecioMinorista = 16900m, PrecioMayorista = 15200m }
-            };
+                var productos = await _productoLogica.ObtenerTodos();
+                _productos = productos ?? new List<ProductoDto>();
+
+                _catalogoInsumos = _productos
+                    .Where(p => p.Estado)
+                    .Select(p => new ArticuloCatalogo
+                    {
+                        Id = p.Id,
+                        Codigo = p.CodigoInterno ?? p.CodBarras ?? "",
+                        Descripcion = p.Nombre,
+                        Stock = p.StockActual,
+                        PrecioMinorista = p.PrecioMinorista,
+                        PrecioMayorista = p.PrecioMayorista ?? p.PrecioMinorista
+                    })
+                    .ToList();
+
+                CargarArticulosEnCombo();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
-        private void ConfigurarBuscadorReactivo()
+
+        // ============================================================
+        // ✅ Llena el ComboBox de artículos
+        // ============================================================
+        private void CargarArticulosEnCombo()
         {
-            AutoCompleteStringCollection autocompletar = new AutoCompleteStringCollection();
+            CBArticulos.Items.Clear();
+
             foreach (var art in _catalogoInsumos)
             {
-                autocompletar.Add($"{art.Codigo} - {art.Descripcion}");
+                CBArticulos.Items.Add(new ArticuloItem
+                {
+                    IdProducto = art.Id,
+                    Codigo = art.Codigo,
+                    Descripcion = art.Descripcion,
+                    Stock = art.Stock,
+                    PrecioMinorista = art.PrecioMinorista,
+                    PrecioMayorista = art.PrecioMayorista
+                });
             }
 
-            TBBuscarArticulo.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-            TBBuscarArticulo.AutoCompleteSource = AutoCompleteSource.CustomSource;
-            TBBuscarArticulo.AutoCompleteCustomSource = autocompletar;
+            CBArticulos.SelectedIndex = -1;
+            CBArticulos.Text = "";
+        }
 
-            // 1. Enter en la caja de texto: selecciona el insumo y pasa el foco a la cantidad
-            TBBuscarArticulo.KeyDown += (s, e) =>
+        // ============================================================
+        // ✅ Al seleccionar un artículo del combo
+        // ============================================================
+        private void CBArticulos_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (CBArticulos.SelectedItem is ArticuloItem item)
             {
-                if (e.KeyCode == Keys.Enter)
+                _insumoSeleccionado = new ArticuloCatalogo
                 {
-                    e.SuppressKeyPress = true;
+                    Id = item.IdProducto,
+                    Codigo = item.Codigo,
+                    Descripcion = item.Descripcion,
+                    Stock = item.Stock,
+                    PrecioMinorista = item.PrecioMinorista,
+                    PrecioMayorista = item.PrecioMayorista
+                };
 
-                    string texto = TBBuscarArticulo.Text.Trim();
-                    if (string.IsNullOrWhiteSpace(texto)) return;
-
-                    // Busca y guarda en la variable de clase
-                    _insumoSeleccionado = _catalogoInsumos.FirstOrDefault(a =>
-                        texto.StartsWith(a.Codigo, StringComparison.OrdinalIgnoreCase) ||
-                        a.Descripcion.IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                        a.Codigo.Equals(texto, StringComparison.OrdinalIgnoreCase));
-
-                    if (_insumoSeleccionado == null)
+                int yaEnGrilla = 0;
+                foreach (DataRow row in _dtDetalle.Rows)
+                {
+                    if (Convert.ToInt32(row["ColIdProducto"]) == item.IdProducto)
                     {
-                        MessageBox.Show("No se encontró ningún artículo que coincida con la búsqueda.",
-                                        "No encontrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                        TBBuscarArticulo.Focus();
-                        return;
+                        yaEnGrilla = Convert.ToInt32(row["ColCantidad"]);
+                        break;
                     }
-
-                    // Calculamos cuánto ya se cargó de este ítem en la grilla
-                    int yaEnGrilla = 0;
-                    foreach (DataRow row in _dtDetalle.Rows)
-                    {
-                        if (Convert.ToInt32(row["ColIdProducto"]) == _insumoSeleccionado.Id)
-                        {
-                            yaEnGrilla = Convert.ToInt32(row["ColCantidad"]);
-                            break;
-                        }
-                    }
-
-                    int stockDisponible = _insumoSeleccionado.Stock - yaEnGrilla;
-
-                    if (stockDisponible <= 0)
-                    {
-                        MessageBox.Show($"Sin stock disponible. Ya se agregaron todas las unidades disponibles ({_insumoSeleccionado.Stock}) de '{_insumoSeleccionado.Descripcion}' a la venta.",
-                                        "Stock Agotado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                        _insumoSeleccionado = null;
-                        TBBuscarArticulo.Focus();
-                        return;
-                    }
-
-                    // Limitamos el control numérico al stock real disponible
-                    NUDCantidad.Minimum = 1;
-                    NUDCantidad.Maximum = stockDisponible;
-                    NUDCantidad.Value = 1;
-
-                    NUDCantidad.Focus();
-                    NUDCantidad.Select(0, NUDCantidad.Text.Length);
                 }
-            };
 
-            // 2. Al dar Enter en el NumericUpDown de cantidad: agrega el ítem
+                int stockDisponible = item.Stock - yaEnGrilla;
+
+                if (stockDisponible <= 0)
+                {
+                    MessageBox.Show(
+                        $"Sin stock disponible.\n\n" +
+                        $"Producto: {item.Descripcion}\n" +
+                        $"Stock total: {item.Stock}\n" +
+                        $"Ya en el detalle: {yaEnGrilla}\n\n" +
+                        "No se puede agregar más unidades.",
+                        "Stock Agotado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    _insumoSeleccionado = null;
+                    CBArticulos.SelectedIndex = -1;
+                    LStockDisponible.Text = "";
+                    return;
+                }
+
+                NUDCantidad.Minimum = 1;
+                NUDCantidad.Maximum = stockDisponible;
+                NUDCantidad.Value = 1;
+
+                // ✅ Mostrar stock disponible en el label
+                LStockDisponible.Text = $"Stock disp: {stockDisponible}";
+                LStockDisponible.ForeColor = stockDisponible <= 3
+                    ? Color.FromArgb(192, 57, 43)
+                    : Color.FromArgb(39, 174, 96);
+
+                NUDCantidad.Focus();
+                NUDCantidad.Select(0, NUDCantidad.Text.Length);
+            }
+        }
+
+        private void ConfigurarBuscadorReactivo()
+        {
             NUDCantidad.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter)
@@ -157,25 +211,98 @@ namespace CapaPresentacion
                     BAgregarItem.PerformClick();
                 }
             };
+
+            // ✅ NUEVO: Validar cuando cambia el valor de cantidad
+            NUDCantidad.ValueChanged += (s, e) =>
+            {
+                if (_insumoSeleccionado == null) return;
+
+                int yaEnGrilla = 0;
+                foreach (DataRow row in _dtDetalle.Rows)
+                {
+                    if (Convert.ToInt32(row["ColIdProducto"]) == _insumoSeleccionado.Id)
+                    {
+                        yaEnGrilla = Convert.ToInt32(row["ColCantidad"]);
+                        break;
+                    }
+                }
+
+                int stockDisponible = _insumoSeleccionado.Stock - yaEnGrilla;
+
+                if (NUDCantidad.Value > stockDisponible && stockDisponible > 0)
+                {
+                    NUDCantidad.Value = stockDisponible;
+                    MessageBox.Show(
+                        $"Solo quedan {stockDisponible} unidades de '{_insumoSeleccionado.Descripcion}' disponibles.",
+                        "Stock insuficiente",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+                }
+            };
         }
-        private ArticuloCatalogo ObtenerArticuloPorBusqueda(string texto)
+
+        // ============================================================
+        // CLIENTES
+        // ============================================================
+        private async Task CargarClientesAsync()
         {
-            return _catalogoInsumos.FirstOrDefault(a =>
-                texto.StartsWith(a.Codigo, StringComparison.OrdinalIgnoreCase) ||
-                a.Descripcion.IndexOf(texto, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                a.Codigo.Equals(texto, StringComparison.OrdinalIgnoreCase));
+            try
+            {
+                var clientes = await _clienteLogica.ObtenerTodos();
+                _clientes = clientes ?? new List<ClienteResponseDto>();
+
+                CBClientes.Items.Clear();
+
+                var consumidorFinal = _clientes.FirstOrDefault(c => c.Dni == "00000000");
+                if (consumidorFinal != null)
+                {
+                    CBClientes.Items.Add(new ClienteItem
+                    {
+                        IdCliente = consumidorFinal.IdCliente,
+                        Display = "Consumidor Final"
+                    });
+                }
+
+                var otros = _clientes
+                    .Where(c => c.Estado && c.Dni != "00000000")
+                    .OrderBy(c => c.Apellido)
+                    .ThenBy(c => c.Nombre)
+                    .ToList();
+
+                foreach (var cliente in otros)
+                {
+                    string nombreCompleto = $"{cliente.Nombre} {cliente.Apellido}".Trim();
+                    string documento = cliente.Dni ?? cliente.CuilCuit ?? "";
+                    string display = $"{nombreCompleto} ({documento})";
+
+                    CBClientes.Items.Add(new ClienteItem
+                    {
+                        IdCliente = cliente.IdCliente,
+                        Display = display
+                    });
+                }
+
+                if (CBClientes.Items.Count > 0)
+                    CBClientes.SelectedIndex = 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar clientes: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
-        private void CargarClientesSimulados()
+
+        private int ObtenerIdClienteSeleccionado()
         {
-            CBClientes.Items.Clear();
-            CBClientes.Items.AddRange(new object[] {
-                "Consumidor Final",
-                "Herrería San José (CUIT 20-35412890-4)",
-                "Metalúrgica Del Nordeste (CUIT 30-71289012-8)",
-                "Carlos Romero (CUIT 27-28456123-2)"
-            });
-            CBClientes.SelectedIndex = 0;
+            if (CBClientes.SelectedItem is ClienteItem item)
+                return item.IdCliente;
+
+            return 0;
         }
+
+        // ============================================================
+        // DETALLE
+        // ============================================================
         private void ConfigurarEstructuraDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -198,42 +325,24 @@ namespace CapaPresentacion
             ColPrecioUnit.DataPropertyName = "ColPrecioUnit";
             ColSubtotal.DataPropertyName = "ColSubtotal";
 
-            // Formato de moneda para columnas de precio
             ColPrecioUnit.DefaultCellStyle.Format = "C2";
             ColSubtotal.DefaultCellStyle.Format = "C2";
 
             DGVDetalle.DataSource = _dtDetalle;
         }
-        // Adición y validación de ítems
+
         private void BAgregarItem_Click(object sender, EventArgs e)
         {
-            // Si el usuario no presionó Enter en el buscador y dio clic directo al botón:
             if (_insumoSeleccionado == null)
             {
-                string textoBusqueda = TBBuscarArticulo.Text.Trim();
-                if (string.IsNullOrEmpty(textoBusqueda))
-                {
-                    MessageBox.Show("Ingrese el código o nombre del insumo.", "Atención", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    TBBuscarArticulo.Focus();
-                    return;
-                }
-
-                _insumoSeleccionado = _catalogoInsumos.FirstOrDefault(a =>
-                    textoBusqueda.StartsWith(a.Codigo, StringComparison.OrdinalIgnoreCase) ||
-                    a.Descripcion.IndexOf(textoBusqueda, StringComparison.OrdinalIgnoreCase) >= 0 ||
-                    a.Codigo.Equals(textoBusqueda, StringComparison.OrdinalIgnoreCase));
-
-                if (_insumoSeleccionado == null)
-                {
-                    MessageBox.Show("No se encontró ningún artículo que coincida con la búsqueda.", "No encontrado", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    TBBuscarArticulo.Focus();
-                    return;
-                }
+                MessageBox.Show("Seleccione un artículo del desplegable.", "Atención",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                CBArticulos.Focus();
+                return;
             }
 
             int cantidadSolicitada = (int)NUDCantidad.Value;
 
-            // Verificar si el producto ya está en la grilla para sumar cantidades
             DataRow filaExistente = null;
             foreach (DataRow row in _dtDetalle.Rows)
             {
@@ -247,11 +356,20 @@ namespace CapaPresentacion
             int cantidadActualEnGrilla = filaExistente != null ? Convert.ToInt32(filaExistente["ColCantidad"]) : 0;
             int cantidadTotal = cantidadActualEnGrilla + cantidadSolicitada;
 
-            // Validación de seguridad de stock
+            // ✅ Validar stock con mensaje detallado
             if (cantidadTotal > _insumoSeleccionado.Stock)
             {
-                MessageBox.Show($"Stock insuficiente. Solo hay {_insumoSeleccionado.Stock} unidades en almacén.",
-                                "Stock Crítico", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                int stockDisponible = _insumoSeleccionado.Stock - cantidadActualEnGrilla;
+                MessageBox.Show(
+                    $"Stock insuficiente.\n\n" +
+                    $"Producto: {_insumoSeleccionado.Descripcion}\n" +
+                    $"Stock total: {_insumoSeleccionado.Stock}\n" +
+                    $"Ya en el detalle: {cantidadActualEnGrilla}\n" +
+                    $"Disponible: {stockDisponible}\n\n" +
+                    $"Solo quedan {stockDisponible} unidades disponibles.",
+                    "Stock Crítico",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Warning);
                 return;
             }
 
@@ -268,15 +386,17 @@ namespace CapaPresentacion
                 _dtDetalle.Rows.Add(_insumoSeleccionado.Id, _insumoSeleccionado.Codigo, _insumoSeleccionado.Descripcion, _insumoSeleccionado.Stock, cantidadSolicitada, precioAplicado, subtotal);
             }
 
-            // Resetear formulario para el siguiente ítem
             _insumoSeleccionado = null;
-            TBBuscarArticulo.Clear();
-            NUDCantidad.Maximum = 10000; // Restaurar tope genérico temporal
+            CBArticulos.SelectedIndex = -1;
+            CBArticulos.Text = "";
+            LStockDisponible.Text = "";
+            NUDCantidad.Maximum = 10000;
             NUDCantidad.Value = 1;
-            TBBuscarArticulo.Focus();
+            CBArticulos.Focus();
 
             ActualizarTotales();
         }
+
         private void DGVDetalle_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0 && e.ColumnIndex == DGVDetalle.Columns["ColEliminar"].Index)
@@ -285,10 +405,9 @@ namespace CapaPresentacion
                 ActualizarTotales();
             }
         }
-        // Cambio de lista de precios y totalizadores
+
         private void TipoPrecio_CheckedChanged(object sender, EventArgs e)
         {
-            // Recalcula los precios unitarios de todos los renglones cargados
             foreach (DataRow row in _dtDetalle.Rows)
             {
                 int idArt = Convert.ToInt32(row["ColIdProducto"]);
@@ -304,6 +423,7 @@ namespace CapaPresentacion
 
             ActualizarTotales();
         }
+
         private void ActualizarTotales()
         {
             int totalItems = 0;
@@ -323,89 +443,231 @@ namespace CapaPresentacion
             if (DGVDetalle.CurrentCell != null)
                 DGVDetalle.CurrentCell = null;
         }
-        // Acciones de pedido y presupuesto
-        private void BEnviarACaja_Click(object sender, EventArgs e)
+
+        // ============================================================
+        // BOTÓN: GUARDAR PRESUPUESTO (Pendiente + PDF)
+        // ============================================================
+        private async void BGuardarPresupuesto_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count == 0)
             {
-                MessageBox.Show("Debe cargar al menos un artículo para enviar el pedido a Caja.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Cargue artículos antes de guardar el presupuesto.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
-            string nroTicket = $"PV-{DateTime.Now:yyMMdd}-{new Random().Next(100, 999)}";
-
-            DialogResult res = MessageBox.Show(
-                $"¿Confirmar envío a Caja?\n\nN° Pedido: {nroTicket}\nCliente: {CBClientes.Text}\nTotal: {LTotalMonto.Text}",
-                "Enviar a Cobro",
-                MessageBoxButtons.YesNo,
-                MessageBoxIcon.Question
-            );
-
-            if (res == DialogResult.Yes)
+            int idCliente = ObtenerIdClienteSeleccionado();
+            if (idCliente <= 0)
             {
-                MessageBox.Show($"Pedido #{nroTicket} transmitido a Caja de forma exitosa.", "PreVenta Registrada", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                LimpiarFormulario();
-            }
-        }
-        private void BGuardarPresupuesto_Click(object sender, EventArgs e)
-        {
-            // 1. Validación de renglones cargados
-            if (_dtDetalle.Rows.Count == 0)
-            {
-                MessageBox.Show("Cargue artículos antes de generar el presupuesto.", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                MessageBox.Show("Seleccione un cliente válido.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 return;
             }
 
             try
             {
-                // 2. Guardamos el presupuesto en la lista en memoria para poder recuperarlo luego
-                string nroPresupuestoNuevo = $"PRE-{DateTime.Now:yyMMdd}-{new Random().Next(10, 99)}";
-                var nuevoPresupuesto = new PresupuestoSimulado
+                BGuardarPresupuesto.Enabled = false;
+
+                var nuevaOrden = new CrearOrdenVentaDto
                 {
-                    NroPresupuesto = nroPresupuestoNuevo,
-                    FechaEmision = DateTime.Now,
-                    Cliente = CBClientes.Text,
-                    EsMayorista = RBPremioMayorista.Checked
+                    ClienteId = idCliente,
+                    PersonalId = SesionUsuario.IdPersonal,
+                    TipoDocumentoId = 5,
+                    EstadoVentaId = 1,
+                    FechaValidez = DateTime.Now.AddDays(7),
+                    Detalles = new List<CrearDetalleOrdenDto>()
                 };
 
                 foreach (DataRow row in _dtDetalle.Rows)
                 {
-                    nuevoPresupuesto.Items.Add(new ItemPresupuesto
+                    nuevaOrden.Detalles.Add(new CrearDetalleOrdenDto
                     {
-                        IdProducto = Convert.ToInt32(row["ColIdProducto"]),
-                        Codigo = row["ColCodigo"].ToString(),
-                        Descripcion = row["ColDescripcion"].ToString(),
+                        ProductoId = Convert.ToInt32(row["ColIdProducto"]),
                         Cantidad = Convert.ToInt32(row["ColCantidad"]),
                         PrecioUnitario = Convert.ToDecimal(row["ColPrecioUnit"])
                     });
                 }
 
-                _presupuestosGuardados.Add(nuevoPresupuesto);
+                var respuesta = await _ordenVentaLogica.Crear(nuevaOrden);
 
-                // 3. Impresión / Vista Previa 
-                PrintDocument pd = new PrintDocument();
-                pd.DocumentName = $"Presupuesto_{CBClientes.Text.Replace(" ", "_")}";
-                pd.PrintPage += ImprimirPresupuesto_PrintPage;
+                GenerarPDFPresupuesto(respuesta.NumeroPresupuesto);
 
-                PrintPreviewDialog prev = new PrintPreviewDialog
-                {
-                    Document = pd,
-                    Width = 850,
-                    Height = 650,
-                    StartPosition = FormStartPosition.CenterScreen
-                };
-                prev.ShowDialog();
+                MessageBox.Show(
+                    $"Presupuesto #{respuesta.NumeroPresupuesto} guardado correctamente.\n" +
+                    $"Total: {respuesta.Total:C2}\n" +
+                    "El presupuesto quedó registrado como Pendiente.",
+                    "Presupuesto Guardado",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
 
-                MessageBox.Show($"Presupuesto #{nroPresupuestoNuevo} registrado correctamente con validez por 7 días.",
-                    "Presupuesto Guardado", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                LimpiarFormulario();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al generar presupuesto:\n{ex.Message}", "Error",
+                MessageBox.Show($"Error al guardar presupuesto:\n{ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                BGuardarPresupuesto.Enabled = true;
+            }
+        }
+
+        // ============================================================
+        // BOTÓN: IMPRIMIR (sin guardar)
+        // ============================================================
+        private void BImprimirPresupuesto_Click(object sender, EventArgs e)
+        {
+            if (_dtDetalle.Rows.Count == 0)
+            {
+                MessageBox.Show("Cargue artículos antes de imprimir.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                GenerarPDFPresupuesto("BORRADOR");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al imprimir:\n{ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-        private void ImprimirPresupuesto_PrintPage(object sender, PrintPageEventArgs e)
+
+        // ============================================================
+        // BOTÓN: ENVIAR A CAJA (Pendiente → Confirmada)
+        // ============================================================
+        private async void BEnviarACaja_Click(object sender, EventArgs e)
+        {
+            if (_dtDetalle.Rows.Count == 0)
+            {
+                MessageBox.Show("Debe cargar al menos un artículo para enviar a Caja.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            int idCliente = ObtenerIdClienteSeleccionado();
+            if (idCliente <= 0)
+            {
+                MessageBox.Show("Seleccione un cliente válido.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            DialogResult res = MessageBox.Show(
+                $"¿Confirmar envío a Caja?\n\nCliente: {CBClientes.Text}\nTotal: {LTotalMonto.Text}",
+                "Enviar a Cobro",
+                MessageBoxButtons.YesNo,
+                MessageBoxIcon.Question);
+
+            if (res != DialogResult.Yes) return;
+
+            try
+            {
+                BEnviarACaja.Enabled = false;
+
+                var nuevaOrden = new CrearOrdenVentaDto
+                {
+                    ClienteId = idCliente,
+                    PersonalId = SesionUsuario.IdPersonal,
+                    TipoDocumentoId = 5,
+                    EstadoVentaId = 1,
+                    FechaValidez = DateTime.Now.AddDays(7),
+                    Detalles = new List<CrearDetalleOrdenDto>()
+                };
+
+                foreach (DataRow row in _dtDetalle.Rows)
+                {
+                    nuevaOrden.Detalles.Add(new CrearDetalleOrdenDto
+                    {
+                        ProductoId = Convert.ToInt32(row["ColIdProducto"]),
+                        Cantidad = Convert.ToInt32(row["ColCantidad"]),
+                        PrecioUnitario = Convert.ToDecimal(row["ColPrecioUnit"])
+                    });
+                }
+
+                var respuesta = await _ordenVentaLogica.Crear(nuevaOrden);
+                await _ordenVentaLogica.Confirmar(respuesta.IdOrden);
+
+                MessageBox.Show(
+                    $"Pedido #{respuesta.NumeroPresupuesto} enviado a Caja correctamente.\n" +
+                    $"Total: {respuesta.Total:C2}\n" +
+                    "El cajero ya puede procesar el cobro.",
+                    "Enviado a Caja",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
+                LimpiarFormulario();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al enviar a Caja:\n{ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                BEnviarACaja.Enabled = true;
+            }
+        }
+
+        // ============================================================
+        // BOTÓN: LIMPIAR
+        // ============================================================
+        private void BCancelarVenta_Click(object sender, EventArgs e)
+        {
+            if (_dtDetalle.Rows.Count > 0)
+            {
+                DialogResult res = MessageBox.Show("¿Desea limpiar todos los ítems cargados?", "Limpiar",
+                    MessageBoxButtons.YesNo, MessageBoxIcon.Question);
+                if (res == DialogResult.Yes)
+                    LimpiarFormulario();
+            }
+            else
+            {
+                LimpiarFormulario();
+            }
+        }
+
+        private void LimpiarFormulario()
+        {
+            _insumoSeleccionado = null;
+            _dtDetalle.Rows.Clear();
+
+            if (CBClientes.Items.Count > 0)
+                CBClientes.SelectedIndex = 0;
+
+            CBArticulos.SelectedIndex = -1;
+            CBArticulos.Text = "";
+            LStockDisponible.Text = "";
+
+            NUDCantidad.Maximum = 10000;
+            NUDCantidad.Value = 1;
+            RBPremioMinorista.Checked = true;
+            ActualizarTotales();
+        }
+
+        // ============================================================
+        // GENERAR PDF
+        // ============================================================
+        private void GenerarPDFPresupuesto(string numeroPresupuesto)
+        {
+            PrintDocument pd = new PrintDocument();
+            pd.DocumentName = $"Presupuesto_{numeroPresupuesto}";
+            pd.PrintPage += (s, args) => ImprimirPresupuesto_PrintPage(s, args, numeroPresupuesto);
+
+            PrintPreviewDialog prev = new PrintPreviewDialog
+            {
+                Document = pd,
+                Width = 850,
+                Height = 650,
+                StartPosition = FormStartPosition.CenterScreen
+            };
+            prev.ShowDialog();
+        }
+
+        private void ImprimirPresupuesto_PrintPage(object sender, PrintPageEventArgs e, string numeroPresupuesto = "")
         {
             Graphics g = e.Graphics;
             float x = 50;
@@ -421,14 +683,13 @@ namespace CapaPresentacion
             using (Pen penLinea = new Pen(Color.FromArgb(210, 215, 220), 1))
             {
                 g.DrawString("HIERRO Y FORJA", fTitulo, bOcre, x, y);
-                g.DrawString("PRESUPUESTO COMERCIAL VALIDEZ: 15 DÍAS", fSub, bGrafito, x, y + 28);
+                g.DrawString($"PRESUPUESTO N° {numeroPresupuesto} - VALIDEZ: 7 DÍAS", fSub, bGrafito, x, y + 28);
                 g.DrawString($"Cliente: {CBClientes.Text}  |  Fecha: {DateTime.Now:dd/MM/yyyy HH:mm}  |  Operador: {SesionUsuario.Nombre}", fSub, bGris, x, y + 48);
 
                 y += 75;
                 g.DrawLine(penLinea, x, y, 750, y);
                 y += 15;
 
-                // Cabeceras
                 g.DrawString("Cód.", fHeader, bOcre, x, y);
                 g.DrawString("Descripción", fHeader, bOcre, x + 80, y);
                 g.DrawString("Cant.", fHeader, bOcre, x + 400, y);
@@ -457,272 +718,38 @@ namespace CapaPresentacion
                 g.DrawString($"TOTAL PRESUPUESTADO: {LTotalMonto.Text}", fTitulo, bOcre, x + 350, y);
             }
         }
-        private void BCancelarVenta_Click(object sender, EventArgs e)
+
+        // ============================================================
+        // CARGAR PRESUPUESTO (próximamente)
+        // ============================================================
+        private void BCargarPresupuesto_Click(object sender, EventArgs e)
         {
-            if (_dtDetalle.Rows.Count > 0)
-            {
-                DialogResult res = MessageBox.Show("¿Desea limpiar todos los ítems cargados?", "Limpiar", MessageBoxButtons.YesNo, MessageBoxIcon.Question);
-                if (res == DialogResult.Yes)
-                    LimpiarFormulario();
-            }
-            else
-            {
-                LimpiarFormulario();
-            }
+            MessageBox.Show("La carga de presupuestos desde la API se implementará en el próximo paso.",
+                "Próximamente", MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-        private void LimpiarFormulario()
+
+        // ============================================================
+        // CLASES AUXILIARES
+        // ============================================================
+        private class ClienteItem
         {
-            _insumoSeleccionado = null;
-            _dtDetalle.Rows.Clear();
-            CBClientes.SelectedIndex = 0;
-            TBBuscarArticulo.Clear();
-            NUDCantidad.Maximum = 10000;
-            NUDCantidad.Value = 1;
-            RBPremioMinorista.Checked = true;
-            ActualizarTotales();
+            public int IdCliente { get; set; }
+            public string Display { get; set; }
+
+            public override string ToString() => Display;
         }
-        // =========================================================================
-        // 1. MODELOS DE PRESUPUESTO EN MEMORIA (DENTRO DE LA CLASE FormPreVenta)
-        // =========================================================================
-        private class ItemPresupuesto
+
+        private class ArticuloItem
         {
             public int IdProducto { get; set; }
             public string Codigo { get; set; }
             public string Descripcion { get; set; }
-            public int Cantidad { get; set; }
-            public decimal PrecioUnitario { get; set; }
+            public int Stock { get; set; }
+            public decimal PrecioMinorista { get; set; }
+            public decimal PrecioMayorista { get; set; }
+
+            public override string ToString() =>
+                $"{Codigo} - {Descripcion} (Stock: {Stock})";
         }
-
-        private class PresupuestoSimulado
-        {
-            public string NroPresupuesto { get; set; }
-            public DateTime FechaEmision { get; set; }
-            public string Cliente { get; set; }
-            public bool EsMayorista { get; set; }
-            public List<ItemPresupuesto> Items { get; set; } = new List<ItemPresupuesto>();
-        }
-
-        private List<PresupuestoSimulado> _presupuestosGuardados = new List<PresupuestoSimulado>();
-
-        // =========================================================================
-        // 2. EN FormPreVenta_Load(): INICIALIZAR PRESUPUESTOS DE PRUEBA
-        // =========================================================================
-        // Agrega esta llamada dentro de FormPreVenta_Load:
-        // CargarPresupuestosSimulados();
-
-        private void CargarPresupuestosSimulados()
-        {
-            _presupuestosGuardados = new List<PresupuestoSimulado>
-    {
-        // Presupuesto Vigente (Emitido hace 3 días)
-        new PresupuestoSimulado
-        {
-            NroPresupuesto = "PRE-260919-01",
-            FechaEmision = DateTime.Now.AddDays(-3),
-            Cliente = "Herrería San José (CUIT 20-35412890-4)",
-            EsMayorista = true,
-            Items = new List<ItemPresupuesto>
-            {
-                new ItemPresupuesto { IdProducto = 1, Codigo = "HI-014", Descripcion = "Hierro Ángulo 1 1/2 x 1/8", Cantidad = 4, PrecioUnitario = 12900m },
-                new ItemPresupuesto { IdProducto = 4, Codigo = "DI-CUT", Descripcion = "Disco Corte Acero 115x1.0mm", Cantidad = 10, PrecioUnitario = 1500m }
-            }
-        },
-        // Presupuesto Vencido (Emitido hace 10 días -> RECHAZADO POR REGLA > 7 DÍAS)
-        new PresupuestoSimulado
-        {
-            NroPresupuesto = "PRE-260912-88",
-            FechaEmision = DateTime.Now.AddDays(-10),
-            Cliente = "Metalúrgica Del Nordeste (CUIT 30-71289012-8)",
-            EsMayorista = true,
-            Items = new List<ItemPresupuesto>
-            {
-                new ItemPresupuesto { IdProducto = 5, Codigo = "TU-4040", Descripcion = "Tubo Estructural 40x40x1.6mm (6m)", Cantidad = 6, PrecioUnitario = 22100m }
-            }
-        }
-    };
-        }
-
-        // =========================================================================
-        // 3. DIÁLOGO DE SELECCIÓN Y VALIDACIÓN DE LOS 7 DÍAS
-        // =========================================================================
-        private void BCargarPresupuesto_Click(object sender, EventArgs e)
-        {
-            if (_presupuestosGuardados == null || _presupuestosGuardados.Count == 0)
-            {
-                MessageBox.Show("No hay presupuestos registrados para cargar.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
-            // Modal de selección de presupuestos
-            using (Form selector = new Form())
-            {
-                selector.Text = "Seleccionar Presupuesto para Pasar a Caja";
-                selector.Size = new Size(680, 360);
-                selector.StartPosition = FormStartPosition.CenterParent;
-                selector.FormBorderStyle = FormBorderStyle.FixedDialog;
-                selector.MaximizeBox = false;
-                selector.MinimizeBox = false;
-
-                Label lbl = new Label
-                {
-                    Text = "Presupuestos registrados (Validez máxima permitida: 7 días corridos):",
-                    Dock = DockStyle.Top,
-                    Height = 30,
-                    Padding = new Padding(10, 8, 0, 0),
-                    Font = new Font("Segoe UI", 9F, FontStyle.Bold)
-                };
-
-                DataGridView dgv = new DataGridView
-                {
-                    Dock = DockStyle.Fill,
-                    ReadOnly = true,
-                    AllowUserToAddRows = false,
-                    MultiSelect = false,
-                    SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                    BackgroundColor = Color.White,
-                    RowHeadersVisible = false,
-                    AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill
-                };
-
-                dgv.Columns.Add("Nro", "N° Presupuesto");
-                dgv.Columns.Add("Fecha", "Emisión");
-                dgv.Columns.Add("Cliente", "Cliente");
-                dgv.Columns.Add("Antiguedad", "Antigüedad");
-                dgv.Columns.Add("Estado", "Estado");
-
-                foreach (var p in _presupuestosGuardados)
-                {
-                    int dias = (int)(DateTime.Now - p.FechaEmision).TotalDays;
-                    string estado = dias <= 7 ? "Válido" : "VENCIDO (+7 días)";
-
-                    int idx = dgv.Rows.Add(p.NroPresupuesto, p.FechaEmision.ToString("dd/MM/yyyy HH:mm"), p.Cliente, $"{dias} días", estado);
-
-                    if (dias > 7)
-                    {
-                        dgv.Rows[idx].DefaultCellStyle.ForeColor = Color.FromArgb(192, 57, 43);
-                    }
-                    else
-                    {
-                        dgv.Rows[idx].DefaultCellStyle.ForeColor = Color.FromArgb(39, 174, 96);
-                    }
-                }
-
-                Panel pBotones = new Panel { Dock = DockStyle.Bottom, Height = 48 };
-                Button btnCargar = new Button
-                {
-                    Text = "Importar a PreVenta",
-                    DialogResult = DialogResult.OK,
-                    BackColor = Color.FromArgb(39, 174, 96),
-                    ForeColor = Color.White,
-                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
-                    FlatStyle = FlatStyle.Flat,
-                    Size = new Size(160, 34),
-                    Location = new Point(340, 7)
-                };
-                Button btnCancelar = new Button
-                {
-                    Text = "Cancelar",
-                    DialogResult = DialogResult.Cancel,
-                    Size = new Size(100, 34),
-                    Location = new Point(510, 7)
-                };
-
-                pBotones.Controls.Add(btnCargar);
-                pBotones.Controls.Add(btnCancelar);
-
-                selector.Controls.Add(dgv);
-                selector.Controls.Add(pBotones);
-                selector.Controls.Add(lbl);
-
-                if (selector.ShowDialog(this) == DialogResult.OK && dgv.CurrentRow != null)
-                {
-                    string nroPresupuesto = dgv.CurrentRow.Cells["Nro"].Value.ToString();
-                    var presupuesto = _presupuestosGuardados.FirstOrDefault(p => p.NroPresupuesto == nroPresupuesto);
-
-                    if (presupuesto == null) return;
-
-                    // RESTRICCIÓN DE 7 DÍAS
-                    double diasTranscurridos = (DateTime.Now - presupuesto.FechaEmision).TotalDays;
-                    if (diasTranscurridos > 7)
-                    {
-                        MessageBox.Show(
-                            $"El presupuesto #{presupuesto.NroPresupuesto} caducó.\n\n" +
-                            $"Fecha de emisión: {presupuesto.FechaEmision:dd/MM/yyyy}\n" +
-                            $"Antigüedad: {(int)diasTranscurridos} días.\n\n" +
-                            "La validez máxima para congelar precios y pasar a cobro es de 7 días. Debe realizarse una nueva cotización.",
-                            "Presupuesto Vencido",
-                            MessageBoxButtons.OK,
-                            MessageBoxIcon.Stop);
-                        return;
-                    }
-
-                    // Advertir si hay ítems cargados
-                    if (_dtDetalle.Rows.Count > 0)
-                    {
-                        var confirm = MessageBox.Show(
-                            "Hay artículos cargados en la grilla actual. ¿Desea reemplazarlos con los ítems del presupuesto?",
-                            "Reemplazar Ítems",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question);
-
-                        if (confirm != DialogResult.Yes) return;
-                    }
-
-                    // Cargar en la pantalla de PreVenta
-                    ImportarPresupuestoAFormulario(presupuesto);
-                }
-            }
-        }
-
-        private void ImportarPresupuestoAFormulario(PresupuestoSimulado presupuesto)
-        {
-            _dtDetalle.Rows.Clear();
-
-            // Establecer Cliente
-            int idxCliente = CBClientes.FindStringExact(presupuesto.Cliente);
-            if (idxCliente >= 0)
-                CBClientes.SelectedIndex = idxCliente;
-            else
-                CBClientes.Text = presupuesto.Cliente;
-
-            // Establecer Lista de Precios
-            if (presupuesto.EsMayorista)
-                RBPremioMayorista.Checked = true;
-            else
-                RBPremioMinorista.Checked = true;
-
-            // Poblar Grilla validando stock de cada producto
-            foreach (var item in presupuesto.Items)
-            {
-                var art = _catalogoInsumos.FirstOrDefault(a => a.Id == item.IdProducto);
-                int stockDisp = art != null ? art.Stock : item.Cantidad;
-
-                decimal subtotal = item.Cantidad * item.PrecioUnitario;
-                _dtDetalle.Rows.Add(
-                    item.IdProducto,
-                    item.Codigo,
-                    item.Descripcion,
-                    stockDisp,
-                    item.Cantidad,
-                    item.PrecioUnitario,
-                    subtotal
-                );
-            }
-
-            ActualizarTotales();
-
-            MessageBox.Show(
-                $"Presupuesto #{presupuesto.NroPresupuesto} importado correctamente.\nVerifique los artículos y presione 'Enviar Pedido a Caja'.",
-                "Presupuesto Cargado",
-                MessageBoxButtons.OK,
-                MessageBoxIcon.Information);
-        }
-
-        // =========================================================================
-        // 4. GUARDAR PRESUPUESTO ACTUALIZADO
-        // =========================================================================
-        // En BGuardarPresupuesto_Click, cuando se emita un presupuesto nuevo,
-        // lo guardamos en la lista en memoria:
     }
 }

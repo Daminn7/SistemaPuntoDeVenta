@@ -173,6 +173,21 @@ namespace CapaDatos.Services
             return JsonConvert.DeserializeObject<dynamic>(content);
         }
 
+        public async Task<dynamic> AnularOrdenVentaAsync(int id)
+        {
+            var response = await _httpClient.PutAsync($"/api/ordenesventa/{id}/anular", null);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Anular orden {id} - Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
         // ============================================================
         // PRODUCTOS
         // ============================================================

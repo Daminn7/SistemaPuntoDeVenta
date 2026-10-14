@@ -1,13 +1,7 @@
 ﻿using CapaDatos.DTOs;
 using CapaLogica;
 using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CapaPresentacion
@@ -33,6 +27,7 @@ namespace CapaPresentacion
             }
         }
 
+        // ✅ CORREGIDO: Ahora crea la categoría en la API
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             string descripcion = TBNombreCategoria.Text.Trim();
@@ -47,14 +42,17 @@ namespace CapaPresentacion
 
             try
             {
-                var nuevaCategoria = new CategoriaDto { 
-                //Nombre = nombre, 
-                Descripcion = descripcion
+                // ✅ Crear el DTO correcto (CrearCategoriaDto, no CategoriaDto)
+                var nuevaCategoria = new CrearCategoriaDto
+                {
+                    Descripcion = descripcion
                 };
-                //var resultado = await _categoriaLogica.Crear(nuevaCategoria);
 
-                //IdCategoriaCreada = resultado.Id;
-                //NombreCategoriaCreada = nombre;
+                // ✅ Llamar a la API (descomentado)
+                var resultado = await _categoriaLogica.Crear(nuevaCategoria);
+
+                IdCategoriaCreada = resultado.Id;
+                NombreCategoriaCreada = resultado.Descripcion;
 
                 this.DialogResult = DialogResult.OK;
                 this.Close();

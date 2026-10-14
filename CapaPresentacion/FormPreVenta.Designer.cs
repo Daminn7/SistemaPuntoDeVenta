@@ -31,7 +31,7 @@ namespace CapaPresentacion
         /// the contents of this method with the code editor.
         /// </summary>
         private void InitializeComponent()
-        {        
+        {
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle1 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle2 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -49,8 +49,9 @@ namespace CapaPresentacion
             this.PTarjetaLateral = new System.Windows.Forms.Panel();
             this.PBotonesVenta = new System.Windows.Forms.Panel();
             this.BCancelarVenta = new System.Windows.Forms.Button();
-            this.BGuardarPresupuesto = new System.Windows.Forms.Button();
             this.BEnviarACaja = new System.Windows.Forms.Button();
+            this.BImprimirPresupuesto = new System.Windows.Forms.Button();
+            this.BGuardarPresupuesto = new System.Windows.Forms.Button();
             this.PContenedorTotales = new System.Windows.Forms.Panel();
             this.LTotalMonto = new System.Windows.Forms.Label();
             this.LTituloTotal = new System.Windows.Forms.Label();
@@ -67,10 +68,11 @@ namespace CapaPresentacion
             this.LTituloTarjeta = new System.Windows.Forms.Label();
             this.PBarraArticulo = new System.Windows.Forms.Panel();
             this.BCargarPresupuesto = new System.Windows.Forms.Button();
+            this.LStockDisponible = new System.Windows.Forms.Label();
             this.BAgregarItem = new System.Windows.Forms.Button();
             this.NUDCantidad = new System.Windows.Forms.NumericUpDown();
             this.LCantidad = new System.Windows.Forms.Label();
-            this.TBBuscarArticulo = new System.Windows.Forms.TextBox();
+            this.CBArticulos = new System.Windows.Forms.ComboBox();
             this.LBuscarArticulo = new System.Windows.Forms.Label();
             this.CBClientes = new System.Windows.Forms.ComboBox();
             this.LCliente = new System.Windows.Forms.Label();
@@ -259,48 +261,31 @@ namespace CapaPresentacion
             // PBotonesVenta
             // 
             this.PBotonesVenta.Controls.Add(this.BCancelarVenta);
-            this.PBotonesVenta.Controls.Add(this.BGuardarPresupuesto);
             this.PBotonesVenta.Controls.Add(this.BEnviarACaja);
+            this.PBotonesVenta.Controls.Add(this.BImprimirPresupuesto);
+            this.PBotonesVenta.Controls.Add(this.BGuardarPresupuesto);
             this.PBotonesVenta.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.PBotonesVenta.Location = new System.Drawing.Point(14, 492);
+            this.PBotonesVenta.Location = new System.Drawing.Point(14, 448);
             this.PBotonesVenta.Name = "PBotonesVenta";
-            this.PBotonesVenta.Size = new System.Drawing.Size(388, 176);
+            this.PBotonesVenta.Size = new System.Drawing.Size(388, 220);
             this.PBotonesVenta.TabIndex = 4;
             // 
             // BCancelarVenta
             // 
             this.BCancelarVenta.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(108)))), ((int)(((byte)(117)))), ((int)(((byte)(125)))));
             this.BCancelarVenta.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BCancelarVenta.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.BCancelarVenta.Dock = System.Windows.Forms.DockStyle.Top;
             this.BCancelarVenta.FlatAppearance.BorderSize = 0;
             this.BCancelarVenta.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BCancelarVenta.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.BCancelarVenta.ForeColor = System.Drawing.Color.White;
-            this.BCancelarVenta.Location = new System.Drawing.Point(0, 124);
+            this.BCancelarVenta.Location = new System.Drawing.Point(0, 168);
             this.BCancelarVenta.Name = "BCancelarVenta";
             this.BCancelarVenta.Size = new System.Drawing.Size(388, 52);
-            this.BCancelarVenta.TabIndex = 2;
+            this.BCancelarVenta.TabIndex = 3;
             this.BCancelarVenta.Text = "🧹 Limpiar Operación";
             this.BCancelarVenta.UseVisualStyleBackColor = false;
             this.BCancelarVenta.Click += new System.EventHandler(this.BCancelarVenta_Click);
-            // 
-            // BGuardarPresupuesto
-            // 
-            this.BGuardarPresupuesto.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
-            this.BGuardarPresupuesto.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BGuardarPresupuesto.Dock = System.Windows.Forms.DockStyle.Top;
-            this.BGuardarPresupuesto.FlatAppearance.BorderSize = 0;
-            this.BGuardarPresupuesto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BGuardarPresupuesto.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
-            this.BGuardarPresupuesto.ForeColor = System.Drawing.Color.White;
-            this.BGuardarPresupuesto.Location = new System.Drawing.Point(0, 52);
-            this.BGuardarPresupuesto.Margin = new System.Windows.Forms.Padding(0, 6, 0, 0);
-            this.BGuardarPresupuesto.Name = "BGuardarPresupuesto";
-            this.BGuardarPresupuesto.Size = new System.Drawing.Size(388, 52);
-            this.BGuardarPresupuesto.TabIndex = 1;
-            this.BGuardarPresupuesto.Text = "📄 Imprimir Presupuesto";
-            this.BGuardarPresupuesto.UseVisualStyleBackColor = false;
-            this.BGuardarPresupuesto.Click += new System.EventHandler(this.BGuardarPresupuesto_Click);
             // 
             // BEnviarACaja
             // 
@@ -311,13 +296,47 @@ namespace CapaPresentacion
             this.BEnviarACaja.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BEnviarACaja.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.BEnviarACaja.ForeColor = System.Drawing.Color.White;
-            this.BEnviarACaja.Location = new System.Drawing.Point(0, 0);
+            this.BEnviarACaja.Location = new System.Drawing.Point(0, 116);
             this.BEnviarACaja.Name = "BEnviarACaja";
             this.BEnviarACaja.Size = new System.Drawing.Size(388, 52);
-            this.BEnviarACaja.TabIndex = 0;
+            this.BEnviarACaja.TabIndex = 2;
             this.BEnviarACaja.Text = "✔ Enviar Pedido a Caja";
             this.BEnviarACaja.UseVisualStyleBackColor = false;
             this.BEnviarACaja.Click += new System.EventHandler(this.BEnviarACaja_Click);
+            // 
+            // BImprimirPresupuesto
+            // 
+            this.BImprimirPresupuesto.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(149)))), ((int)(((byte)(165)))), ((int)(((byte)(166)))));
+            this.BImprimirPresupuesto.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BImprimirPresupuesto.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BImprimirPresupuesto.FlatAppearance.BorderSize = 0;
+            this.BImprimirPresupuesto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BImprimirPresupuesto.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.BImprimirPresupuesto.ForeColor = System.Drawing.Color.White;
+            this.BImprimirPresupuesto.Location = new System.Drawing.Point(0, 64);
+            this.BImprimirPresupuesto.Name = "BImprimirPresupuesto";
+            this.BImprimirPresupuesto.Size = new System.Drawing.Size(388, 52);
+            this.BImprimirPresupuesto.TabIndex = 1;
+            this.BImprimirPresupuesto.Text = "🖨️ Imprimir (sin guardar)";
+            this.BImprimirPresupuesto.UseVisualStyleBackColor = false;
+            this.BImprimirPresupuesto.Click += new System.EventHandler(this.BImprimirPresupuesto_Click);
+            // 
+            // BGuardarPresupuesto
+            // 
+            this.BGuardarPresupuesto.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
+            this.BGuardarPresupuesto.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BGuardarPresupuesto.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BGuardarPresupuesto.FlatAppearance.BorderSize = 0;
+            this.BGuardarPresupuesto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BGuardarPresupuesto.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.BGuardarPresupuesto.ForeColor = System.Drawing.Color.White;
+            this.BGuardarPresupuesto.Location = new System.Drawing.Point(0, 0);
+            this.BGuardarPresupuesto.Name = "BGuardarPresupuesto";
+            this.BGuardarPresupuesto.Size = new System.Drawing.Size(388, 64);
+            this.BGuardarPresupuesto.TabIndex = 0;
+            this.BGuardarPresupuesto.Text = "📄 Guardar Presupuesto";
+            this.BGuardarPresupuesto.UseVisualStyleBackColor = false;
+            this.BGuardarPresupuesto.Click += new System.EventHandler(this.BGuardarPresupuesto_Click);
             // 
             // PContenedorTotales
             // 
@@ -494,8 +513,9 @@ namespace CapaPresentacion
             this.PBarraArticulo.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.PBarraArticulo.Controls.Add(this.BAgregarItem);
             this.PBarraArticulo.Controls.Add(this.NUDCantidad);
+            this.PBarraArticulo.Controls.Add(this.LStockDisponible);
             this.PBarraArticulo.Controls.Add(this.LCantidad);
-            this.PBarraArticulo.Controls.Add(this.TBBuscarArticulo);
+            this.PBarraArticulo.Controls.Add(this.CBArticulos);
             this.PBarraArticulo.Controls.Add(this.LBuscarArticulo);
             this.PBarraArticulo.Controls.Add(this.BCargarPresupuesto);
             this.PBarraArticulo.Controls.Add(this.CBClientes);
@@ -514,7 +534,7 @@ namespace CapaPresentacion
             this.BAgregarItem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BAgregarItem.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
             this.BAgregarItem.ForeColor = System.Drawing.Color.White;
-            this.BAgregarItem.Location = new System.Drawing.Point(1115, 13);
+            this.BAgregarItem.Location = new System.Drawing.Point(1280, 13);
             this.BAgregarItem.Name = "BAgregarItem";
             this.BAgregarItem.Size = new System.Drawing.Size(120, 33);
             this.BAgregarItem.TabIndex = 4;
@@ -534,24 +554,39 @@ namespace CapaPresentacion
             this.NUDCantidad.TextAlign = System.Windows.Forms.HorizontalAlignment.Center;
             this.NUDCantidad.Value = new decimal(new int[] { 1, 0, 0, 0 });
             // 
+            // LStockDisponible
+            // 
+            this.LStockDisponible.AutoSize = true;
+            this.LStockDisponible.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.LStockDisponible.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
+            this.LStockDisponible.Location = new System.Drawing.Point(1110, 21);
+            this.LStockDisponible.Name = "LStockDisponible";
+            this.LStockDisponible.Size = new System.Drawing.Size(120, 20);
+            this.LStockDisponible.TabIndex = 5;
+            this.LStockDisponible.Text = "";
+            // 
             // LCantidad
             // 
-            this.LCliente.AutoSize = true;
-            this.LCliente.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.LCliente.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            this.LCliente.Location = new System.Drawing.Point(14, 19);
-            this.LCliente.Name = "LCliente";
-            this.LCliente.Size = new System.Drawing.Size(61, 20);
-            this.LCliente.TabIndex = 0;
-            this.LCliente.Text = "Cliente:";
+            this.LCantidad.AutoSize = true;
+            this.LCantidad.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            this.LCantidad.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
+            this.LCantidad.Location = new System.Drawing.Point(972, 19);
+            this.LCantidad.Name = "LCantidad";
+            this.LCantidad.Size = new System.Drawing.Size(45, 20);
+            this.LCantidad.TabIndex = 3;
+            this.LCantidad.Text = "Cant:";
             // 
-            // TBBuscarArticulo
+            // CBArticulos
             // 
-            this.TBBuscarArticulo.Font = new System.Drawing.Font("Segoe UI", 9.5F);
-            this.TBBuscarArticulo.Location = new System.Drawing.Point(658, 15);
-            this.TBBuscarArticulo.Name = "TBBuscarArticulo";
-            this.TBBuscarArticulo.Size = new System.Drawing.Size(300, 29);
-            this.TBBuscarArticulo.TabIndex = 2;
+            this.CBArticulos.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this.CBArticulos.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.CBArticulos.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.CBArticulos.Font = new System.Drawing.Font("Segoe UI", 9.5F);
+            this.CBArticulos.Location = new System.Drawing.Point(658, 15);
+            this.CBArticulos.Name = "CBArticulos";
+            this.CBArticulos.Size = new System.Drawing.Size(300, 29);
+            this.CBArticulos.TabIndex = 2;
+            this.CBArticulos.SelectedIndexChanged += new System.EventHandler(this.CBArticulos_SelectedIndexChanged);
             // 
             // LBuscarArticulo
             // 
@@ -566,11 +601,13 @@ namespace CapaPresentacion
             // 
             // CBClientes
             // 
-            this.CBClientes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.CBClientes.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
+            this.CBClientes.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.CBClientes.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
             this.CBClientes.Font = new System.Drawing.Font("Segoe UI", 9.5F);
             this.CBClientes.Location = new System.Drawing.Point(80, 15);
             this.CBClientes.Name = "CBClientes";
-            this.CBClientes.Size = new System.Drawing.Size(230, 29);
+            this.CBClientes.Size = new System.Drawing.Size(280, 29);
             this.CBClientes.TabIndex = 0;
             // 
             // LCliente
@@ -592,24 +629,13 @@ namespace CapaPresentacion
             this.BCargarPresupuesto.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BCargarPresupuesto.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.BCargarPresupuesto.ForeColor = System.Drawing.Color.White;
-            this.BCargarPresupuesto.Location = new System.Drawing.Point(318, 14);
+            this.BCargarPresupuesto.Location = new System.Drawing.Point(370, 14);
             this.BCargarPresupuesto.Name = "BCargarPresupuesto";
-            this.BCargarPresupuesto.Size = new System.Drawing.Size(155, 31);
+            this.BCargarPresupuesto.Size = new System.Drawing.Size(115, 31);
             this.BCargarPresupuesto.TabIndex = 1;
-            this.BCargarPresupuesto.Text = "📂 Cargar Presupuesto";
+            this.BCargarPresupuesto.Text = "📂 Cargar Pres.";
             this.BCargarPresupuesto.UseVisualStyleBackColor = false;
             this.BCargarPresupuesto.Click += new System.EventHandler(this.BCargarPresupuesto_Click);
-            // 
-            // LCantidad
-            // 
-            this.LCantidad.AutoSize = true;
-            this.LCantidad.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.LCantidad.ForeColor = System.Drawing.Color.FromArgb(50, 50, 50);
-            this.LCantidad.Location = new System.Drawing.Point(972, 19);
-            this.LCantidad.Name = "LCantidad";
-            this.LCantidad.Size = new System.Drawing.Size(45, 20);
-            this.LCantidad.TabIndex = 3;
-            this.LCantidad.Text = "Cant:";
             // 
             // PEncabezado
             // 
@@ -670,51 +696,53 @@ namespace CapaPresentacion
             ((System.ComponentModel.ISupportInitialize)(this.PBIconoTitulo)).EndInit();
             this.ResumeLayout(false);
 
-            }
+        }
 
-            #endregion
+        #endregion
 
-            private System.Windows.Forms.Panel PFondo;
-            private System.Windows.Forms.Panel PEncabezado;
-            private System.Windows.Forms.PictureBox PBIconoTitulo;
-            private System.Windows.Forms.Label LTituloPrincipal;
-            private System.Windows.Forms.Panel PBarraArticulo;
-            private System.Windows.Forms.Label LCliente;
-            private System.Windows.Forms.ComboBox CBClientes;
-            private System.Windows.Forms.Label LBuscarArticulo;
-            private System.Windows.Forms.TextBox TBBuscarArticulo;
-            private System.Windows.Forms.Label LCantidad;
-            private System.Windows.Forms.NumericUpDown NUDCantidad;
-            private System.Windows.Forms.Button BAgregarItem;
-            private System.Windows.Forms.TableLayoutPanel TLPContenido;
-            private System.Windows.Forms.DataGridView DGVDetalle;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColIdProducto;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColCodigo;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColDescripcion;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColStockDisp;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColCantidad;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColPrecioUnit;
-            private System.Windows.Forms.DataGridViewTextBoxColumn ColSubtotal;
-            private System.Windows.Forms.DataGridViewButtonColumn ColEliminar;
-            private System.Windows.Forms.Panel PTarjetaLateral;
-            private System.Windows.Forms.Label LTituloTarjeta;
-            private System.Windows.Forms.Label LSubtituloTarjeta;
-            private System.Windows.Forms.Panel POpcionesVenta;
-            private System.Windows.Forms.Label LTituloListaPrecio;
-            private System.Windows.Forms.RadioButton RBPremioMinorista;
-            private System.Windows.Forms.RadioButton RBPremioMayorista;
-            private System.Windows.Forms.Panel PContenedorTotales;
-            private System.Windows.Forms.Label LTituloItems;
-            private System.Windows.Forms.Label LItemsCantidad;
-            private System.Windows.Forms.Label LTituloSubtotal;
-            private System.Windows.Forms.Label LSubtotalMonto;
-            private System.Windows.Forms.Panel PLineaDivisoria;
-            private System.Windows.Forms.Label LTituloTotal;
-            private System.Windows.Forms.Label LTotalMonto;
-            private System.Windows.Forms.Panel PBotonesVenta;
-            private System.Windows.Forms.Button BEnviarACaja;
-            private System.Windows.Forms.Button BGuardarPresupuesto;
-            private System.Windows.Forms.Button BCancelarVenta;
-            private System.Windows.Forms.Button BCargarPresupuesto;
+        private System.Windows.Forms.Panel PFondo;
+        private System.Windows.Forms.Panel PEncabezado;
+        private System.Windows.Forms.PictureBox PBIconoTitulo;
+        private System.Windows.Forms.Label LTituloPrincipal;
+        private System.Windows.Forms.Panel PBarraArticulo;
+        private System.Windows.Forms.Label LCliente;
+        private System.Windows.Forms.ComboBox CBClientes;
+        private System.Windows.Forms.Label LBuscarArticulo;
+        private System.Windows.Forms.ComboBox CBArticulos;
+        private System.Windows.Forms.Label LStockDisponible;
+        private System.Windows.Forms.Label LCantidad;
+        private System.Windows.Forms.NumericUpDown NUDCantidad;
+        private System.Windows.Forms.Button BAgregarItem;
+        private System.Windows.Forms.TableLayoutPanel TLPContenido;
+        private System.Windows.Forms.DataGridView DGVDetalle;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColIdProducto;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCodigo;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColDescripcion;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColStockDisp;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCantidad;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColPrecioUnit;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColSubtotal;
+        private System.Windows.Forms.DataGridViewButtonColumn ColEliminar;
+        private System.Windows.Forms.Panel PTarjetaLateral;
+        private System.Windows.Forms.Label LTituloTarjeta;
+        private System.Windows.Forms.Label LSubtituloTarjeta;
+        private System.Windows.Forms.Panel POpcionesVenta;
+        private System.Windows.Forms.Label LTituloListaPrecio;
+        private System.Windows.Forms.RadioButton RBPremioMinorista;
+        private System.Windows.Forms.RadioButton RBPremioMayorista;
+        private System.Windows.Forms.Panel PContenedorTotales;
+        private System.Windows.Forms.Label LTituloItems;
+        private System.Windows.Forms.Label LItemsCantidad;
+        private System.Windows.Forms.Label LTituloSubtotal;
+        private System.Windows.Forms.Label LSubtotalMonto;
+        private System.Windows.Forms.Panel PLineaDivisoria;
+        private System.Windows.Forms.Label LTituloTotal;
+        private System.Windows.Forms.Label LTotalMonto;
+        private System.Windows.Forms.Panel PBotonesVenta;
+        private System.Windows.Forms.Button BEnviarACaja;
+        private System.Windows.Forms.Button BGuardarPresupuesto;
+        private System.Windows.Forms.Button BCancelarVenta;
+        private System.Windows.Forms.Button BCargarPresupuesto;
+        private System.Windows.Forms.Button BImprimirPresupuesto;
     }
 }

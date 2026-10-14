@@ -56,6 +56,8 @@ namespace CapaDatos.DTOs
 
         [JsonProperty("detalles")]
         public List<DetalleOrdenDto> Detalles { get; set; } = new List<DetalleOrdenDto>();
+        [JsonProperty("formaPago")]
+        public string FormaPago { get; set; }
     }
 
     // ============================================================
@@ -124,5 +126,7 @@ namespace CapaDatos.DTOs
 
         [JsonProperty("total")]
         public decimal Total { get; set; }
+        [JsonProperty("formaPago")]
+        public string FormaPago { get; set; }
     }
 }
