@@ -40,6 +40,7 @@
             this.dgvMovimientos = new System.Windows.Forms.DataGridView();
             this.colId = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colFechaHora = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colCaja = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colTipo = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colConcepto = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colMedioPago = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -123,6 +124,7 @@
             this.dgvMovimientos.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colId,
             this.colFechaHora,
+            this.colCaja,
             this.colTipo,
             this.colConcepto,
             this.colMedioPago,
@@ -138,11 +140,11 @@
             dataGridViewCellStyle25.WrapMode = System.Windows.Forms.DataGridViewTriState.False;
             this.dgvMovimientos.DefaultCellStyle.BackColor = System.Drawing.Color.White;
             this.dgvMovimientos.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
-            this.dgvMovimientos.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53); // Ocre
+            this.dgvMovimientos.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             this.dgvMovimientos.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
             this.dgvMovimientos.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 249, 250);
             this.dgvMovimientos.AlternatingRowsDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 30, 30);
-            this.dgvMovimientos.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53); // Ocre idéntico
+            this.dgvMovimientos.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(212, 131, 53);
             this.dgvMovimientos.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.White;
             this.dgvMovimientos.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvMovimientos.EnableHeadersVisualStyles = false;
@@ -174,6 +176,14 @@
             this.colFechaHora.Name = "colFechaHora";
             this.colFechaHora.ReadOnly = true;
             this.colFechaHora.Width = 120;
+            // 
+            // colCaja
+            // 
+            this.colCaja.HeaderText = "Caja";
+            this.colCaja.MinimumWidth = 6;
+            this.colCaja.Name = "colCaja";
+            this.colCaja.ReadOnly = true;
+            this.colCaja.Width = 70;
             // 
             // colTipo
             // 
@@ -602,6 +612,7 @@
         private System.Windows.Forms.DataGridView dgvMovimientos;
         private System.Windows.Forms.DataGridViewTextBoxColumn colId;
         private System.Windows.Forms.DataGridViewTextBoxColumn colFechaHora;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colCaja;         // ✅ NUEVA
         private System.Windows.Forms.DataGridViewTextBoxColumn colTipo;
         private System.Windows.Forms.DataGridViewTextBoxColumn colConcepto;
         private System.Windows.Forms.DataGridViewTextBoxColumn colMedioPago;
