@@ -672,6 +672,27 @@ namespace CapaDatos.Services
             return JsonConvert.DeserializeObject<dynamic>(responseContent);
         }
 
+        // Registrar el cobro completo de una orden
+        public async Task<dynamic> CreateVentaCompletaAsync(CrearVentaCompletaDto venta)
+        {
+            var json = JsonConvert.SerializeObject(venta);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/ventas: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("/api/ventas", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
+
         // ============================================================
         // ORDENES Y DETALLES
         // ============================================================

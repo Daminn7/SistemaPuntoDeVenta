@@ -2,15 +2,8 @@
 {
     partial class FormCobroVenta
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,27 +15,31 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             System.Windows.Forms.DataGridViewCellStyle dgvHeaderStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dgvRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dgvAltRowStyle = new System.Windows.Forms.DataGridViewCellStyle();
 
             this.PFondo = new System.Windows.Forms.Panel();
             this.TLPContenido = new System.Windows.Forms.TableLayoutPanel();
             this.SCIzquierda = new System.Windows.Forms.SplitContainer();
-            this.LSubtituloPendientes = new System.Windows.Forms.Label();
+            this.TCArriba = new System.Windows.Forms.TabControl();
+            this.TPPedidos = new System.Windows.Forms.TabPage();
             this.DGVPendientes = new System.Windows.Forms.DataGridView();
             this.ColIdPedido = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColNroPedido = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColHora = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColVendedor = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColCliente = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColEstadoPedido = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.ColTotalPedido = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.TPMisCobros = new System.Windows.Forms.TabPage();
+            this.DGVMisCobros = new System.Windows.Forms.DataGridView();
+            this.ColCobroHora = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColCobroComprobante = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColCobroCliente = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColCobroMedio = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.ColCobroTotal = new System.Windows.Forms.DataGridViewTextBoxColumn();
 
             this.LSubtituloDetalle = new System.Windows.Forms.Label();
             this.DGVDetalle = new System.Windows.Forms.DataGridView();
@@ -56,26 +53,21 @@
             this.PBotonesCobro = new System.Windows.Forms.Panel();
             this.BAnularPedido = new System.Windows.Forms.Button();
             this.BConfirmarCobro = new System.Windows.Forms.Button();
-
             this.PCalculoPago = new System.Windows.Forms.Panel();
             this.LValorVuelto = new System.Windows.Forms.Label();
             this.LTituloVuelto = new System.Windows.Forms.Label();
             this.TBPagaCon = new System.Windows.Forms.TextBox();
             this.LTituloPagaCon = new System.Windows.Forms.Label();
-
             this.PFormaPago = new System.Windows.Forms.Panel();
             this.CBComprobante = new System.Windows.Forms.ComboBox();
             this.LTipoComprobante = new System.Windows.Forms.Label();
             this.CBMedioPago = new System.Windows.Forms.ComboBox();
             this.LTituloMedioPago = new System.Windows.Forms.Label();
-
             this.PContenedorTotal = new System.Windows.Forms.Panel();
             this.LTotalMonto = new System.Windows.Forms.Label();
             this.LTituloTotal = new System.Windows.Forms.Label();
-
             this.LSubtituloTarjeta = new System.Windows.Forms.Label();
             this.LTituloTarjeta = new System.Windows.Forms.Label();
-
             this.PEncabezado = new System.Windows.Forms.Panel();
             this.LTituloPrincipal = new System.Windows.Forms.Label();
             this.PBIconoTitulo = new System.Windows.Forms.PictureBox();
@@ -86,7 +78,11 @@
             this.SCIzquierda.Panel1.SuspendLayout();
             this.SCIzquierda.Panel2.SuspendLayout();
             this.SCIzquierda.SuspendLayout();
+            this.TCArriba.SuspendLayout();
+            this.TPPedidos.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.DGVPendientes)).BeginInit();
+            this.TPMisCobros.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.DGVMisCobros)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.DGVDetalle)).BeginInit();
             this.PTarjetaLateral.SuspendLayout();
             this.PBotonesCobro.SuspendLayout();
@@ -97,7 +93,9 @@
             ((System.ComponentModel.ISupportInitialize)(this.PBIconoTitulo)).BeginInit();
             this.SuspendLayout();
 
+            // ============================================================
             // PFondo
+            // ============================================================
             this.PFondo.BackColor = System.Drawing.Color.FromArgb(242, 237, 230);
             this.PFondo.Controls.Add(this.TLPContenido);
             this.PFondo.Controls.Add(this.PEncabezado);
@@ -108,7 +106,9 @@
             this.PFondo.Size = new System.Drawing.Size(1534, 822);
             this.PFondo.TabIndex = 0;
 
+            // ============================================================
             // PEncabezado
+            // ============================================================
             this.PEncabezado.Controls.Add(this.LTituloPrincipal);
             this.PEncabezado.Controls.Add(this.PBIconoTitulo);
             this.PEncabezado.Dock = System.Windows.Forms.DockStyle.Top;
@@ -134,7 +134,9 @@
             this.LTituloPrincipal.TabIndex = 0;
             this.LTituloPrincipal.Text = "COBRO DE PEDIDOS Y CAJA";
 
+            // ============================================================
             // TLPContenido
+            // ============================================================
             this.TLPContenido.ColumnCount = 2;
             this.TLPContenido.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 72F));
             this.TLPContenido.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 28F));
@@ -148,34 +150,51 @@
             this.TLPContenido.Size = new System.Drawing.Size(1492, 754);
             this.TLPContenido.TabIndex = 0;
 
-            // SCIzquierda (Parte superior: Pendientes, Parte inferior: Detalle de ítems)
+            // ============================================================
+            // SCIzquierda
+            // ============================================================
             this.SCIzquierda.Dock = System.Windows.Forms.DockStyle.Fill;
             this.SCIzquierda.Location = new System.Drawing.Point(0, 0);
             this.SCIzquierda.Margin = new System.Windows.Forms.Padding(0, 0, 14, 0);
             this.SCIzquierda.Name = "SCIzquierda";
             this.SCIzquierda.Orientation = System.Windows.Forms.Orientation.Horizontal;
 
-            // Panel1: Pendientes
-            this.SCIzquierda.Panel1.Controls.Add(this.DGVPendientes);
-            this.SCIzquierda.Panel1.Controls.Add(this.LSubtituloPendientes);
-            // Panel2: Detalle de pedido
+            this.SCIzquierda.Panel1.Controls.Add(this.TCArriba);
             this.SCIzquierda.Panel2.Controls.Add(this.DGVDetalle);
             this.SCIzquierda.Panel2.Controls.Add(this.LSubtituloDetalle);
             this.SCIzquierda.Size = new System.Drawing.Size(1060, 754);
             this.SCIzquierda.SplitterDistance = 370;
             this.SCIzquierda.TabIndex = 0;
 
-            // LSubtituloPendientes
-            this.LSubtituloPendientes.Dock = System.Windows.Forms.DockStyle.Top;
-            this.LSubtituloPendientes.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
-            this.LSubtituloPendientes.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
-            this.LSubtituloPendientes.Location = new System.Drawing.Point(0, 0);
-            this.LSubtituloPendientes.Name = "LSubtituloPendientes";
-            this.LSubtituloPendientes.Size = new System.Drawing.Size(1060, 24);
-            this.LSubtituloPendientes.TabIndex = 0;
-            this.LSubtituloPendientes.Text = "PEDIDOS EMITIDOS EN PREVENTA (PENDIENTES DE COBRO):";
+            // ============================================================
+            // TCArriba (TabControl con 2 pestañas)
+            // ============================================================
+            this.TCArriba.Controls.Add(this.TPPedidos);
+            this.TCArriba.Controls.Add(this.TPMisCobros);
+            this.TCArriba.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.TCArriba.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold);
+            this.TCArriba.Location = new System.Drawing.Point(0, 0);
+            this.TCArriba.Name = "TCArriba";
+            this.TCArriba.SelectedIndex = 0;
+            this.TCArriba.Size = new System.Drawing.Size(1060, 370);
+            this.TCArriba.TabIndex = 0;
+            this.TCArriba.SelectedIndexChanged += new System.EventHandler(this.TCArriba_SelectedIndexChanged);
 
+            // ============================================================
+            // TPPedidos (Tab 1)
+            // ============================================================
+            this.TPPedidos.BackColor = System.Drawing.Color.White;
+            this.TPPedidos.Controls.Add(this.DGVPendientes);
+            this.TPPedidos.Location = new System.Drawing.Point(4, 30);
+            this.TPPedidos.Name = "TPPedidos";
+            this.TPPedidos.Padding = new System.Windows.Forms.Padding(3);
+            this.TPPedidos.Size = new System.Drawing.Size(1052, 336);
+            this.TPPedidos.TabIndex = 0;
+            this.TPPedidos.Text = "PEDIDOS POR COBRAR";
+
+            // ============================================================
             // DGVPendientes
+            // ============================================================
             this.DGVPendientes.AllowUserToAddRows = false;
             this.DGVPendientes.AllowUserToDeleteRows = false;
             this.DGVPendientes.BackgroundColor = System.Drawing.Color.White;
@@ -210,12 +229,13 @@
                 this.ColHora,
                 this.ColVendedor,
                 this.ColCliente,
+                this.ColEstadoPedido,
                 this.ColTotalPedido
             });
             this.DGVPendientes.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.DGVPendientes.Location = new System.Drawing.Point(0, 24);
+            this.DGVPendientes.Location = new System.Drawing.Point(3, 3);
             this.DGVPendientes.Name = "DGVPendientes";
-            this.DGVPendientes.Size = new System.Drawing.Size(1060, 346);
+            this.DGVPendientes.Size = new System.Drawing.Size(1046, 330);
             this.DGVPendientes.TabIndex = 1;
             this.DGVPendientes.CellClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.DGVPendientes_CellClick);
 
@@ -244,12 +264,89 @@
             this.ColCliente.Name = "ColCliente";
             this.ColCliente.ReadOnly = true;
 
+            // ✅ NUEVA COLUMNA ESTADO
+            this.ColEstadoPedido.HeaderText = "Estado";
+            this.ColEstadoPedido.Name = "ColEstadoPedido";
+            this.ColEstadoPedido.ReadOnly = true;
+            this.ColEstadoPedido.Width = 110;
+
             this.ColTotalPedido.HeaderText = "Total Pedido ($)";
             this.ColTotalPedido.Width = 140;
             this.ColTotalPedido.Name = "ColTotalPedido";
             this.ColTotalPedido.ReadOnly = true;
 
+            // ============================================================
+            // TPMisCobros (Tab 2)
+            // ============================================================
+            this.TPMisCobros.BackColor = System.Drawing.Color.White;
+            this.TPMisCobros.Controls.Add(this.DGVMisCobros);
+            this.TPMisCobros.Location = new System.Drawing.Point(4, 30);
+            this.TPMisCobros.Name = "TPMisCobros";
+            this.TPMisCobros.Padding = new System.Windows.Forms.Padding(3);
+            this.TPMisCobros.Size = new System.Drawing.Size(1052, 336);
+            this.TPMisCobros.TabIndex = 1;
+            this.TPMisCobros.Text = "MIS COBROS DEL DÍA";
+
+            // ============================================================
+            // DGVMisCobros
+            // ============================================================
+            this.DGVMisCobros.AllowUserToAddRows = false;
+            this.DGVMisCobros.AllowUserToDeleteRows = false;
+            this.DGVMisCobros.BackgroundColor = System.Drawing.Color.White;
+            this.DGVMisCobros.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.DGVMisCobros.ColumnHeadersHeight = 32;
+            this.DGVMisCobros.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
+            this.DGVMisCobros.EnableHeadersVisualStyles = false;
+            this.DGVMisCobros.GridColor = System.Drawing.Color.FromArgb(230, 233, 238);
+            this.DGVMisCobros.MultiSelect = false;
+            this.DGVMisCobros.ReadOnly = true;
+            this.DGVMisCobros.RowHeadersVisible = false;
+            this.DGVMisCobros.RowTemplate.Height = 28;
+            this.DGVMisCobros.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
+            this.DGVMisCobros.ColumnHeadersDefaultCellStyle = dgvHeaderStyle;
+            this.DGVMisCobros.DefaultCellStyle = dgvRowStyle;
+
+            this.DGVMisCobros.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+                this.ColCobroHora,
+                this.ColCobroComprobante,
+                this.ColCobroCliente,
+                this.ColCobroMedio,
+                this.ColCobroTotal
+            });
+            this.DGVMisCobros.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.DGVMisCobros.Location = new System.Drawing.Point(3, 3);
+            this.DGVMisCobros.Name = "DGVMisCobros";
+            this.DGVMisCobros.Size = new System.Drawing.Size(1046, 330);
+            this.DGVMisCobros.TabIndex = 0;
+
+            this.ColCobroHora.HeaderText = "Hora";
+            this.ColCobroHora.Width = 80;
+            this.ColCobroHora.Name = "ColCobroHora";
+            this.ColCobroHora.ReadOnly = true;
+
+            this.ColCobroComprobante.HeaderText = "N° Comprobante";
+            this.ColCobroComprobante.Width = 160;
+            this.ColCobroComprobante.Name = "ColCobroComprobante";
+            this.ColCobroComprobante.ReadOnly = true;
+
+            this.ColCobroCliente.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.ColCobroCliente.HeaderText = "Cliente";
+            this.ColCobroCliente.Name = "ColCobroCliente";
+            this.ColCobroCliente.ReadOnly = true;
+
+            this.ColCobroMedio.HeaderText = "Medio de Pago";
+            this.ColCobroMedio.Width = 150;
+            this.ColCobroMedio.Name = "ColCobroMedio";
+            this.ColCobroMedio.ReadOnly = true;
+
+            this.ColCobroTotal.HeaderText = "Total ($)";
+            this.ColCobroTotal.Width = 130;
+            this.ColCobroTotal.Name = "ColCobroTotal";
+            this.ColCobroTotal.ReadOnly = true;
+
+            // ============================================================
             // LSubtituloDetalle
+            // ============================================================
             this.LSubtituloDetalle.Dock = System.Windows.Forms.DockStyle.Top;
             this.LSubtituloDetalle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.LSubtituloDetalle.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
@@ -259,7 +356,9 @@
             this.LSubtituloDetalle.TabIndex = 0;
             this.LSubtituloDetalle.Text = "DETALLE DE ARTÍCULOS DEL PEDIDO SELECCIONADO:";
 
+            // ============================================================
             // DGVDetalle
+            // ============================================================
             this.DGVDetalle.AllowUserToAddRows = false;
             this.DGVDetalle.AllowUserToDeleteRows = false;
             this.DGVDetalle.BackgroundColor = System.Drawing.Color.White;
@@ -273,7 +372,6 @@
             this.DGVDetalle.RowHeadersVisible = false;
             this.DGVDetalle.RowTemplate.Height = 26;
             this.DGVDetalle.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-
             this.DGVDetalle.ColumnHeadersDefaultCellStyle = dgvHeaderStyle;
             this.DGVDetalle.DefaultCellStyle = dgvRowStyle;
 
@@ -315,7 +413,9 @@
             this.ColDetSubtotal.Name = "ColDetSubtotal";
             this.ColDetSubtotal.ReadOnly = true;
 
+            // ============================================================
             // PTarjetaLateral
+            // ============================================================
             this.PTarjetaLateral.BackColor = System.Drawing.Color.White;
             this.PTarjetaLateral.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.PTarjetaLateral.Controls.Add(this.PBotonesCobro);
@@ -481,10 +581,8 @@
             this.PBotonesCobro.Name = "PBotonesCobro";
             this.PBotonesCobro.Size = new System.Drawing.Size(388, 122);
             this.PBotonesCobro.TabIndex = 5;
-            // 
-            // BConfirmarCobro
-            // 
-            this.BConfirmarCobro.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
+
+            this.BConfirmarCobro.BackColor = System.Drawing.Color.FromArgb(39, 174, 96);
             this.BConfirmarCobro.Cursor = System.Windows.Forms.Cursors.Hand;
             this.BConfirmarCobro.Dock = System.Windows.Forms.DockStyle.Top;
             this.BConfirmarCobro.FlatAppearance.BorderSize = 0;
@@ -501,10 +599,7 @@
             this.BConfirmarCobro.UseVisualStyleBackColor = false;
             this.BConfirmarCobro.Click += new System.EventHandler(this.BConfirmarCobro_Click);
 
-            // 
-            // BAnularPedido
-            // 
-            this.BAnularPedido.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(57)))), ((int)(((byte)(43)))));
+            this.BAnularPedido.BackColor = System.Drawing.Color.FromArgb(192, 57, 43);
             this.BAnularPedido.Cursor = System.Windows.Forms.Cursors.Hand;
             this.BAnularPedido.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.BAnularPedido.FlatAppearance.BorderSize = 0;
@@ -521,7 +616,9 @@
             this.BAnularPedido.UseVisualStyleBackColor = false;
             this.BAnularPedido.Click += new System.EventHandler(this.BAnularPedido_Click);
 
+            // ============================================================
             // FormCobroVenta
+            // ============================================================
             this.AutoScaleDimensions = new System.Drawing.SizeF(8F, 16F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.Color.FromArgb(242, 237, 230);
@@ -538,7 +635,11 @@
             this.SCIzquierda.Panel2.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.SCIzquierda)).EndInit();
             this.SCIzquierda.ResumeLayout(false);
+            this.TCArriba.ResumeLayout(false);
+            this.TPPedidos.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.DGVPendientes)).EndInit();
+            this.TPMisCobros.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.DGVMisCobros)).EndInit();
             ((System.ComponentModel.ISupportInitialize)(this.DGVDetalle)).EndInit();
             this.PTarjetaLateral.ResumeLayout(false);
             this.PBotonesCobro.ResumeLayout(false);
@@ -560,14 +661,23 @@
         private System.Windows.Forms.Label LTituloPrincipal;
         private System.Windows.Forms.TableLayoutPanel TLPContenido;
         private System.Windows.Forms.SplitContainer SCIzquierda;
-        private System.Windows.Forms.Label LSubtituloPendientes;
+        private System.Windows.Forms.TabControl TCArriba;
+        private System.Windows.Forms.TabPage TPPedidos;
         private System.Windows.Forms.DataGridView DGVPendientes;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColIdPedido;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColNroPedido;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColHora;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColVendedor;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColCliente;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColEstadoPedido;   // ✅ NUEVA
         private System.Windows.Forms.DataGridViewTextBoxColumn ColTotalPedido;
+        private System.Windows.Forms.TabPage TPMisCobros;
+        private System.Windows.Forms.DataGridView DGVMisCobros;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCobroHora;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCobroComprobante;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCobroCliente;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCobroMedio;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ColCobroTotal;
         private System.Windows.Forms.Label LSubtituloDetalle;
         private System.Windows.Forms.DataGridView DGVDetalle;
         private System.Windows.Forms.DataGridViewTextBoxColumn ColDetCodigo;

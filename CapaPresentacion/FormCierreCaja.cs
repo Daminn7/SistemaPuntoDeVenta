@@ -199,7 +199,7 @@ namespace CapaPresentacion
                         // ✅ NUEVO: Se abre la caja en la API
                         var nuevaCaja = new CrearCajaDto
                         {
-                            PersonalId = SesionUsuario.IdUsuario,
+                            PersonalId = SesionUsuario.IdPersonal,
                             FondoInicial = fondo
                         };
 
@@ -243,7 +243,7 @@ namespace CapaPresentacion
                         var movimiento = new CrearMovimientoCajaDto
                         {
                             CajaId = _idTurnoCaja,
-                            PersonalId = SesionUsuario.IdUsuario,
+                            PersonalId = SesionUsuario.IdPersonal,
                             TipoMovimientoId = 2, // 2 = Egreso
                             Monto = monto,
                             Descripcion = motivo
