@@ -371,6 +371,44 @@ namespace CapaDatos.Services
 
             return JsonConvert.DeserializeObject<dynamic>(responseContent);
         }
+
+        // ✅ NUEVO: Actualizar detalles de una orden Pendiente
+        public async Task<dynamic> ActualizarDetallesOrdenVentaAsync(int id, CrearOrdenVentaDto orden)
+        {
+            var json = JsonConvert.SerializeObject(orden);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/ordenesventa/{id}/detalles: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PutAsync($"/api/ordenesventa/{id}/detalles", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
+
+        // ✅ NUEVO: Cancelar presupuestos vencidos (job automático)
+        public async Task<dynamic> CancelarOrdenesVencidasAsync()
+        {
+            var response = await _httpClient.PostAsync("/api/ordenesventa/cancelar-vencidos", null);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Cancelar vencidos - Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
         // ============================================================
         // DIRECCIONES
         // ============================================================

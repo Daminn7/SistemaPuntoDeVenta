@@ -17,6 +17,7 @@ namespace CapaPresentacion
 {
     public partial class FormPreVenta : Form
     {
+        // Estructura interna para el catálogo de insumos
         private class ArticuloCatalogo
         {
             public int Id { get; set; }
@@ -42,19 +43,50 @@ namespace CapaPresentacion
         // ✅ Órdenes de venta (API)
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
 
+        // ✅ NUEVO: Controla si se está editando un presupuesto existente
+        private int _ordenIdCargado = 0;
+        private string _tituloOriginal = "PREVENTA Y ATENCIÓN A CLIENTES";
+
         public FormPreVenta()
         {
             InitializeComponent();
             ConfigurarBuscadorReactivo();
         }
 
+        // ✅ MODIFICADO: Ahora cancela los vencidos al iniciar
         private async void FormPreVenta_Load(object sender, EventArgs e)
         {
             AsignarIconoTitulo();
+            _tituloOriginal = LTituloPrincipal.Text;
+
+            await CancelarPresupuestosVencidosAsync();
             await CargarClientesAsync();
             await CargarProductosAsync();
             ConfigurarEstructuraDetalle();
             LimpiarFormulario();
+            ActualizarBotonGuardar();
+        }
+
+        // ✅ NUEVO: Cancelar vencidos al iniciar
+        private async Task CancelarPresupuestosVencidosAsync()
+        {
+            try
+            {
+                var resultado = await _ordenVentaLogica.CancelarVencidos();
+
+                if (resultado != null)
+                {
+                    int cancelados = (int)(resultado.cancelados ?? 0);
+                    if (cancelados > 0)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Se cancelaron {cancelados} presupuestos vencidos.");
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Error al cancelar vencidos: {ex.Message}");
+            }
         }
 
         private Image DibujarIconoPreVenta(Color color)
@@ -84,7 +116,7 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // ✅ Carga productos desde la API y los pone en el ComboBox
+        // ✅ Carga productos desde la API
         // ============================================================
         private async Task CargarProductosAsync()
         {
@@ -115,9 +147,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ Llena el ComboBox de artículos
-        // ============================================================
         private void CargarArticulosEnCombo()
         {
             CBArticulos.Items.Clear();
@@ -139,9 +168,6 @@ namespace CapaPresentacion
             CBArticulos.Text = "";
         }
 
-        // ============================================================
-        // ✅ Al seleccionar un artículo del combo
-        // ============================================================
         private void CBArticulos_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (CBArticulos.SelectedItem is ArticuloItem item)
@@ -190,7 +216,6 @@ namespace CapaPresentacion
                 NUDCantidad.Maximum = stockDisponible;
                 NUDCantidad.Value = 1;
 
-                // ✅ Mostrar stock disponible en el label
                 LStockDisponible.Text = $"Stock disp: {stockDisponible}";
                 LStockDisponible.ForeColor = stockDisponible <= 3
                     ? Color.FromArgb(192, 57, 43)
@@ -212,7 +237,6 @@ namespace CapaPresentacion
                 }
             };
 
-            // ✅ NUEVO: Validar cuando cambia el valor de cantidad
             NUDCantidad.ValueChanged += (s, e) =>
             {
                 if (_insumoSeleccionado == null) return;
@@ -356,7 +380,6 @@ namespace CapaPresentacion
             int cantidadActualEnGrilla = filaExistente != null ? Convert.ToInt32(filaExistente["ColCantidad"]) : 0;
             int cantidadTotal = cantidadActualEnGrilla + cantidadSolicitada;
 
-            // ✅ Validar stock con mensaje detallado
             if (cantidadTotal > _insumoSeleccionado.Stock)
             {
                 int stockDisponible = _insumoSeleccionado.Stock - cantidadActualEnGrilla;
@@ -373,7 +396,9 @@ namespace CapaPresentacion
                 return;
             }
 
-            decimal precioAplicado = RBPremioMayorista.Checked ? _insumoSeleccionado.PrecioMayorista : _insumoSeleccionado.PrecioMinorista;
+            decimal precioAplicado = RBPremioMayorista.Checked
+                ? _insumoSeleccionado.PrecioMayorista
+                : _insumoSeleccionado.PrecioMinorista;
 
             if (filaExistente != null)
             {
@@ -383,7 +408,14 @@ namespace CapaPresentacion
             else
             {
                 decimal subtotal = cantidadSolicitada * precioAplicado;
-                _dtDetalle.Rows.Add(_insumoSeleccionado.Id, _insumoSeleccionado.Codigo, _insumoSeleccionado.Descripcion, _insumoSeleccionado.Stock, cantidadSolicitada, precioAplicado, subtotal);
+                _dtDetalle.Rows.Add(
+                    _insumoSeleccionado.Id,
+                    _insumoSeleccionado.Codigo,
+                    _insumoSeleccionado.Descripcion,
+                    _insumoSeleccionado.Stock,
+                    cantidadSolicitada,
+                    precioAplicado,
+                    subtotal);
             }
 
             _insumoSeleccionado = null;
@@ -414,7 +446,9 @@ namespace CapaPresentacion
                 var art = _catalogoInsumos.FirstOrDefault(a => a.Id == idArt);
                 if (art != null)
                 {
-                    decimal nuevoPrecio = RBPremioMayorista.Checked ? art.PrecioMayorista : art.PrecioMinorista;
+                    decimal nuevoPrecio = RBPremioMayorista.Checked
+                        ? art.PrecioMayorista
+                        : art.PrecioMinorista;
                     int cant = Convert.ToInt32(row["ColCantidad"]);
                     row["ColPrecioUnit"] = nuevoPrecio;
                     row["ColSubtotal"] = cant * nuevoPrecio;
@@ -445,10 +479,318 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // BOTÓN: GUARDAR PRESUPUESTO (Pendiente + PDF)
+        // ✅ NUEVO: Actualizar botón Guardar según modo
+        // ============================================================
+        private void ActualizarBotonGuardar()
+        {
+            if (_ordenIdCargado > 0)
+            {
+                // Editando presupuesto existente → Guardar deshabilitado
+                BGuardarPresupuesto.Enabled = false;
+                BGuardarPresupuesto.BackColor = Color.FromArgb(180, 180, 180);
+            }
+            else
+            {
+                // Modo nuevo → Guardar habilitado
+                BGuardarPresupuesto.Enabled = true;
+                BGuardarPresupuesto.BackColor = Color.FromArgb(41, 128, 185);
+            }
+        }
+
+        // ============================================================
+        // ✅ BOTÓN: Cargar Presupuesto Pendiente
+        // ============================================================
+        private async void BCargarPresupuesto_Click(object sender, EventArgs e)
+        {
+            try
+            {
+                var todas = await _ordenVentaLogica.ObtenerTodas();
+
+                var ahora = DateTime.Now;
+                var pendientes = todas?
+                    .Where(o => o.EstadoVentaId == 1 &&                          // Pendiente
+                                o.FechaValidez.HasValue &&
+                                o.FechaValidez.Value >= ahora)                   // No vencido
+                    .OrderByDescending(o => o.FechaCreacion)
+                    .ToList() ?? new List<OrdenVentaDto>();
+
+                if (pendientes.Count == 0)
+                {
+                    MessageBox.Show("No hay presupuestos pendientes y vigentes para cargar.",
+                        "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                using (var modal = CrearModalSeleccionPresupuesto(pendientes))
+                {
+                    if (modal.ShowDialog(this) != DialogResult.OK) return;
+
+                    var seleccionado = modal.Tag as OrdenVentaDto;
+                    if (seleccionado == null) return;
+
+                    if (_dtDetalle.Rows.Count > 0)
+                    {
+                        var res = MessageBox.Show(
+                            "Hay artículos cargados en la grilla actual. ¿Desea reemplazarlos con los del presupuesto?",
+                            "Reemplazar Ítems",
+                            MessageBoxButtons.YesNo,
+                            MessageBoxIcon.Question);
+
+                        if (res != DialogResult.Yes) return;
+                    }
+
+                    await CargarPresupuestoEnFormularioAsync(seleccionado);
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar presupuestos: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // ✅ Modal de selección de presupuestos
+        // ============================================================
+        private Form CrearModalSeleccionPresupuesto(List<OrdenVentaDto> pendientes)
+        {
+            var modal = new Form
+            {
+                Text = "Seleccionar Presupuesto Pendiente",
+                Size = new Size(820, 500),
+                StartPosition = FormStartPosition.CenterParent,
+                FormBorderStyle = FormBorderStyle.FixedDialog,
+                MaximizeBox = false,
+                MinimizeBox = false,
+                BackColor = Color.White
+            };
+
+            var lblTitulo = new Label
+            {
+                Text = "Presupuestos Pendientes vigentes (seleccione uno para cargar):",
+                Dock = DockStyle.Top,
+                Height = 32,
+                Padding = new Padding(12, 10, 0, 0),
+                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(212, 131, 53)
+            };
+
+            var dgv = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                ReadOnly = true,
+                AllowUserToAddRows = false,
+                MultiSelect = false,
+                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
+                BackgroundColor = Color.White,
+                RowHeadersVisible = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BorderStyle = BorderStyle.FixedSingle
+            };
+
+            dgv.Columns.Add("Nro", "N° Presupuesto");
+            dgv.Columns.Add("Fecha", "Fecha");
+            dgv.Columns.Add("Cliente", "Cliente");
+            dgv.Columns.Add("Items", "Ítems");
+            dgv.Columns.Add("Total", "Total ($)");
+            dgv.Columns.Add("Vendedor", "Vendedor");
+
+            dgv.Columns["Nro"].FillWeight = 90;
+            dgv.Columns["Fecha"].FillWeight = 80;
+            dgv.Columns["Cliente"].FillWeight = 180;
+            dgv.Columns["Items"].FillWeight = 60;
+            dgv.Columns["Total"].FillWeight = 80;
+            dgv.Columns["Vendedor"].FillWeight = 120;
+
+            foreach (var orden in pendientes)
+            {
+                int cantItems = orden.Detalles?.Sum(d => d.Cantidad) ?? 0;
+
+                dgv.Rows.Add(
+                    orden.NumeroPresupuesto ?? $"#{orden.IdOrden}",
+                    orden.FechaCreacion.ToString("dd/MM/yyyy HH:mm"),
+                    orden.ClienteNombre ?? "Consumidor Final",
+                    cantItems,
+                    orden.Total.ToString("N2"),
+                    orden.PersonalNombre ?? ""
+                );
+            }
+
+            if (dgv.Rows.Count > 0)
+                dgv.Rows[0].Selected = true;
+
+            dgv.CellDoubleClick += (s, e) =>
+            {
+                if (e.RowIndex >= 0)
+                    modal.DialogResult = DialogResult.OK;
+            };
+
+            var pnlBotones = new Panel { Dock = DockStyle.Bottom, Height = 52 };
+
+            var btnCargar = new Button
+            {
+                Text = "📂 Cargar Presupuesto",
+                BackColor = Color.FromArgb(212, 131, 53),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(180, 36),
+                Location = new Point(420, 8),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.OK
+            };
+            btnCargar.FlatAppearance.BorderSize = 0;
+
+            var btnCancelar = new Button
+            {
+                Text = "Cancelar",
+                BackColor = Color.FromArgb(108, 117, 125),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                FlatStyle = FlatStyle.Flat,
+                Size = new Size(120, 36),
+                Location = new Point(610, 8),
+                Cursor = Cursors.Hand,
+                DialogResult = DialogResult.Cancel
+            };
+            btnCancelar.FlatAppearance.BorderSize = 0;
+
+            pnlBotones.Controls.Add(btnCargar);
+            pnlBotones.Controls.Add(btnCancelar);
+
+            modal.Controls.Add(dgv);
+            modal.Controls.Add(pnlBotones);
+            modal.Controls.Add(lblTitulo);
+
+            modal.AcceptButton = btnCargar;
+            modal.CancelButton = btnCancelar;
+
+            modal.FormClosing += (s, e) =>
+            {
+                if (modal.DialogResult == DialogResult.OK && dgv.SelectedRows.Count > 0)
+                {
+                    int index = dgv.SelectedRows[0].Index;
+                    modal.Tag = pendientes[index];
+                }
+            };
+
+            return modal;
+        }
+
+        // ============================================================
+        // ✅ Carga la orden seleccionada en el formulario
+        // ============================================================
+        private async Task CargarPresupuestoEnFormularioAsync(OrdenVentaDto orden)
+        {
+            try
+            {
+                _dtDetalle.Rows.Clear();
+
+                // 1. Cargar el cliente
+                bool clienteEncontrado = false;
+                for (int i = 0; i < CBClientes.Items.Count; i++)
+                {
+                    if (CBClientes.Items[i] is ClienteItem item && item.IdCliente == orden.ClienteId)
+                    {
+                        CBClientes.SelectedIndex = i;
+                        clienteEncontrado = true;
+                        break;
+                    }
+                }
+
+                if (!clienteEncontrado)
+                {
+                    MessageBox.Show(
+                        $"El cliente '{orden.ClienteNombre}' no está disponible.\n\n" +
+                        "Se asignará 'Consumidor Final' por defecto.",
+                        "Cliente no encontrado",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Warning);
+
+                    CBClientes.SelectedIndex = 0;
+                }
+
+                // 2. Traer la orden completa con detalles
+                var ordenCompleta = await _ordenVentaLogica.ObtenerPorId(orden.IdOrden);
+
+                if (ordenCompleta?.Detalles == null || ordenCompleta.Detalles.Count == 0)
+                {
+                    MessageBox.Show("El presupuesto no tiene ítems.", "Aviso",
+                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                // 3. Detectar tipo de precio
+                bool esMayorista = false;
+                foreach (var detalle in ordenCompleta.Detalles)
+                {
+                    var articulo = _catalogoInsumos.FirstOrDefault(a => a.Id == detalle.ProductoId);
+                    if (articulo != null
+                        && detalle.PrecioUnitario == articulo.PrecioMayorista
+                        && detalle.PrecioUnitario != articulo.PrecioMinorista)
+                    {
+                        esMayorista = true;
+                        break;
+                    }
+                }
+
+                RBPremioMayorista.Checked = esMayorista;
+                RBPremioMinorista.Checked = !esMayorista;
+
+                // 4. Cargar los ítems
+                foreach (var detalle in ordenCompleta.Detalles)
+                {
+                    var articulo = _catalogoInsumos.FirstOrDefault(a => a.Id == detalle.ProductoId);
+                    int stockActual = articulo?.Stock ?? 0;
+
+                    _dtDetalle.Rows.Add(
+                        detalle.ProductoId,
+                        detalle.ProductoCodigo ?? "",
+                        detalle.ProductoNombre ?? "",
+                        stockActual,
+                        detalle.Cantidad,
+                        detalle.PrecioUnitario,
+                        detalle.Subtotal
+                    );
+                }
+
+                // 5. Actualizar totales y estado
+                ActualizarTotales();
+
+                _ordenIdCargado = orden.IdOrden;
+                LTituloPrincipal.Text = $"EDITANDO PRESUPUESTO {orden.NumeroPresupuesto}";
+                ActualizarBotonGuardar();
+
+                MessageBox.Show(
+                    $"Presupuesto #{orden.NumeroPresupuesto} cargado correctamente.\n\n" +
+                    $"Cliente: {orden.ClienteNombre}\n" +
+                    $"Ítems: {ordenCompleta.Detalles.Count}\n" +
+                    $"Total: {orden.Total:C2}\n\n" +
+                    "Modifique si es necesario y presione 'Enviar Pedido a Caja'.",
+                    "Presupuesto Cargado",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar el presupuesto: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
+        // ============================================================
+        // ✅ BOTÓN: Guardar Presupuesto (solo modo nuevo)
         // ============================================================
         private async void BGuardarPresupuesto_Click(object sender, EventArgs e)
         {
+            if (_ordenIdCargado > 0)
+            {
+                MessageBox.Show(
+                    "Está editando un presupuesto existente. Use 'Enviar Pedido a Caja' para confirmarlo.",
+                    "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
             if (_dtDetalle.Rows.Count == 0)
             {
                 MessageBox.Show("Cargue artículos antes de guardar el presupuesto.", "Aviso",
@@ -495,7 +837,7 @@ namespace CapaPresentacion
                 MessageBox.Show(
                     $"Presupuesto #{respuesta.NumeroPresupuesto} guardado correctamente.\n" +
                     $"Total: {respuesta.Total:C2}\n" +
-                    "El presupuesto quedó registrado como Pendiente.",
+                    "Quedó registrado como Pendiente.",
                     "Presupuesto Guardado",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Information);
@@ -510,11 +852,12 @@ namespace CapaPresentacion
             finally
             {
                 BGuardarPresupuesto.Enabled = true;
+                ActualizarBotonGuardar();
             }
         }
 
         // ============================================================
-        // BOTÓN: IMPRIMIR (sin guardar)
+        // ✅ BOTÓN: Imprimir (sin guardar)
         // ============================================================
         private void BImprimirPresupuesto_Click(object sender, EventArgs e)
         {
@@ -527,7 +870,7 @@ namespace CapaPresentacion
 
             try
             {
-                GenerarPDFPresupuesto("BORRADOR");
+                GenerarPDFPresupuesto(_ordenIdCargado > 0 ? $"EDIT-{_ordenIdCargado}" : "BORRADOR");
             }
             catch (Exception ex)
             {
@@ -537,7 +880,9 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // BOTÓN: ENVIAR A CAJA (Pendiente → Confirmada)
+        // ✅ BOTÓN: Enviar a Caja
+        //   - Si hay presupuesto cargado → Actualizar detalles + Confirmar
+        //   - Si es nuevo → Crear orden + Confirmar
         // ============================================================
         private async void BEnviarACaja_Click(object sender, EventArgs e)
         {
@@ -568,7 +913,8 @@ namespace CapaPresentacion
             {
                 BEnviarACaja.Enabled = false;
 
-                var nuevaOrden = new CrearOrdenVentaDto
+                // Armar el DTO con los datos actuales
+                var dto = new CrearOrdenVentaDto
                 {
                     ClienteId = idCliente,
                     PersonalId = SesionUsuario.IdPersonal,
@@ -580,7 +926,7 @@ namespace CapaPresentacion
 
                 foreach (DataRow row in _dtDetalle.Rows)
                 {
-                    nuevaOrden.Detalles.Add(new CrearDetalleOrdenDto
+                    dto.Detalles.Add(new CrearDetalleOrdenDto
                     {
                         ProductoId = Convert.ToInt32(row["ColIdProducto"]),
                         Cantidad = Convert.ToInt32(row["ColCantidad"]),
@@ -588,12 +934,26 @@ namespace CapaPresentacion
                     });
                 }
 
-                var respuesta = await _ordenVentaLogica.Crear(nuevaOrden);
-                await _ordenVentaLogica.Confirmar(respuesta.IdOrden);
+                int idOrden;
+
+                if (_ordenIdCargado > 0)
+                {
+                    // ✅ Actualizar detalles de la orden cargada
+                    await _ordenVentaLogica.ActualizarDetalles(_ordenIdCargado, dto);
+                    idOrden = _ordenIdCargado;
+                }
+                else
+                {
+                    // ✅ Crear nueva orden
+                    var respuesta = await _ordenVentaLogica.Crear(dto);
+                    idOrden = respuesta.IdOrden;
+                }
+
+                // Confirmar (descuenta stock y valida)
+                await _ordenVentaLogica.Confirmar(idOrden);
 
                 MessageBox.Show(
-                    $"Pedido #{respuesta.NumeroPresupuesto} enviado a Caja correctamente.\n" +
-                    $"Total: {respuesta.Total:C2}\n" +
+                    "Pedido enviado a Caja correctamente.\n\n" +
                     "El cajero ya puede procesar el cobro.",
                     "Enviado a Caja",
                     MessageBoxButtons.OK,
@@ -603,8 +963,10 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
+                // El mensaje puede incluir la lista de productos sin stock
                 MessageBox.Show($"Error al enviar a Caja:\n{ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
             }
             finally
             {
@@ -613,11 +975,11 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // BOTÓN: LIMPIAR
+        // ✅ BOTÓN: Limpiar
         // ============================================================
         private void BCancelarVenta_Click(object sender, EventArgs e)
         {
-            if (_dtDetalle.Rows.Count > 0)
+            if (_dtDetalle.Rows.Count > 0 || _ordenIdCargado > 0)
             {
                 DialogResult res = MessageBox.Show("¿Desea limpiar todos los ítems cargados?", "Limpiar",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question);
@@ -633,6 +995,7 @@ namespace CapaPresentacion
         private void LimpiarFormulario()
         {
             _insumoSeleccionado = null;
+            _ordenIdCargado = 0;
             _dtDetalle.Rows.Clear();
 
             if (CBClientes.Items.Count > 0)
@@ -645,6 +1008,9 @@ namespace CapaPresentacion
             NUDCantidad.Maximum = 10000;
             NUDCantidad.Value = 1;
             RBPremioMinorista.Checked = true;
+
+            LTituloPrincipal.Text = _tituloOriginal;
+            ActualizarBotonGuardar();
             ActualizarTotales();
         }
 
@@ -719,299 +1085,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ BOTÓN: Cargar Presupuesto Pendiente
-        //    Abre un modal con todos los presupuestos Pendientes
-        //    y carga el seleccionado en el formulario
-        // ============================================================
-        private async void BCargarPresupuesto_Click(object sender, EventArgs e)
-        {
-            try
-            {
-                // 1. Traer todas las órdenes pendientes
-                var todas = await _ordenVentaLogica.ObtenerTodas();
-
-                var pendientes = todas?
-                    .Where(o => o.EstadoVentaId == 1)  // Pendiente
-                    .OrderByDescending(o => o.FechaCreacion)
-                    .ToList() ?? new List<OrdenVentaDto>();
-
-                if (pendientes.Count == 0)
-                {
-                    MessageBox.Show("No hay presupuestos pendientes para cargar.",
-                        "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                // 2. Mostrar modal de selección
-                using (var modal = CrearModalSeleccionPresupuesto(pendientes))
-                {
-                    if (modal.ShowDialog(this) != DialogResult.OK) return;
-
-                    var seleccionado = modal.Tag as OrdenVentaDto;
-                    if (seleccionado == null) return;
-
-                    // 3. Confirmar si hay ítems cargados
-                    if (_dtDetalle.Rows.Count > 0)
-                    {
-                        var res = MessageBox.Show(
-                            "Hay artículos cargados en la grilla actual. ¿Desea reemplazarlos con los del presupuesto?",
-                            "Reemplazar Ítems",
-                            MessageBoxButtons.YesNo,
-                            MessageBoxIcon.Question);
-
-                        if (res != DialogResult.Yes) return;
-                    }
-
-                    // 4. Cargar el presupuesto en el formulario
-                    await CargarPresupuestoEnFormularioAsync(seleccionado);
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al cargar presupuestos: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
-
-        // ============================================================
-        // ✅ NUEVO: Crea el modal de selección de presupuestos
-        // ============================================================
-        private Form CrearModalSeleccionPresupuesto(List<OrdenVentaDto> pendientes)
-        {
-            var modal = new Form
-            {
-                Text = "Seleccionar Presupuesto Pendiente",
-                Size = new Size(820, 500),
-                StartPosition = FormStartPosition.CenterParent,
-                FormBorderStyle = FormBorderStyle.FixedDialog,
-                MaximizeBox = false,
-                MinimizeBox = false,
-                BackColor = Color.White
-            };
-
-            // Título
-            var lblTitulo = new Label
-            {
-                Text = "Presupuestos Pendientes (seleccione uno para cargar):",
-                Dock = DockStyle.Top,
-                Height = 32,
-                Padding = new Padding(12, 10, 0, 0),
-                Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(212, 131, 53)
-            };
-
-            // Grilla
-            var dgv = new DataGridView
-            {
-                Dock = DockStyle.Fill,
-                ReadOnly = true,
-                AllowUserToAddRows = false,
-                MultiSelect = false,
-                SelectionMode = DataGridViewSelectionMode.FullRowSelect,
-                BackgroundColor = Color.White,
-                RowHeadersVisible = false,
-                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
-                BorderStyle = BorderStyle.FixedSingle
-            };
-
-            dgv.Columns.Add("Nro", "N° Presupuesto");
-            dgv.Columns.Add("Fecha", "Fecha");
-            dgv.Columns.Add("Cliente", "Cliente");
-            dgv.Columns.Add("Items", "Ítems");
-            dgv.Columns.Add("Total", "Total ($)");
-            dgv.Columns.Add("Vendedor", "Vendedor");
-
-            dgv.Columns["Nro"].FillWeight = 90;
-            dgv.Columns["Fecha"].FillWeight = 80;
-            dgv.Columns["Cliente"].FillWeight = 180;
-            dgv.Columns["Items"].FillWeight = 60;
-            dgv.Columns["Total"].FillWeight = 80;
-            dgv.Columns["Vendedor"].FillWeight = 120;
-
-            foreach (var orden in pendientes)
-            {
-                int cantItems = orden.Detalles?.Sum(d => d.Cantidad) ?? 0;
-
-                dgv.Rows.Add(
-                    orden.NumeroPresupuesto ?? $"#{orden.IdOrden}",
-                    orden.FechaCreacion.ToString("dd/MM/yyyy HH:mm"),
-                    orden.ClienteNombre ?? "Consumidor Final",
-                    cantItems,
-                    orden.Total.ToString("N2"),
-                    orden.PersonalNombre ?? ""
-                );
-            }
-
-            if (dgv.Rows.Count > 0)
-                dgv.Rows[0].Selected = true;
-
-            // Doble clic = OK
-            dgv.CellDoubleClick += (s, e) =>
-            {
-                if (e.RowIndex >= 0)
-                    modal.DialogResult = DialogResult.OK;
-            };
-
-            // Botones
-            var pnlBotones = new Panel { Dock = DockStyle.Bottom, Height = 52 };
-
-            var btnCargar = new Button
-            {
-                Text = "📂 Cargar Presupuesto",
-                BackColor = Color.FromArgb(212, 131, 53),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(180, 36),
-                Location = new Point(420, 8),
-                Cursor = Cursors.Hand,
-                DialogResult = DialogResult.OK
-            };
-            btnCargar.FlatAppearance.BorderSize = 0;
-
-            var btnCancelar = new Button
-            {
-                Text = "Cancelar",
-                BackColor = Color.FromArgb(108, 117, 125),
-                ForeColor = Color.White,
-                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
-                FlatStyle = FlatStyle.Flat,
-                Size = new Size(120, 36),
-                Location = new Point(610, 8),
-                Cursor = Cursors.Hand,
-                DialogResult = DialogResult.Cancel
-            };
-            btnCancelar.FlatAppearance.BorderSize = 0;
-
-            pnlBotones.Controls.Add(btnCargar);
-            pnlBotones.Controls.Add(btnCancelar);
-
-            modal.Controls.Add(dgv);
-            modal.Controls.Add(pnlBotones);
-            modal.Controls.Add(lblTitulo);
-
-            modal.AcceptButton = btnCargar;
-            modal.CancelButton = btnCancelar;
-
-            // Guardar la orden seleccionada en el Tag
-            modal.FormClosing += (s, e) =>
-            {
-                if (modal.DialogResult == DialogResult.OK && dgv.SelectedRows.Count > 0)
-                {
-                    int index = dgv.SelectedRows[0].Index;
-                    modal.Tag = pendientes[index];
-                }
-            };
-
-            return modal;
-        }
-
-        // ============================================================
-        // ✅ NUEVO: Carga la orden seleccionada en el formulario
-        // ============================================================
-        private async Task CargarPresupuestoEnFormularioAsync(OrdenVentaDto orden)
-        {
-            try
-            {
-                _dtDetalle.Rows.Clear();
-
-                // ============================================================
-                // 1. Cliente
-                // ============================================================
-                bool clienteEncontrado = false;
-                for (int i = 0; i < CBClientes.Items.Count; i++)
-                {
-                    if (CBClientes.Items[i] is ClienteItem item && item.IdCliente == orden.ClienteId)
-                    {
-                        CBClientes.SelectedIndex = i;
-                        clienteEncontrado = true;
-                        break;
-                    }
-                }
-
-                if (!clienteEncontrado)
-                {
-                    MessageBox.Show(
-                        $"El cliente '{orden.ClienteNombre}' no está disponible (quizás fue desactivado).\n\n" +
-                        "Se asignará 'Consumidor Final' por defecto.",
-                        "Cliente no encontrado",
-                        MessageBoxButtons.OK,
-                        MessageBoxIcon.Warning);
-
-                    CBClientes.SelectedIndex = 0;
-                }
-
-                // ============================================================
-                // 2. Cargar los ítems
-                // ============================================================
-                // Traer la orden completa con detalles
-                var ordenCompleta = await _ordenVentaLogica.ObtenerPorId(orden.IdOrden);
-
-                if (ordenCompleta?.Detalles == null || ordenCompleta.Detalles.Count == 0)
-                {
-                    MessageBox.Show("El presupuesto no tiene ítems.", "Aviso",
-                        MessageBoxButtons.OK, MessageBoxIcon.Warning);
-                    return;
-                }
-
-                // Detectar tipo de precio (si algún precio unitario coincide con mayorista)
-                bool esMayorista = false;
-                foreach (var detalle in ordenCompleta.Detalles)
-                {
-                    var articulo = _catalogoInsumos.FirstOrDefault(a => a.Id == detalle.ProductoId);
-                    if (articulo != null && detalle.PrecioUnitario == articulo.PrecioMayorista
-                        && detalle.PrecioUnitario != articulo.PrecioMinorista)
-                    {
-                        esMayorista = true;
-                        break;
-                    }
-                }
-
-                RBPremioMayorista.Checked = esMayorista;
-                RBPremioMinorista.Checked = !esMayorista;
-
-                // Agregar cada detalle
-                foreach (var detalle in ordenCompleta.Detalles)
-                {
-                    var articulo = _catalogoInsumos.FirstOrDefault(a => a.Id == detalle.ProductoId);
-                    int stockActual = articulo?.Stock ?? 0;
-
-                    _dtDetalle.Rows.Add(
-                        detalle.ProductoId,
-                        detalle.ProductoCodigo ?? "",
-                        detalle.ProductoNombre ?? "",
-                        stockActual,
-                        detalle.Cantidad,
-                        detalle.PrecioUnitario,
-                        detalle.Subtotal
-                    );
-                }
-
-                // ============================================================
-                // 3. Actualizar totales
-                // ============================================================
-                ActualizarTotales();
-
-                // ============================================================
-                // 4. Avisar al usuario
-                // ============================================================
-                MessageBox.Show(
-                    $"Presupuesto #{orden.NumeroPresupuesto} cargado correctamente.\n\n" +
-                    $"Cliente: {orden.ClienteNombre}\n" +
-                    $"Ítems: {ordenCompleta.Detalles.Count}\n" +
-                    $"Total: {orden.Total:C2}\n\n" +
-                    "Verifique los ítems y presione 'Enviar Pedido a Caja' cuando esté listo.",
-                    "Presupuesto Cargado",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error al cargar el presupuesto: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-        }
         // ============================================================
         // CLASES AUXILIARES
         // ============================================================

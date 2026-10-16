@@ -67,5 +67,13 @@ namespace CapaLogica
         /// </summary>
         public async Task<dynamic> Anular(int id)
             => await _apiClient.AnularOrdenVentaAsync(id);
+        // ✅ NUEVO: Actualizar detalles de una orden Pendiente
+        public async Task<dynamic> ActualizarDetalles(int id, CrearOrdenVentaDto orden)
+            => await _apiClient.ActualizarDetallesOrdenVentaAsync(id, orden);
+
+        // ✅ NUEVO: Cancelar presupuestos vencidos (job automático)
+        public async Task<dynamic> CancelarVencidos()
+            => await _apiClient.CancelarOrdenesVencidasAsync();
+
     }
 }

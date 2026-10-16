@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -27,6 +28,13 @@ namespace CapaPresentacion
 
         // ✅ Controla qué clientes se muestran (true = activos, false = inactivos)
         private bool _mostrarSoloActivos = true;
+
+        // ✅ NUEVO: CancellationTokenSource para cancelar cargas al cerrar el form
+        private CancellationTokenSource _ctsCarga;
+
+        // ✅ NUEVO: Bandera para suspender la cascada de provincias→localidades
+        // cuando estamos cargando un cliente manualmente
+        private bool _suspendiendoCascada = false;
 
         // ============================================================
         // CONSTRUCTOR
@@ -52,20 +60,54 @@ namespace CapaPresentacion
 
         // ============================================================
         // CARGA DEL FORMULARIO
+        // ✅ MODIFICADO: Ahora usa CancellationToken para evitar errores
+        //    si el usuario cierra el form antes de que termine la carga
         // ============================================================
         private async void FormClientes_Load(object sender, EventArgs e)
         {
+            // ✅ NUEVO: Crear el token al abrir el form
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             AplicarPermisosPorRol();
             ConfigurarEstiloDataGridView();
-            await CargarProvinciasAsync();
-            await CargarClientesAsync();
-            LimpiarCampos();
 
-            // Inicializar el texto del botón de estado
-            BLimpiarFiltros.Text = "Inactivos";
+            try
+            {
+                await CargarProvinciasAsync(token);
+                if (token.IsCancellationRequested) return;
 
-            // ✅ NUEVO: Estado inicial de los botones (modo nuevo)
-            ActualizarBotonesSegunModo();
+                await CargarClientesAsync(token);
+                if (token.IsCancellationRequested) return;
+
+                LimpiarCampos();
+
+                // Inicializar el texto del botón de estado
+                BLimpiarFiltros.Text = "Inactivos";
+
+                // ✅ Estado inicial de los botones (modo nuevo)
+                ActualizarBotonesSegunModo();
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelación esperada al cerrar el form: no hacer nada
+            }
+        }
+
+        // ============================================================
+        // ✅ NUEVO: Cancelar cargas al cerrar el form
+        // ============================================================
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+
+            base.OnFormClosing(e);
         }
 
         // ============================================================
@@ -130,15 +172,32 @@ namespace CapaPresentacion
 
         // ============================================================
         // CARGA DE CLIENTES
+        // ✅ MODIFICADO: Recibe CancellationToken y verifica antes de tocar la UI
+        // ✅ MODIFICADO: Usa SuspendLayout/ResumeLayout para mejor performance
         // ============================================================
-        private async Task CargarClientesAsync()
+        private async Task CargarClientesAsync(CancellationToken token = default(CancellationToken))
+
         {
             try
             {
                 var clientes = await _clienteLogica.ObtenerTodos();
 
+                // ✅ NUEVO: Si cancelaron mientras cargaba, no tocar la UI
+                if (token.IsCancellationRequested) return;
+
+                // ✅ NUEVO: Verificar que el form siga vivo
+                if (this.IsDisposed || this.Disposing) return;
+
+                // ✅ NUEVO: Suspender el layout para evitar redibujado en cada Add
+                DGVClientes.SuspendLayout();
+                DGVClientes.DataSource = null;
                 DGVClientes.Rows.Clear();
-                if (clientes == null || clientes.Count == 0) return;
+
+                if (clientes == null || clientes.Count == 0)
+                {
+                    DGVClientes.ResumeLayout();
+                    return;
+                }
 
                 // Filtrar según _mostrarSoloActivos
                 var clientesFiltrados = clientes
@@ -180,15 +239,26 @@ namespace CapaPresentacion
                         estadoMostrar           // Columna 8: Estado (Activo/Inactivo)
                     );
                 }
+
+                DGVClientes.ResumeLayout();
+            }
+            catch (OperationCanceledException)
+            {
+                // Cancelación esperada, no hacer nada
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar clientes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar clientes: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
         // ============================================================
         // SELECCIÓN DE CLIENTE EN EL DATAGRIDVIEW
+        // ✅ MODIFICADO: Blindado contra form cerrado
         // ============================================================
         private void DGVClientes_CellClick(object sender, DataGridViewCellEventArgs e)
         {
@@ -209,27 +279,38 @@ namespace CapaPresentacion
                 _esEdicion = true;
                 CargarClienteEnFormulario(id);
 
-                // ✅ NUEVO: Cambiar estado de botones (modo edición)
+                // ✅ Cambiar estado de botones (modo edición)
                 ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al seleccionar cliente: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error al seleccionar cliente: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
         // ============================================================
         // CARGAR CLIENTE EN EL FORMULARIO PARA EDITAR
+        // ✅ MODIFICADO: Eliminado await Task.Delay(300)
+        // ✅ MODIFICADO: Usa _suspendiendoCascada para no re-disparar la cascada
+        // ✅ MODIFICADO: Verifica cancelación antes de tocar controles
         // ============================================================
         private async void CargarClienteEnFormulario(int id)
         {
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
+
             try
             {
                 var cliente = await _clienteLogica.ObtenerPorId(id);
 
+                // ✅ Verificar cancelación / form cerrado
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
+
                 if (cliente == null)
                 {
-                    MessageBox.Show("Cliente no encontrado", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Cliente no encontrado", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
@@ -327,6 +408,7 @@ namespace CapaPresentacion
 
                 // ============================================================
                 // PROVINCIA Y LOCALIDAD
+                // ✅ MODIFICADO: Carga ordenada sin Task.Delay
                 // ============================================================
                 if (cliente.LocalidadId.HasValue && cliente.LocalidadId.Value > 0)
                 {
@@ -337,6 +419,7 @@ namespace CapaPresentacion
                     if (localidad == null && cliente.ProvinciaId.HasValue && cliente.ProvinciaId.Value > 0)
                     {
                         await CargarLocalidadesPorProvinciaAsync(cliente.ProvinciaId.Value);
+                        if (token.IsCancellationRequested) return;
                         localidad = _localidades?.FirstOrDefault(l => l.Id == localidadId);
                     }
 
@@ -345,9 +428,24 @@ namespace CapaPresentacion
                         var provincia = _provincias?.FirstOrDefault(p => p.Id == localidad.ProvinciaId);
                         if (provincia != null)
                         {
-                            CBProvincia.SelectedValue = provincia.Id;
-                            await Task.Delay(300);
-                            CBLocalidad.SelectedValue = localidadId;
+                            // ✅ NUEVO: Suspender cascada mientras asignamos manualmente
+                            _suspendiendoCascada = true;
+                            try
+                            {
+                                // 1. Cargar las localidades de esa provincia primero
+                                await CargarLocalidadesPorProvinciaAsync(provincia.Id);
+                                if (token.IsCancellationRequested) return;
+
+                                // 2. Ahora sí, asignar la provincia (ya tiene localidades cargadas)
+                                CBProvincia.SelectedValue = provincia.Id;
+
+                                // 3. Asignar la localidad (ya está en el DataSource)
+                                CBLocalidad.SelectedValue = localidadId;
+                            }
+                            finally
+                            {
+                                _suspendiendoCascada = false;
+                            }
                         }
                     }
                 }
@@ -355,9 +453,17 @@ namespace CapaPresentacion
                 // ✅ Cargar el estado del cliente en el CheckBox
                 ChBClienteHabilitado.Checked = cliente.Estado;
             }
+            catch (OperationCanceledException)
+            {
+                // Cancelación esperada
+            }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar cliente: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar cliente: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -504,12 +610,18 @@ namespace CapaPresentacion
 
         // ============================================================
         // 5. CASCADA PROVINCIAS -> LOCALIDADES
+        // ✅ MODIFICADO: Ahora respeta _suspendiendoCascada
         // ============================================================
-        private async Task CargarProvinciasAsync()
+        private async Task CargarProvinciasAsync(CancellationToken token = default(CancellationToken))
+
         {
             try
             {
                 _provincias = await _tablasLogica.GetProvincias();
+
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
+
                 if (_provincias == null || _provincias.Count == 0) return;
 
                 CBProvincia.DataSource = _provincias;
@@ -517,9 +629,14 @@ namespace CapaPresentacion
                 CBProvincia.ValueMember = "Id";
                 CBProvincia.SelectedIndex = -1;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar provincias: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar provincias: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -527,6 +644,9 @@ namespace CapaPresentacion
         {
             CBProvincia.SelectedIndexChanged += async (s, e) =>
             {
+                // ✅ NUEVO: Si estamos cargando un cliente manualmente, no re-disparar la cascada
+                if (_suspendiendoCascada) return;
+
                 try
                 {
                     if (CBProvincia.SelectedItem == null)
@@ -543,16 +663,21 @@ namespace CapaPresentacion
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"Error en cascada: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show($"Error en cascada: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
         }
 
-        private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia)
+        private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia, CancellationToken token = default(CancellationToken))
         {
             try
             {
                 _localidades = await _tablasLogica.GetLocalidadesByProvincia(idProvincia);
+
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
+
                 if (_localidades == null || _localidades.Count == 0)
                 {
                     CBLocalidad.DataSource = null;
@@ -565,9 +690,14 @@ namespace CapaPresentacion
                 CBLocalidad.ValueMember = "Id";
                 CBLocalidad.SelectedIndex = -1;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar localidades: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar localidades: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -676,7 +806,6 @@ namespace CapaPresentacion
                     Dni = TBCodigoInterno.Text.Trim(),
                     CuilCuit = TBCuilCuit.Text.Trim(),
                     Email = TBEmail.Text.Trim(),
-                    // ✅ NUEVO: Enviar estado del CheckBox
                     Estado = ChBClienteHabilitado.Checked,
                     Direccion = new DireccionCrearDto
                     {
@@ -697,15 +826,24 @@ namespace CapaPresentacion
 
                 await _clienteLogica.Crear(crearCliente);
 
+                if (this.IsDisposed) return;
+
                 MessageBox.Show("Cliente creado exitosamente", "Éxito",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-                await CargarClientesAsync();
+
+                var token = _ctsCarga?.Token ?? CancellationToken.None;
+                await CargarClientesAsync(token);
+                if (token.IsCancellationRequested) return;
+
                 LimpiarCampos();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -738,7 +876,6 @@ namespace CapaPresentacion
                     Dni = TBCodigoInterno.Text.Trim(),
                     CuilCuit = TBCuilCuit.Text.Trim(),
                     Email = TBEmail.Text.Trim(),
-                    // ✅ NUEVO: Enviar estado del CheckBox
                     Estado = ChBClienteHabilitado.Checked,
                     Direccion = new DireccionCrearDto
                     {
@@ -759,15 +896,24 @@ namespace CapaPresentacion
 
                 await _clienteLogica.Actualizar(_clienteId, actualizarCliente);
 
+                if (this.IsDisposed) return;
+
                 MessageBox.Show("Cliente actualizado exitosamente", "Éxito",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-                await CargarClientesAsync();
+
+                var token = _ctsCarga?.Token ?? CancellationToken.None;
+                await CargarClientesAsync(token);
+                if (token.IsCancellationRequested) return;
+
                 LimpiarCampos();
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -778,7 +924,8 @@ namespace CapaPresentacion
         {
             if (DGVClientes.SelectedRows.Count == 0)
             {
-                MessageBox.Show("Seleccione un cliente para dar de baja", "Aviso", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                MessageBox.Show("Seleccione un cliente para dar de baja", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
             }
 
@@ -794,14 +941,26 @@ namespace CapaPresentacion
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
                     await _clienteLogica.Eliminar(id);
-                    MessageBox.Show("Cliente dado de baja exitosamente", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    await CargarClientesAsync();
+
+                    if (this.IsDisposed) return;
+
+                    MessageBox.Show("Cliente dado de baja exitosamente", "Éxito",
+                        MessageBoxButtons.OK, MessageBoxIcon.Information);
+
+                    var token = _ctsCarga?.Token ?? CancellationToken.None;
+                    await CargarClientesAsync(token);
+                    if (token.IsCancellationRequested) return;
+
                     LimpiarCampos();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -820,7 +979,8 @@ namespace CapaPresentacion
         private async void BActualizarLista_Click(object sender, EventArgs e)
         {
             TBBuscar.Clear();
-            await CargarClientesAsync();
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
+            await CargarClientesAsync(token);
         }
 
         // ============================================================
@@ -835,7 +995,8 @@ namespace CapaPresentacion
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
 
             // Recargar la lista con el filtro aplicado
-            await CargarClientesAsync();
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
+            await CargarClientesAsync(token);
         }
 
         // ============================================================
@@ -855,20 +1016,29 @@ namespace CapaPresentacion
             TBPiso.Clear();
             TBDpto.Clear();
 
-            CBProvincia.SelectedIndex = -1;
-            CBLocalidad.DataSource = null;
-            CBLocalidad.Items.Clear();
+            // ✅ NUEVO: Suspender cascada mientras limpiamos
+            _suspendiendoCascada = true;
+            try
+            {
+                CBProvincia.SelectedIndex = -1;
+                CBLocalidad.DataSource = null;
+                CBLocalidad.Items.Clear();
+            }
+            finally
+            {
+                _suspendiendoCascada = false;
+            }
 
             ChBClienteHabilitado.Checked = true;
             _esEdicion = false;
             _clienteId = 0;
 
-            // ✅ NUEVO: Actualizar botones (modo nuevo)
+            // ✅ Actualizar botones (modo nuevo)
             ActualizarBotonesSegunModo();
         }
 
         // ============================================================
-        // 14. ✅ NUEVO: Habilita/Deshabilita botones según el modo
+        // 14. Habilita/Deshabilita botones según el modo
         // ============================================================
         private void ActualizarBotonesSegunModo()
         {
