@@ -54,6 +54,12 @@ namespace CapaLogica
         public async Task<CajaDto> ObtenerActiva() => await _apiClient.GetCajaActivaAsync();
 
         /// <summary>
+        /// ✅ NUEVO: Obtiene las cajas abiertas actualmente.
+        /// Se usa en: GET /api/caja/abiertas
+        /// </summary>
+        public async Task<List<CajaDto>> ObtenerAbiertas() => await _apiClient.GetCajasAbiertasAsync();
+
+        /// <summary>
         /// Abre una nueva caja con el personal y fondo inicial especificados.
         /// Se usa en: POST /api/caja/apertura
         /// </summary>

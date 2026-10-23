@@ -6,6 +6,7 @@ using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,9 +14,6 @@ namespace CapaPresentacion
 {
     public partial class FormProveedores : Form
     {
-        // ============================================================
-        // DECLARACIÓN DE VARIABLES
-        // ============================================================
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
 
@@ -25,47 +23,65 @@ namespace CapaPresentacion
         private List<ProvinciaDto> _provincias;
         private List<LocalidadDto> _localidades;
 
-        // ✅ NUEVO: Controla qué proveedores se muestran (true = activos, false = inactivos)
         private bool _mostrarSoloActivos = true;
-
-        // ✅ NUEVO: Bandera para el formateo del CUIT en vivo
         private bool _actualizandoCuit = false;
 
-        // ============================================================
-        // CONSTRUCTOR
-        // ============================================================
+        // ✅ NUEVO: CancellationTokenSource
+        private CancellationTokenSource _ctsCarga;
+
         public FormProveedores()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
 
-        // ============================================================
-        // CARGA DEL FORMULARIO
-        // ✅ MODIFICADO: Ahora carga de la API
-        // ============================================================
         private async void FormProveedores_Load(object sender, EventArgs e)
         {
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = GenerarIconoProveedores(Color.FromArgb(212, 131, 53));
 
             AsignarEstiloEIconos();
-            await CargarProvinciasAsync();
-            await CargarProveedoresAsync();
+
+            try
+            {
+                // ✅ Cargar provincias y proveedores en paralelo
+                await Task.WhenAll(
+                    CargarProvinciasAsync(token),
+                    CargarProveedoresAsync(token)
+                );
+                if (token.IsCancellationRequested) return;
+            }
+            catch (OperationCanceledException) { }
+
+            if (this.IsDisposed || this.Disposing) return;
+
             LimpiarFormulario();
             ActualizarBotonesSegunModo();
-
             BLimpiarFiltros.Text = "Inactivos";
         }
 
-        // ============================================================
-        // ✅ NUEVO: Carga las provincias desde la API
-        // ============================================================
-        private async Task CargarProvinciasAsync()
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+            base.OnFormClosing(e);
+        }
+
+        private async Task CargarProvinciasAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
                 _provincias = await _tablasLogica.GetProvincias();
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
 
                 CBProvincia.DataSource = _provincias;
                 CBProvincia.DisplayMember = "Descripcion";
@@ -76,26 +92,34 @@ namespace CapaPresentacion
                 CBFiltroLocalidad.Items.Add("(Todas)");
                 CBFiltroLocalidad.SelectedIndex = 0;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar provincias: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar provincias: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // ✅ NUEVO: Carga los proveedores desde la API
-        // ============================================================
-        private async Task CargarProveedoresAsync()
+        private async Task CargarProveedoresAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
                 var proveedores = await _proveedorLogica.ObtenerTodos();
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
 
+                DGVProveedores.SuspendLayout();
                 DGVProveedores.Rows.Clear();
-                if (proveedores == null || proveedores.Count == 0) return;
 
-                // ✅ Filtrar según _mostrarSoloActivos
+                if (proveedores == null || proveedores.Count == 0)
+                {
+                    DGVProveedores.ResumeLayout();
+                    return;
+                }
+
                 var filtrados = proveedores
                     .Where(p => _mostrarSoloActivos ? p.Estado : !p.Estado)
                     .ToList();
@@ -106,30 +130,32 @@ namespace CapaPresentacion
                     string estadoMostrar = p.Estado ? "Habilitado" : "Deshabilitado";
 
                     DGVProveedores.Rows.Add(
-                        p.Id,                  // Columna 0: ID (oculta)
-                        p.CuilCuit ?? "",      // Columna 1: ColCuit
-                        nombreCompleto,        // Columna 2: ColRazonSocial
-                        p.Nombre ?? "",        // Columna 3: ColContacto
-                        p.Telefono ?? "",      // Columna 4: ColTelefono
-                        p.Email ?? "",         // Columna 5: ColEmail
-                        p.Localidad ?? "",     // Columna 6: ColLocalidad
-                        p.Direccion ?? "",     // Columna 7: ColDireccion
-                        estadoMostrar          // Columna 8: ColEstado
+                        p.Id,
+                        p.CuilCuit ?? "",
+                        nombreCompleto,
+                        p.Nombre ?? "",
+                        p.Telefono ?? "",
+                        p.Email ?? "",
+                        p.Localidad ?? "",
+                        p.Direccion ?? "",
+                        estadoMostrar
                     );
                 }
 
+                DGVProveedores.ResumeLayout();
                 AplicarFiltroGrilla();
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // Ícono vectorial
-        // ============================================================
         private Image GenerarIconoProveedores(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -182,12 +208,8 @@ namespace CapaPresentacion
             catch { }
         }
 
-        // ============================================================
-        // 2. RESTRICCIONES DE TECLADO Y FILTRADO
-        // ============================================================
         private void InicializarComportamiento()
         {
-            // CUIT: solo dígitos y guiones, con formateo en vivo
             TBCuit.MaxLength = 15;
             TBCuit.KeyPress += (s, e) =>
             {
@@ -196,7 +218,6 @@ namespace CapaPresentacion
             };
             ConfigurarFormateoCuitEnVivo();
 
-            // Teléfono: solo dígitos, '+' opcional al inicio
             TBTelefono.MaxLength = 18;
             TBTelefono.KeyPress += (s, e) =>
             {
@@ -207,21 +228,14 @@ namespace CapaPresentacion
                     e.Handled = true;
             };
 
-            // Nombre / Razón social: solo letras, números, espacios y puntos
             TBRazonSocial.KeyPress += SoloLetrasYNumerosYEspacios_KeyPress;
             TBContacto.KeyPress += SoloLetrasYEspacios_KeyPress;
 
-            // Validación de email en vivo
             ConfigurarValidacionEmailEnVivo();
-
-            // Cascada provincia → localidad desde la API
             ConfigurarCascadaProvincias();
-
-            // Filtros dinámicos
             ConfigurarFiltrosDinamicos();
         }
 
-        // ✅ Formateo CUIT en vivo (XX-XXXXXXXX-X)
         private void ConfigurarFormateoCuitEnVivo()
         {
             TBCuit.TextChanged += (s, e) =>
@@ -248,7 +262,6 @@ namespace CapaPresentacion
             };
         }
 
-        // ✅ Validación de email en vivo
         private void ConfigurarValidacionEmailEnVivo()
         {
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
@@ -310,7 +323,6 @@ namespace CapaPresentacion
                 e.Handled = true;
         }
 
-        // ✅ Cascada provincia → localidad desde la API
         private void ConfigurarCascadaProvincias()
         {
             CBProvincia.SelectedIndexChanged += async (s, e) =>
@@ -326,7 +338,7 @@ namespace CapaPresentacion
 
                     if (CBProvincia.SelectedItem is ProvinciaDto provincia)
                     {
-                        await CargarLocalidadesPorProvinciaAsync(provincia.Id);
+                        await CargarLocalidadesPorProvinciaAsync(provincia.Id, _ctsCarga?.Token ?? CancellationToken.None);
                     }
                 }
                 catch (Exception ex)
@@ -337,11 +349,14 @@ namespace CapaPresentacion
             };
         }
 
-        private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia)
+        private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia, CancellationToken token = default(CancellationToken))
         {
             try
             {
                 _localidades = await _tablasLogica.GetLocalidadesByProvincia(idProvincia);
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
+
                 if (_localidades == null || _localidades.Count == 0)
                 {
                     CBLocalidad.DataSource = null;
@@ -354,17 +369,20 @@ namespace CapaPresentacion
                 CBLocalidad.ValueMember = "Id";
                 CBLocalidad.SelectedIndex = -1;
 
-                // ✅ También actualizamos el combo de filtro
                 CBFiltroLocalidad.Items.Clear();
                 CBFiltroLocalidad.Items.Add("(Todas)");
                 foreach (var loc in _localidades)
                     CBFiltroLocalidad.Items.Add(loc.Descripcion);
                 CBFiltroLocalidad.SelectedIndex = 0;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar localidades: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar localidades: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -382,6 +400,7 @@ namespace CapaPresentacion
 
             bool filtrarPorLocalidad = !string.IsNullOrEmpty(localidadFiltro) && localidadFiltro != "(Todas)";
 
+            DGVProveedores.SuspendLayout();
             foreach (DataGridViewRow row in DGVProveedores.Rows)
             {
                 if (row.IsNewRow) continue;
@@ -401,26 +420,20 @@ namespace CapaPresentacion
 
                 row.Visible = coincideTexto && coincideLocalidad;
             }
+            DGVProveedores.ResumeLayout();
         }
 
-        // ============================================================
-        // BOTÓN QUE ALTERNA ACTIVOS/INACTIVOS
-        // ============================================================
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
             _mostrarSoloActivos = !_mostrarSoloActivos;
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
-            await CargarProveedoresAsync();
+            await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
 
-        // ============================================================
-        // VALIDACIÓN
-        // ============================================================
         private bool ValidarFormulario(out string mensajeError)
         {
             mensajeError = string.Empty;
 
-            // CUIT obligatorio, 11 dígitos
             string cuitDigitos = new string(TBCuit.Text.Where(char.IsDigit).ToArray());
             if (string.IsNullOrWhiteSpace(TBCuit.Text) || cuitDigitos.Length != 11)
             {
@@ -429,7 +442,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // Razón social obligatoria
             if (string.IsNullOrWhiteSpace(TBRazonSocial.Text))
             {
                 mensajeError = "Debe ingresar el Nombre del proveedor.";
@@ -437,7 +449,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // Email obligatorio y válido
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
             if (string.IsNullOrWhiteSpace(TBEmail.Text.Trim()) ||
                 !Regex.IsMatch(TBEmail.Text.Trim(), patronEmail))
@@ -447,7 +458,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // Provincia obligatoria si se carga dirección
             if (!string.IsNullOrWhiteSpace(TBCalle.Text) && CBProvincia.SelectedIndex == -1)
             {
                 mensajeError = "Debe seleccionar una Provincia.";
@@ -455,7 +465,6 @@ namespace CapaPresentacion
                 return false;
             }
 
-            // Localidad obligatoria si se carga dirección
             if (!string.IsNullOrWhiteSpace(TBCalle.Text) && CBLocalidad.SelectedIndex == -1)
             {
                 mensajeError = "Debe seleccionar una Localidad.";
@@ -466,10 +475,6 @@ namespace CapaPresentacion
             return true;
         }
 
-        // ============================================================
-        // BOTONES DE ACCIÓN
-        // ✅ MODIFICADO: Deshabilitar botones durante la operación
-        // ============================================================
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             if (_esEdicion)
@@ -485,7 +490,6 @@ namespace CapaPresentacion
                 return;
             }
 
-            // ✅ NUEVO: Deshabilitar botones durante el guardado
             BGuardar.Enabled = false;
             BActualizar.Enabled = false;
 
@@ -537,10 +541,8 @@ namespace CapaPresentacion
 
                 MessageBox.Show("Proveedor creado exitosamente", "Éxito",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-                await CargarProveedoresAsync();
+                await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
                 LimpiarFormulario();
-
-                // ✅ NUEVO: Actualización explícita del estado de botones
                 ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
@@ -548,7 +550,6 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al guardar: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                // ✅ Rehabilitar botones en caso de error
                 BGuardar.Enabled = true;
                 BActualizar.Enabled = false;
             }
@@ -569,7 +570,6 @@ namespace CapaPresentacion
                 return;
             }
 
-            // ✅ NUEVO: Deshabilitar botones durante la operación
             BGuardar.Enabled = false;
             BActualizar.Enabled = false;
 
@@ -621,10 +621,8 @@ namespace CapaPresentacion
 
                 MessageBox.Show("Proveedor actualizado exitosamente", "Éxito",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
-                await CargarProveedoresAsync();
+                await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
                 LimpiarFormulario();
-
-                // ✅ NUEVO: Actualización explícita del estado de botones
                 ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
@@ -632,7 +630,6 @@ namespace CapaPresentacion
                 MessageBox.Show($"Error al actualizar: {ex.Message}", "Error",
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                // ✅ Rehabilitar botones en caso de error (mantener modo edición)
                 BGuardar.Enabled = false;
                 BActualizar.Enabled = true;
             }
@@ -650,7 +647,6 @@ namespace CapaPresentacion
             if (MessageBox.Show("¿Está seguro de dar de baja a este proveedor?",
                 "Dar de Baja", MessageBoxButtons.YesNo, MessageBoxIcon.Warning) == DialogResult.Yes)
             {
-                // ✅ NUEVO: Deshabilitar botones durante la operación
                 BGuardar.Enabled = false;
                 BActualizar.Enabled = false;
                 BDesactivar.Enabled = false;
@@ -660,11 +656,9 @@ namespace CapaPresentacion
                     await _proveedorLogica.Eliminar(_idProveedorSeleccionado);
                     MessageBox.Show("Proveedor dado de baja exitosamente", "Éxito",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    await CargarProveedoresAsync();
+                    await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
                     LimpiarFormulario();
                     BDesactivar.Enabled = true;
-
-                    // ✅ NUEVO: Actualización explícita del estado de botones
                     ActualizarBotonesSegunModo();
                 }
                 catch (Exception ex)
@@ -672,7 +666,6 @@ namespace CapaPresentacion
                     MessageBox.Show($"Error al dar de baja: {ex.Message}", "Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
 
-                    // ✅ Rehabilitar botones en caso de error
                     BDesactivar.Enabled = true;
                     ActualizarBotonesSegunModo();
                 }
@@ -688,12 +681,11 @@ namespace CapaPresentacion
             TBCuit.Focus();
         }
 
-        // ============================================================
-        // SELECCIÓN EN LA GRILLA
-        // ============================================================
         private async void DGVProveedores_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
 
             try
             {
@@ -704,6 +696,8 @@ namespace CapaPresentacion
                 _esEdicion = true;
 
                 var proveedor = await _proveedorLogica.ObtenerPorId(id);
+                if (token.IsCancellationRequested || this.IsDisposed) return;
+
                 if (proveedor != null)
                 {
                     TBRazonSocial.Text = proveedor.Nombre ?? "";
@@ -712,7 +706,6 @@ namespace CapaPresentacion
                     TBEmail.Text = proveedor.Email ?? "";
                     TBTelefono.Text = proveedor.Telefono ?? "";
 
-                    // ✅ Cargar dirección
                     string dir = proveedor.Direccion ?? "";
                     if (!string.IsNullOrEmpty(dir))
                     {
@@ -734,7 +727,6 @@ namespace CapaPresentacion
                         TBNro.Clear();
                     }
 
-                    // ✅ Cargar provincia y localidad
                     if (proveedor.LocalidadId > 0)
                     {
                         var localidad = _localidades?.FirstOrDefault(l => l.Id == proveedor.LocalidadId);
@@ -771,16 +763,17 @@ namespace CapaPresentacion
 
                 ActualizarBotonesSegunModo();
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar proveedor: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar proveedor: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // LIMPIAR FORMULARIO
-        // ============================================================
         private void LimpiarFormulario()
         {
             _idProveedorSeleccionado = 0;
@@ -800,7 +793,6 @@ namespace CapaPresentacion
 
             ChBProveedorHabilitado.Checked = true;
 
-            // ✅ Restaurar color del label de email
             TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             LEmail.Text = "Correo Electrónico:";
             LEmail.ForeColor = Color.FromArgb(70, 70, 70);
@@ -809,15 +801,11 @@ namespace CapaPresentacion
             if (DGVProveedores.CurrentCell != null)
                 DGVProveedores.CurrentCell = null;
 
-            // ✅ Asegurar botón Dar de Baja habilitado por defecto
             BDesactivar.Enabled = true;
 
             ActualizarBotonesSegunModo();
         }
 
-        // ============================================================
-        // HABILITAR/DESHABILITAR BOTONES SEGÚN MODO
-        // ============================================================
         private void ActualizarBotonesSegunModo()
         {
             if (_esEdicion)

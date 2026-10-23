@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -12,9 +13,6 @@ namespace CapaPresentacion
 {
     public partial class FormProductos : Form
     {
-        // ============================================================
-        // DECLARACIÓN DE VARIABLES
-        // ============================================================
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
         private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
@@ -26,12 +24,11 @@ namespace CapaPresentacion
         private List<ProveedorDto> _proveedores;
         private List<ProductoDto> _productosOriginales;
 
-        // ✅ NUEVO: Controla qué productos se muestran (true = activos, false = inactivos)
         private bool _mostrarSoloActivos = true;
 
-        // ============================================================
-        // CONSTRUCTOR
-        // ============================================================
+        // ✅ NUEVO: CancellationTokenSource
+        private CancellationTokenSource _ctsCarga;
+
         public FormProductos()
         {
             InitializeComponent();
@@ -43,28 +40,32 @@ namespace CapaPresentacion
             AsignarEstiloEIconos();
             ConfigurarFiltrosDinamicos();
         }
-        // ============================================================
-        // ✅ NUEVO: Al cambiar la categoría, se puede filtrar el combo de proveedores
-        //    (por ahora solo limpia el proveedor seleccionado)
-        // ============================================================
+
         private void CBCategoria_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Si no hay categoría seleccionada, no hacer nada
             if (CBCategoria.SelectedIndex == -1) return;
-
-            // Aquí podrías filtrar proveedores por categoría si quisieras
-            // Por ahora, dejamos el combo de proveedores como está
         }
-        // ============================================================
-        // CARGA DEL FORMULARIO
-        // ============================================================
+
         private async void FormProductos_Load(object sender, EventArgs e)
         {
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             AplicarRestriccionesPorRol();
 
-            await CargarCategoriasAsync();
-            await CargarProveedoresAsync();
-            await CargarProductosAsync();
+            try
+            {
+                // ✅ Cargar todo en paralelo
+                await Task.WhenAll(
+                    CargarCategoriasAsync(token),
+                    CargarProveedoresAsync(token),
+                    CargarProductosAsync(token)
+                );
+                if (token.IsCancellationRequested) return;
+            }
+            catch (OperationCanceledException) { }
+
+            if (this.IsDisposed || this.Disposing) return;
 
             LimpiarCampos();
             ActualizarBotonesSegunModo();
@@ -72,9 +73,18 @@ namespace CapaPresentacion
             BLimpiarFiltros.Text = "Inactivos";
         }
 
-        // ============================================================
-        // PERMISOS POR ROL
-        // ============================================================
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+            base.OnFormClosing(e);
+        }
+
         private void AplicarRestriccionesPorRol()
         {
             string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
@@ -102,14 +112,14 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // CARGA DE CATEGORÍAS
-        // ============================================================
-        private async Task CargarCategoriasAsync()
+        private async Task CargarCategoriasAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
                 _categorias = await _categoriaLogica.ObtenerTodos();
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
+
                 if (_categorias == null || _categorias.Count == 0) return;
 
                 CBCategoria.DataSource = _categorias;
@@ -117,7 +127,6 @@ namespace CapaPresentacion
                 CBCategoria.ValueMember = "Id";
                 CBCategoria.SelectedIndex = -1;
 
-                // Filtro de categorías con opción "Todas"
                 var categoriasFiltro = new List<CategoriaDto>();
                 categoriasFiltro.Add(new CategoriaDto { Id = 0, Descripcion = "(Todas)" });
                 categoriasFiltro.AddRange(_categorias);
@@ -127,26 +136,27 @@ namespace CapaPresentacion
                 CBFiltroCategoria.ValueMember = "Id";
                 CBFiltroCategoria.SelectedIndex = 0;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar categorías: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar categorías: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // CARGA DE PROVEEDORES
-        // ============================================================
-        private async Task CargarProveedoresAsync()
+        private async Task CargarProveedoresAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
                 var proveedores = await _proveedorLogica.ObtenerTodos();
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
 
-                // ✅ Solo proveedores activos
                 _proveedores = proveedores?.Where(p => p.Estado).ToList() ?? new List<ProveedorDto>();
 
-                // Agregar opción "(Sin proveedor)"
                 var proveedoresCombo = new List<ProveedorDto>();
                 proveedoresCombo.Add(new ProveedorDto { Id = 0, Nombre = "(Sin proveedor)" });
                 proveedoresCombo.AddRange(_proveedores);
@@ -156,21 +166,24 @@ namespace CapaPresentacion
                 CBProveedor.ValueMember = "Id";
                 CBProveedor.SelectedIndex = 0;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // CARGA DE PRODUCTOS
-        // ============================================================
-        private async Task CargarProductosAsync()
+        private async Task CargarProductosAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
                 _productosOriginales = await _productoLogica.ObtenerTodos();
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
 
                 if (_productosOriginales == null || _productosOriginales.Count == 0)
                 {
@@ -180,31 +193,22 @@ namespace CapaPresentacion
 
                 MostrarProductos(_productosOriginales);
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                // ✅ DEBUG: mostrar error completo
-                string msg = $"Error al cargar productos:\n\n" +
-                             $"Mensaje: {ex.Message}\n\n" +
-                             $"Tipo: {ex.GetType().Name}\n\n";
-
-                if (ex.InnerException != null)
-                    msg += $"Inner: {ex.InnerException.Message}\n\n";
-
-                msg += $"StackTrace: {ex.StackTrace}";
-
-                MessageBox.Show(msg, "Error Completo",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // MOSTRAR PRODUCTOS EN LA GRILLA
-        // ============================================================
         private void MostrarProductos(List<ProductoDto> productos)
         {
+            DGVProductos.SuspendLayout();
             DGVProductos.Rows.Clear();
 
-            // ✅ Filtrar según _mostrarSoloActivos
             var filtrados = productos
                 .Where(p => _mostrarSoloActivos ? p.Estado : !p.Estado)
                 .ToList();
@@ -224,17 +228,14 @@ namespace CapaPresentacion
                 );
             }
 
+            DGVProductos.ResumeLayout();
             AplicarFiltroGrilla();
         }
 
-        // ============================================================
-        // SELECCIÓN DE PRODUCTO EN LA GRILLA
-        // ============================================================
         private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
 
-            // Si es Vendedor o Cajero, solo consulta
             string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rol == "VENDEDOR" || rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
                 return;
@@ -256,7 +257,6 @@ namespace CapaPresentacion
                 _esEdicion = true;
                 CargarProductoEnFormulario(id);
 
-                // ✅ NUEVO: Cambiar botones a modo edición
                 ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
@@ -266,14 +266,14 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // CARGAR PRODUCTO EN EL FORMULARIO
-        // ============================================================
         private async void CargarProductoEnFormulario(int id)
         {
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
+
             try
             {
                 var producto = await _productoLogica.ObtenerPorId(id);
+                if (token.IsCancellationRequested || this.IsDisposed) return;
 
                 if (producto == null)
                 {
@@ -282,13 +282,6 @@ namespace CapaPresentacion
                     return;
                 }
 
-                // ✅ DEBUG temporal
-                System.Diagnostics.Debug.WriteLine($"=== CargarProductoEnFormulario({id}) ===");
-                System.Diagnostics.Debug.WriteLine($"Nombre: {producto.Nombre}");
-                System.Diagnostics.Debug.WriteLine($"CategoriaId: {producto.CategoriaId}");
-                System.Diagnostics.Debug.WriteLine($"ProveedorId: {producto.ProveedorId}");
-                System.Diagnostics.Debug.WriteLine($"Items en CBProveedor: {CBProveedor.Items.Count}");
-
                 TCodigoInterno.Text = producto.CodigoInterno ?? "";
                 TCodBarras.Text = producto.CodBarras ?? "";
                 TNombreProducto.Text = producto.Nombre ?? "";
@@ -296,7 +289,6 @@ namespace CapaPresentacion
                 TPrecioMinorista.Text = producto.PrecioMinorista.ToString("0.00");
                 TPrecioMayorista.Text = producto.PrecioMayorista?.ToString("0.00") ?? "";
 
-                // ✅ Cargar categoría con fallback
                 if (producto.CategoriaId > 0 && CBCategoria.DataSource != null)
                 {
                     CBCategoria.SelectedValue = producto.CategoriaId;
@@ -313,17 +305,12 @@ namespace CapaPresentacion
                             }
                         }
                     }
-
-                    System.Diagnostics.Debug.WriteLine($"Categoria seleccionada index: {CBCategoria.SelectedIndex}");
                 }
 
-                // ✅ Cargar proveedor con fallback más robusto
                 if (producto.ProveedorId.HasValue && producto.ProveedorId.Value > 0)
                 {
-                    // Intento 1: SelectedValue
                     CBProveedor.SelectedValue = producto.ProveedorId.Value;
 
-                    // Intento 2: buscar por índice
                     if (CBProveedor.SelectedIndex == -1)
                     {
                         for (int i = 0; i < CBProveedor.Items.Count; i++)
@@ -336,28 +323,27 @@ namespace CapaPresentacion
                             }
                         }
                     }
-
-                    System.Diagnostics.Debug.WriteLine($"Proveedor seleccionado index: {CBProveedor.SelectedIndex}");
                 }
                 else
                 {
-                    CBProveedor.SelectedIndex = 0; // (Sin proveedor)
+                    CBProveedor.SelectedIndex = 0;
                 }
 
                 NUDStockActual.Value = producto.StockActual;
                 NUDStockMinimo.Value = producto.StockMinimo;
                 ChBProductoHabilitado.Checked = producto.Estado;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar producto: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar producto: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // VALIDACIONES
-        // ============================================================
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
@@ -528,9 +514,6 @@ namespace CapaPresentacion
             return true;
         }
 
-        // ============================================================
-        // BOTÓN GUARDAR (SOLO CREAR)
-        // ============================================================
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             if (_esEdicion)
@@ -543,7 +526,6 @@ namespace CapaPresentacion
             if (!ValidarCamposProducto())
                 return;
 
-            // ✅ Deshabilitar botones durante la operación
             BGuardar.Enabled = false;
             BActualizar.Enabled = false;
 
@@ -551,7 +533,6 @@ namespace CapaPresentacion
             {
                 int? idProveedor = ObtenerIdProveedorSeleccionado();
 
-                // ✅ Parsear precios
                 IntentarConvertirDecimal(TPrecioMinorista.Text, out decimal precioMinorista);
                 decimal? precioMayorista = null;
                 if (!string.IsNullOrWhiteSpace(TPrecioMayorista.Text) &&
@@ -582,7 +563,7 @@ namespace CapaPresentacion
                 MessageBox.Show("Producto creado exitosamente", "Éxito",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                await CargarProductosAsync();
+                await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
                 LimpiarCampos();
                 ActualizarBotonesSegunModo();
             }
@@ -596,9 +577,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // BOTÓN ACTUALIZAR
-        // ============================================================
         private async void BActualizar_Click(object sender, EventArgs e)
         {
             if (!_esEdicion || _productoId <= 0)
@@ -611,7 +589,6 @@ namespace CapaPresentacion
             if (!ValidarCamposProducto())
                 return;
 
-            // ✅ Deshabilitar botones durante la operación
             BGuardar.Enabled = false;
             BActualizar.Enabled = false;
 
@@ -649,7 +626,7 @@ namespace CapaPresentacion
                 MessageBox.Show("Producto actualizado exitosamente", "Éxito",
                     MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                await CargarProductosAsync();
+                await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
                 LimpiarCampos();
                 ActualizarBotonesSegunModo();
             }
@@ -663,9 +640,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // BOTÓN DESACTIVAR
-        // ============================================================
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (DGVProductos.SelectedRows.Count == 0)
@@ -695,7 +669,7 @@ namespace CapaPresentacion
                     MessageBox.Show("Producto dado de baja exitosamente", "Éxito",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
-                    await CargarProductosAsync();
+                    await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
                     LimpiarCampos();
                     BDesactivar.Enabled = true;
                     ActualizarBotonesSegunModo();
@@ -711,9 +685,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // BOTÓN NUEVO
-        // ============================================================
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarCampos();
@@ -723,16 +694,13 @@ namespace CapaPresentacion
             TCodigoInterno.Focus();
         }
 
-        // ============================================================
-        // BOTÓN NUEVA CATEGORÍA
-        // ============================================================
         private async void BNuevaCategoria_Click(object sender, EventArgs e)
         {
             using (FormModalCategoria modal = new FormModalCategoria())
             {
                 if (modal.ShowDialog(this) == DialogResult.OK)
                 {
-                    await CargarCategoriasAsync();
+                    await CargarCategoriasAsync(_ctsCarga?.Token ?? CancellationToken.None);
 
                     if (modal.IdCategoriaCreada > 0 && CBCategoria.DataSource != null)
                     {
@@ -742,9 +710,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // FILTROS DINÁMICOS
-        // ============================================================
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
@@ -759,6 +724,7 @@ namespace CapaPresentacion
 
             bool filtrarPorCategoria = !string.IsNullOrEmpty(categoriaFiltro) && categoriaFiltro != "(Todas)";
 
+            DGVProductos.SuspendLayout();
             foreach (DataGridViewRow row in DGVProductos.Rows)
             {
                 if (row.IsNewRow) continue;
@@ -778,21 +744,16 @@ namespace CapaPresentacion
 
                 row.Visible = coincideTexto && coincideCategoria;
             }
+            DGVProductos.ResumeLayout();
         }
 
-        // ============================================================
-        // BOTÓN QUE ALTERNA ACTIVOS/INACTIVOS
-        // ============================================================
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
             _mostrarSoloActivos = !_mostrarSoloActivos;
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
-            await CargarProductosAsync();
+            await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
 
-        // ============================================================
-        // LIMPIAR CAMPOS
-        // ============================================================
         private void LimpiarCampos()
         {
             TCodigoInterno.Clear();
@@ -806,7 +767,7 @@ namespace CapaPresentacion
                 CBCategoria.SelectedIndex = -1;
 
             if (CBProveedor.DataSource != null)
-                CBProveedor.SelectedIndex = 0; // (Sin proveedor)
+                CBProveedor.SelectedIndex = 0;
 
             NUDStockActual.Value = 0;
             NUDStockMinimo.Value = 1;
@@ -822,9 +783,6 @@ namespace CapaPresentacion
             ActualizarBotonesSegunModo();
         }
 
-        // ============================================================
-        // HABILITAR/DESHABILITAR BOTONES SEGÚN MODO
-        // ============================================================
         private void ActualizarBotonesSegunModo()
         {
             if (_esEdicion)
@@ -839,9 +797,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // HELPERS
-        // ============================================================
         private int? ObtenerIdProveedorSeleccionado()
         {
             if (CBProveedor.SelectedItem is ProveedorDto prov && prov.Id > 0)
@@ -850,9 +805,6 @@ namespace CapaPresentacion
             return null;
         }
 
-        // ============================================================
-        // ÍCONOS
-        // ============================================================
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;

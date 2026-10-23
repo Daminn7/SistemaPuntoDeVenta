@@ -755,6 +755,15 @@ namespace CapaDatos.Services
             return JsonConvert.DeserializeObject<CajaDto>(content);
         }
 
+        public async Task<List<CajaDto>> GetCajasAbiertasAsync()
+        {
+            var response = await _httpClient.GetAsync("/api/caja/abiertas");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<CajaDto>>(content);
+        }
+
+
         public async Task<CajaDto> AbrirCajaAsync(CrearCajaDto caja)
         {
             var content = new StringContent(JsonConvert.SerializeObject(caja), Encoding.UTF8, "application/json");

@@ -11,7 +11,8 @@ using System.Windows.Forms;
 using CapaLogica;
 using CapaDatos.DTOs;
 using Newtonsoft.Json.Linq;
-using CapaDatos.Services;      // ✅ Para ApiClient
+using CapaDatos.Services;
+using CapaDatos.Helpers;
 
 namespace CapaPresentacion
 {
@@ -26,6 +27,7 @@ namespace CapaPresentacion
 
         // ✅ Lógica de la API
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
+        private readonly VentaLogica _ventaLogica = new VentaLogica();
         private readonly ApiClient _apiClient;
 
         public FormDashboard()
@@ -161,36 +163,50 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // ✅ NUEVO: Carga las últimas ventas desde /api/ordenesventa
+        // ✅ NUEVO: Carga las últimas ventas (sin fallar por zona horaria)
         // ============================================================
         private async Task CargarUltimasVentasAsync()
         {
             try
             {
-                var ordenes = await _ordenVentaLogica.ObtenerTodas();
+                var ventas = await _ventaLogica.ObtenerTodas();
 
                 dgvUltimasVentas.Rows.Clear();
 
-                if (ordenes == null || ordenes.Count == 0)
+                if (ventas == null || ventas.Count == 0)
                 {
                     dgvUltimasVentas.ClearSelection();
                     return;
                 }
 
-                // ✅ Tomar las últimas 5
-                var ultimas = ordenes
-                    .OrderByDescending(o => o.FechaCreacion)
+                // ✅ 1. Definimos qué es "hoy" en hora local
+                DateTime hoyLocal = DateTime.Now.Date;
+
+                // ✅ 2. Filtramos SOLO las ventas de hoy, las ordenamos y tomamos las últimas 5
+                var ventasDeHoy = ventas
+                    .Where(v => FechaHelper.ToArgentina(v.FechaCobro).Date == hoyLocal)
+                    .OrderByDescending(v => v.FechaCobro)
                     .Take(5)
                     .ToList();
 
-                foreach (var orden in ultimas)
+                // ✅ 3. Si no hay ventas hoy, mostramos una fila indicándolo (opcional)
+                if (ventasDeHoy.Count == 0)
                 {
+                    dgvUltimasVentas.Rows.Add("", "Sin ventas hoy", "", "", "");
+                    dgvUltimasVentas.ClearSelection();
+                    return;
+                }
+
+                foreach (var venta in ventasDeHoy)
+                {
+                    string fechaStr = FechaHelper.ToArgentinaString(venta.FechaCobro, "dd/MM/yyyy HH:mm");
+
                     dgvUltimasVentas.Rows.Add(
-                        orden.IdOrden,
-                        orden.FechaCreacion.ToString("HH:mm"),
-                        orden.NumeroPresupuesto ?? $"#{orden.IdOrden}",
-                        orden.ClienteNombre ?? "Consumidor Final",
-                        orden.Total.ToString("C2")
+                        venta.Id,
+                        fechaStr,
+                        venta.NumeroPresupuesto ?? $"#{venta.Id}",
+                        venta.ClienteNombre ?? "Consumidor Final",
+                        venta.TotalCobrado.ToString("C2")
                     );
                 }
 
@@ -203,7 +219,6 @@ namespace CapaPresentacion
                 System.Diagnostics.Debug.WriteLine($"Error al cargar últimas ventas: {ex.Message}");
             }
         }
-
         // ============================================================
         // ✅ NUEVO: Carga el stock bajo desde /api/reportes/stock-bajo
         // ============================================================

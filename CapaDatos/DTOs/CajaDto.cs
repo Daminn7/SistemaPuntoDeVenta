@@ -5,13 +5,15 @@ namespace CapaDatos.DTOs
 {
     // ============================================================
     // 1. CAJA DTO - PARA CONSULTAS (GET)
-    //    ✅ MODIFICADO: Alineado con la respuesta real de la API
-    //    La API devuelve "idCaja" y "estadoCaja" (no "id" ni "estado")
     // ============================================================
     public class CajaDto
     {
         [JsonProperty("idCaja")]
         public int Id { get; set; }
+
+        // ✅ NUEVO: número físico de caja (1, 2, 3)
+        [JsonProperty("numeroCaja")]
+        public int? NumeroCaja { get; set; }
 
         [JsonProperty("personalId")]
         public int PersonalId { get; set; }
@@ -49,6 +51,10 @@ namespace CapaDatos.DTOs
         [JsonProperty("personalId")]
         public int PersonalId { get; set; }
 
+        // ✅ NUEVO: número físico de caja (obligatorio)
+        [JsonProperty("numeroCaja")]
+        public int NumeroCaja { get; set; }
+
         [JsonProperty("fondoInicial")]
         public decimal FondoInicial { get; set; }
     }
@@ -63,6 +69,10 @@ namespace CapaDatos.DTOs
 
         [JsonProperty("cajaId")]
         public int CajaId { get; set; }
+
+        // ✅ NUEVO: número físico de caja
+        [JsonProperty("numeroCaja")]
+        public int? NumeroCaja { get; set; }
 
         [JsonProperty("personalId")]
         public int PersonalId { get; set; }
@@ -84,7 +94,12 @@ namespace CapaDatos.DTOs
 
         [JsonProperty("fechaMovimiento")]
         public DateTime FechaMovimiento { get; set; }
-    }
 
-    // ✅ CrearMovimientoCajaDto se mantiene en MovimientoCajaDto.cs
+        // ✅ Medio de pago (ya viene de la API)
+        [JsonProperty("medioPagoId")]
+        public int? MedioPagoId { get; set; }
+
+        [JsonProperty("medioPagoDescripcion")]
+        public string MedioPagoDescripcion { get; set; }
+    }
 }

@@ -1,12 +1,9 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
-using System.Globalization;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CapaLogica;
@@ -17,55 +14,53 @@ namespace CapaPresentacion
 {
     public partial class FormCobroVenta : Form
     {
-        // ============================================================
-        // LÓGICA DE LA API
-        // ============================================================
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
         private readonly VentaLogica _ventaLogica = new VentaLogica();
         private readonly CajaLogica _cajaLogica = new CajaLogica();
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
 
-        // ============================================================
-        // ESTADO DEL COBRO
-        // ============================================================
         private int _idPedidoSeleccionado = 0;
         private decimal _totalActual = 0m;
         private int _cajaActivaId = 0;
         private bool _cajaAbierta = false;
         private List<MedioPagoDto> _mediosPago = new List<MedioPagoDto>();
-
-        // Fecha de apertura de la caja activa (para filtrar mis cobros del día)
         private DateTime? _fechaAperturaCaja = null;
 
-        // ============================================================
-        // CONSTRUCTOR
-        // ============================================================
+        private CancellationTokenSource _ctsCarga;
+
         public FormCobroVenta()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
 
-        // ============================================================
-        // CARGA DEL FORMULARIO
-        // ============================================================
         private async void FormCobroVenta_Load(object sender, EventArgs e)
         {
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             AsignarIconoTitulo();
             CargarIconosPestanas();
 
-            await CargarCajaActivaAsync();
-            await CargarMediosPagoAsync();
+            try
+            {
+                await Task.WhenAll(
+                    CargarCajaActivaAsync(),
+                    CargarMediosPagoAsync()
+                );
+                if (token.IsCancellationRequested) return;
+
+                await CargarPedidosPendientesAsync();
+                if (token.IsCancellationRequested) return;
+            }
+            catch (OperationCanceledException) { }
+
+            if (this.IsDisposed || this.Disposing) return;
 
             ConfigurarDetalle();
-            await CargarPedidosPendientesAsync();
-
-            // ✅ Suscribir el clic en la grilla de Mis Cobros
             DGVMisCobros.CellClick += DGVMisCobros_CellClick;
-
             LimpiarFormularioCobro();
 
-            // ✅ Advertencia si la caja está cerrada
             if (!_cajaAbierta)
             {
                 MessageBox.Show(
@@ -78,9 +73,18 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ÍCONO VECTORIAL
-        // ============================================================
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+            base.OnFormClosing(e);
+        }
+
         private Image DibujarIconoCobro(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -111,9 +115,6 @@ namespace CapaPresentacion
             catch { }
         }
 
-        // ============================================================
-        // ÍCONOS VECTORIALES DE LAS PESTAÑAS
-        // ============================================================
         private void CargarIconosPestanas()
         {
             try
@@ -130,16 +131,10 @@ namespace CapaPresentacion
 
                 TCArriba.ImageList = il;
 
-                if (TPPedidos != null)
-                    TPPedidos.ImageKey = "pedidos";
-
-                if (TPMisCobros != null)
-                    TPMisCobros.ImageKey = "cobros";
+                if (TPPedidos != null) TPPedidos.ImageKey = "pedidos";
+                if (TPMisCobros != null) TPMisCobros.ImageKey = "cobros";
             }
-            catch
-            {
-                // Fallback silencioso
-            }
+            catch { }
         }
 
         private Image GenerarIconoPedidos(Color color)
@@ -179,9 +174,6 @@ namespace CapaPresentacion
             return bmp;
         }
 
-        // ============================================================
-        // COMPORTAMIENTO INICIAL
-        // ============================================================
         private void InicializarComportamiento()
         {
             TBPagaCon.KeyPress += (s, e) =>
@@ -214,9 +206,6 @@ namespace CapaPresentacion
             };
         }
 
-        // ============================================================
-        // CARGAR CAJA ACTIVA
-        // ============================================================
         private async Task CargarCajaActivaAsync()
         {
             try
@@ -236,23 +225,20 @@ namespace CapaPresentacion
                     _cajaAbierta = false;
                 }
             }
-            catch (Exception ex)
+            catch
             {
-                System.Diagnostics.Debug.WriteLine($"No hay caja activa: {ex.Message}");
                 _cajaActivaId = 0;
                 _fechaAperturaCaja = null;
                 _cajaAbierta = false;
             }
         }
 
-        // ============================================================
-        // CARGAR MEDIOS DE PAGO
-        // ============================================================
         private async Task CargarMediosPagoAsync()
         {
             try
             {
                 _mediosPago = await _tablasLogica.GetMedioPagos();
+                if (this.IsDisposed || this.Disposing) return;
 
                 CBMedioPago.DataSource = null;
                 CBMedioPago.DataSource = _mediosPago;
@@ -271,21 +257,21 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar medios de pago: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar medios de pago: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // ✅ CARGAR PEDIDOS PENDIENTES Y CONFIRMADOS
-        //    - Muestra el estado en una columna aparte
-        //    - SIN colores de fondo
-        // ============================================================
         private async Task CargarPedidosPendientesAsync()
         {
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
             try
             {
                 var todas = await _ordenVentaLogica.ObtenerTodas();
+                if (token.IsCancellationRequested || this.IsDisposed) return;
 
                 var pendientes = todas?
                     .Where(o => o.EstadoVentaId == 1 || o.EstadoVentaId == 2)
@@ -306,13 +292,8 @@ namespace CapaPresentacion
                 foreach (var orden in pendientes)
                 {
                     string numPresupuesto = orden.NumeroPresupuesto ?? $"#{orden.IdOrden}";
-
-                    // ✅ Texto del estado según EstadoVentaId
-                    string estadoTexto = orden.EstadoVentaId == 1
-                        ? "Pendiente"
-                        : orden.EstadoVentaId == 2
-                            ? "Confirmada"
-                            : "—";
+                    string estadoTexto = orden.EstadoVentaId == 1 ? "Pendiente"
+                        : orden.EstadoVentaId == 2 ? "Confirmada" : "—";
 
                     DGVPendientes.Rows.Add(
                         orden.IdOrden,
@@ -330,27 +311,26 @@ namespace CapaPresentacion
                 if (DGVPendientes.CurrentCell != null)
                     DGVPendientes.CurrentCell = null;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar pedidos: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar pedidos: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // CONFIGURAR DETALLE
-        // ============================================================
         private void ConfigurarDetalle()
         {
             DGVDetalle.Rows.Clear();
         }
 
-        // ============================================================
-        // SELECCIÓN DE PEDIDO EN "PEDIDOS POR COBRAR"
-        // ============================================================
         private async void DGVPendientes_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
 
             try
             {
@@ -361,7 +341,9 @@ namespace CapaPresentacion
                 LTotalMonto.Text = _totalActual.ToString("C2");
 
                 var orden = await _ordenVentaLogica.ObtenerPorId(_idPedidoSeleccionado);
+                if (token.IsCancellationRequested || this.IsDisposed) return;
 
+                DGVDetalle.SuspendLayout();
                 DGVDetalle.Rows.Clear();
 
                 if (orden?.Detalles != null)
@@ -377,6 +359,7 @@ namespace CapaPresentacion
                         );
                     }
                 }
+                DGVDetalle.ResumeLayout();
 
                 if (orden != null)
                 {
@@ -387,17 +370,18 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar el detalle: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar el detalle: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // SELECCIÓN DE COBRO EN "MIS COBROS DEL DÍA"
-        // ============================================================
         private async void DGVMisCobros_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
 
             try
             {
@@ -407,19 +391,16 @@ namespace CapaPresentacion
                 int ventaId = ExtraerVentaIdDeComprobante(comprobante);
                 if (ventaId <= 0) return;
 
-                // ✅ Buscar la venta en la lista completa
                 var ventas = await _ventaLogica.ObtenerTodas();
-                if (this.IsDisposed || this.Disposing) return;
+                if (token.IsCancellationRequested || this.IsDisposed) return;
 
                 var venta = ventas?.FirstOrDefault(v => v.Id == ventaId);
                 if (venta == null) return;
 
-                // ✅ Obtener la orden asociada para traer los detalles
                 var orden = await _ordenVentaLogica.ObtenerPorId(venta.OrdenId);
-                if (this.IsDisposed || this.Disposing) return;
+                if (token.IsCancellationRequested || this.IsDisposed) return;
                 if (orden?.Detalles == null) return;
 
-                // ✅ Cargar los detalles en DGVDetalle
                 DGVDetalle.SuspendLayout();
                 DGVDetalle.Rows.Clear();
 
@@ -433,10 +414,8 @@ namespace CapaPresentacion
                         det.Subtotal
                     );
                 }
-
                 DGVDetalle.ResumeLayout();
 
-                // ✅ Actualizar el subtítulo
                 decimal total = venta.TotalCobrado;
                 LSubtituloDetalle.Text = $"DETALLE DEL COBRO ({comprobante}) - Total: {total:C2}";
             }
@@ -450,7 +429,6 @@ namespace CapaPresentacion
             }
         }
 
-        // Helper para extraer el ID del comprobante "VTA-0001-000042" → 42
         private int ExtraerVentaIdDeComprobante(string comprobante)
         {
             if (string.IsNullOrWhiteSpace(comprobante)) return 0;
@@ -462,9 +440,6 @@ namespace CapaPresentacion
             return int.TryParse(ultimo, out int id) ? id : 0;
         }
 
-        // ============================================================
-        // AL CAMBIAR DE PESTAÑA: cargar "Mis Cobros del Día"
-        // ============================================================
         private async void TCArriba_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (TCArriba.SelectedTab == TPMisCobros)
@@ -473,15 +448,13 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // CARGAR MIS COBROS DEL DÍA
-        // ============================================================
         private async Task CargarMisCobrosAsync()
         {
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
             try
             {
                 var ventas = await _ventaLogica.ObtenerTodas();
-                if (this.IsDisposed || this.Disposing) return;
+                if (token.IsCancellationRequested || this.IsDisposed) return;
 
                 DGVMisCobros.SuspendLayout();
                 DGVMisCobros.Rows.Clear();
@@ -502,28 +475,8 @@ namespace CapaPresentacion
 
                 foreach (var venta in misCobros)
                 {
-                    // ✅ Si la API ya devuelve ClienteNombre y FormaPago, se muestran;
-                    //    si no, se muestra "—" como placeholder.
-                    string cliente = "—";
-                    string formaPago = "—";
-
-                    try
-                    {
-                        var propCliente = venta.GetType().GetProperty("ClienteNombre");
-                        if (propCliente != null)
-                        {
-                            var val = propCliente.GetValue(venta) as string;
-                            if (!string.IsNullOrWhiteSpace(val)) cliente = val;
-                        }
-
-                        var propFormaPago = venta.GetType().GetProperty("FormaPago");
-                        if (propFormaPago != null)
-                        {
-                            var val = propFormaPago.GetValue(venta) as string;
-                            if (!string.IsNullOrWhiteSpace(val)) formaPago = val;
-                        }
-                    }
-                    catch { /* si falla, quedan los placeholders */ }
+                    string cliente = string.IsNullOrWhiteSpace(venta.ClienteNombre) ? "—" : venta.ClienteNombre;
+                    string formaPago = string.IsNullOrWhiteSpace(venta.FormaPago) ? "—" : venta.FormaPago;
 
                     DGVMisCobros.Rows.Add(
                         venta.FechaCobro.ToString("HH:mm:ss"),
@@ -539,9 +492,10 @@ namespace CapaPresentacion
                 if (DGVMisCobros.CurrentCell != null)
                     DGVMisCobros.CurrentCell = null;
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                if (!this.IsDisposed)
+                if (!token.IsCancellationRequested && !this.IsDisposed)
                 {
                     MessageBox.Show($"Error al cargar tus cobros: {ex.Message}", "Error",
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -549,9 +503,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // CONFIRMAR COBRO
-        // ============================================================
         private async void BConfirmarCobro_Click(object sender, EventArgs e)
         {
             if (_idPedidoSeleccionado == 0)
@@ -697,7 +648,6 @@ namespace CapaPresentacion
                 await CargarPedidosPendientesAsync();
                 LimpiarFormularioCobro();
 
-                // ✅ Si estamos en la pestaña "Mis Cobros", refrescar
                 if (TCArriba.SelectedTab == TPMisCobros)
                 {
                     await CargarMisCobrosAsync();
@@ -717,9 +667,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ANULAR PEDIDO
-        // ============================================================
         private async void BAnularPedido_Click(object sender, EventArgs e)
         {
             if (_idPedidoSeleccionado == 0)
@@ -761,9 +708,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // LIMPIAR FORMULARIO
-        // ============================================================
         private void LimpiarFormularioCobro()
         {
             _idPedidoSeleccionado = 0;
@@ -780,9 +724,6 @@ namespace CapaPresentacion
                 DGVPendientes.CurrentCell = null;
         }
 
-        // ============================================================
-        // ESCALADO DE ICONOS
-        // ============================================================
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;

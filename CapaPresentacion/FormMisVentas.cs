@@ -1,28 +1,28 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
 using System.IO;
 using System.Linq;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static CapaPresentacion.FormPrincipal;
 using CapaLogica;
 using CapaDatos.DTOs;
+using CapaDatos.Helpers;
 
 namespace CapaPresentacion
 {
     public partial class FormMisVentas : Form
     {
-        // ✅ API: Órdenes de venta
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
         private List<OrdenVentaDto> _ordenesOriginales = new List<OrdenVentaDto>();
         private int _idOrdenSeleccionada = 0;
         private OrdenVentaDto _ordenDetalleActual = null;
+        private CancellationTokenSource _ctsCarga;
 
         public FormMisVentas()
         {
@@ -30,16 +30,39 @@ namespace CapaPresentacion
             InicializarComportamiento();
         }
 
-        // ✅ MODIFICADO: Ahora es async para cargar de la API
         private async void FormMisVentas_Load(object sender, EventArgs e)
         {
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             AsignarIconoTitulo();
             CargarDesplegableEstados();
-            await CargarOrdenesAsync();
 
-            DGVVentas.ClearSelection();
-            DGVVentas.CurrentCell = null;
-            DGVDetalle.Rows.Clear();
+            try
+            {
+                await CargarOrdenesAsync(token);
+                if (token.IsCancellationRequested) return;
+            }
+            catch (OperationCanceledException) { }
+
+            if (!this.IsDisposed)
+            {
+                DGVVentas.ClearSelection();
+                DGVVentas.CurrentCell = null;
+                DGVDetalle.Rows.Clear();
+            }
+        }
+
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+            base.OnFormClosing(e);
         }
 
         private Image DibujarIconoMisVentas(Color color)
@@ -92,7 +115,6 @@ namespace CapaPresentacion
                 AplicarFiltros();
             };
 
-            // ✅ Coloración de estados
             DGVVentas.CellFormatting += (s, e) =>
             {
                 if (DGVVentas.Columns[e.ColumnIndex].Name == "ColEstado" && e.Value != null)
@@ -101,31 +123,18 @@ namespace CapaPresentacion
 
                     switch (estado)
                     {
-                        case "Pendiente":
-                            e.CellStyle.ForeColor = Color.FromArgb(212, 131, 53);   // Ocre
-                            break;
-                        case "Confirmada":
-                            e.CellStyle.ForeColor = Color.FromArgb(41, 128, 185);   // Azul
-                            break;
-                        case "Finalizada":
-                            e.CellStyle.ForeColor = Color.FromArgb(39, 174, 96);    // Verde
-                            break;
-                        case "Cancelada":
-                            e.CellStyle.ForeColor = Color.FromArgb(230, 126, 34);   // Naranja
-                            break;
-                        case "Anulada":
-                            e.CellStyle.ForeColor = Color.FromArgb(192, 57, 43);    // Rojo
-                            break;
-                        default:
-                            e.CellStyle.ForeColor = Color.FromArgb(30, 30, 30);
-                            break;
+                        case "Pendiente": e.CellStyle.ForeColor = Color.FromArgb(212, 131, 53); break;
+                        case "Confirmada": e.CellStyle.ForeColor = Color.FromArgb(41, 128, 185); break;
+                        case "Finalizada": e.CellStyle.ForeColor = Color.FromArgb(39, 174, 96); break;
+                        case "Cancelada": e.CellStyle.ForeColor = Color.FromArgb(230, 126, 34); break;
+                        case "Anulada": e.CellStyle.ForeColor = Color.FromArgb(192, 57, 43); break;
+                        default: e.CellStyle.ForeColor = Color.FromArgb(30, 30, 30); break;
                     }
 
                     e.CellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
                 }
             };
 
-            // ✅ Al hacer clic en una fila, cargar el detalle desde la API
             DGVVentas.CellClick += async (s, e) =>
             {
                 if (e.RowIndex < 0) return;
@@ -133,14 +142,13 @@ namespace CapaPresentacion
             };
         }
 
-        // ============================================================
-        // ✅ Carga las órdenes del vendedor logueado desde la API
-        // ============================================================
-        private async Task CargarOrdenesAsync()
+        private async Task CargarOrdenesAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
                 var todas = await _ordenVentaLogica.ObtenerTodas();
+                if (token.IsCancellationRequested) return;
+                if (this.IsDisposed || this.Disposing) return;
 
                 _ordenesOriginales = todas?
                     .Where(o => o.PersonalId == SesionUsuario.IdPersonal)
@@ -149,27 +157,32 @@ namespace CapaPresentacion
 
                 MostrarOrdenes(_ordenesOriginales);
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar órdenes: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar órdenes: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // ✅ Muestra las órdenes en la grilla
-        // ============================================================
         private void MostrarOrdenes(List<OrdenVentaDto> ordenes)
         {
+            DGVVentas.SuspendLayout();
             DGVVentas.Rows.Clear();
 
             foreach (var orden in ordenes)
             {
                 int cantItems = orden.Detalles?.Sum(d => d.Cantidad) ?? 0;
 
+                // ✅ Fecha convertida a hora local
+                string fechaStr = FechaHelper.ToArgentinaString(orden.FechaCreacion, "dd/MM/yyyy HH:mm");
+
                 DGVVentas.Rows.Add(
                     orden.IdOrden,
-                    orden.FechaCreacion.ToString("dd/MM/yyyy HH:mm"),
+                    fechaStr,
                     orden.NumeroPresupuesto ?? $"#{orden.IdOrden}",
                     orden.ClienteNombre ?? "Consumidor Final",
                     cantItems,
@@ -178,14 +191,13 @@ namespace CapaPresentacion
                 );
             }
 
+            DGVVentas.ResumeLayout();
             RecalcularMetricasPersonales();
         }
 
-        // ============================================================
-        // ✅ Carga el detalle de la orden seleccionada desde la API
-        // ============================================================
         private async Task CargarDetalleOrdenAsync(int rowIndex)
         {
+            var token = _ctsCarga?.Token ?? CancellationToken.None;
             try
             {
                 var idValue = DGVVentas.Rows[rowIndex].Cells["ColIdVenta"].Value;
@@ -194,10 +206,12 @@ namespace CapaPresentacion
                 int idOrden = Convert.ToInt32(idValue);
                 _idOrdenSeleccionada = idOrden;
 
-                // Buscar la orden completa con detalles
                 var orden = await _ordenVentaLogica.ObtenerPorId(idOrden);
+                if (token.IsCancellationRequested || this.IsDisposed) return;
+
                 _ordenDetalleActual = orden;
 
+                DGVDetalle.SuspendLayout();
                 DGVDetalle.Rows.Clear();
                 if (orden?.Detalles != null)
                 {
@@ -212,35 +226,29 @@ namespace CapaPresentacion
                         );
                     }
                 }
+                DGVDetalle.ResumeLayout();
             }
+            catch (OperationCanceledException) { }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar detalle: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar detalle: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
-        // ============================================================
-        // ✅ Carga el desplegable con TODOS los estados reales
-        // ============================================================
         private void CargarDesplegableEstados()
         {
             CBFiltroEstado.Items.Clear();
             CBFiltroEstado.Items.AddRange(new object[]
             {
-                "Todos",
-                "Pendiente",
-                "Confirmada",
-                "Finalizada",
-                "Cancelada",
-                "Anulada"
+                "Todos", "Pendiente", "Confirmada", "Finalizada", "Cancelada", "Anulada"
             });
             CBFiltroEstado.SelectedIndex = 0;
         }
 
-        // ============================================================
-        // ✅ Aplica los filtros sobre la grilla
-        // ============================================================
         private void AplicarFiltros()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
@@ -248,6 +256,7 @@ namespace CapaPresentacion
             DateTime fechaDesde = DTPFechaDesde.Value.Date;
             DateTime fechaHasta = DTPFechaHasta.Value.Date.AddDays(1);
 
+            DGVVentas.SuspendLayout();
             foreach (DataGridViewRow row in DGVVentas.Rows)
             {
                 if (row.IsNewRow) continue;
@@ -269,22 +278,15 @@ namespace CapaPresentacion
 
                 row.Visible = coincideTexto && coincideEstado && coincideFecha;
             }
+            DGVVentas.ResumeLayout();
 
             RecalcularMetricasPersonales();
 
-            // Limpiar el detalle al aplicar nuevos filtros
             DGVDetalle.Rows.Clear();
             _idOrdenSeleccionada = 0;
             _ordenDetalleActual = null;
         }
 
-        // ============================================================
-        // ✅ Recalcula métricas:
-        //    - Total Facturado = Confirmadas + Finalizadas
-        //    - Ventas Cobradas = cantidad de Finalizadas
-        //    - Comisión = 2.5% × (Confirmadas + Finalizadas)
-        //    - Canceladas/Anuladas NO cuentan
-        // ============================================================
         private void RecalcularMetricasPersonales()
         {
             decimal totalFacturado = 0m;
@@ -300,34 +302,25 @@ namespace CapaPresentacion
                 switch (estado)
                 {
                     case "Confirmada":
-                        // ✅ Suma al Total Facturado pero NO cuenta como cobrada
                         totalFacturado += total;
                         break;
 
                     case "Finalizada":
-                        // ✅ Suma al Total Facturado Y cuenta como cobrada
                         totalFacturado += total;
                         operacionesCobradas++;
-                        break;
-
-                    case "Pendiente":
-                    case "Cancelada":
-                    case "Anulada":
-                    default:
-                        // ❌ No cuenta
                         break;
                 }
             }
 
-            // ✅ Comisión sobre el Total Facturado (Confirmadas + Finalizadas)
             decimal comision = totalFacturado * 0.025m;
 
             LValorTotalVentas.Text = totalFacturado.ToString("C2");
             LValorOperaciones.Text = $"{operacionesCobradas} operaciones";
             LValorComision.Text = comision.ToString("C2");
         }
+
         // ============================================================
-        // ✅ BOTÓN: Reimprimir comprobante (con detalle completo)
+        // ✅ BOTÓN: Reimprimir comprobante
         // ============================================================
         private async void BReimprimirTicket_Click(object sender, EventArgs e)
         {
@@ -342,7 +335,6 @@ namespace CapaPresentacion
             {
                 int idOrden = Convert.ToInt32(DGVVentas.CurrentRow.Cells["ColIdVenta"].Value ?? 0);
 
-                // Traer la orden completa con detalles
                 var orden = await _ordenVentaLogica.ObtenerPorId(idOrden);
                 if (orden == null)
                 {
@@ -395,20 +387,14 @@ namespace CapaPresentacion
             using (Brush bGris = new SolidBrush(Color.Gray))
             using (Pen penLinea = new Pen(Color.FromArgb(210, 215, 220), 1))
             {
-                // ============================
-                // ENCABEZADO
-                // ============================
                 g.DrawString("HIERRO Y FORJA", fTitulo, bOcre, x, y);
                 g.DrawString($"DUPLICADO - {orden.TipoDocumentoDescripcion?.ToUpper() ?? "COMPROBANTE"}", fSub, bGrafito, x, y + 28);
-                g.DrawString($"N° {orden.NumeroPresupuesto}  |  Fecha: {orden.FechaCreacion:dd/MM/yyyy HH:mm}  |  Vendedor: {vendedor}", fSub, bGris, x, y + 48);
+                g.DrawString($"N° {orden.NumeroPresupuesto}  |  Fecha: {FechaHelper.ToArgentinaString(orden.FechaCreacion)}  |  Vendedor: {vendedor}", fSub, bGris, x, y + 48);
 
                 y += 75;
                 g.DrawLine(penLinea, x, y, 750, y);
                 y += 15;
 
-                // ============================
-                // DATOS DEL CLIENTE
-                // ============================
                 g.DrawString($"Cliente: {orden.ClienteNombre ?? "Consumidor Final"}", fHeader, bGrafito, x, y);
                 g.DrawString($"Estado: {orden.EstadoVentaDescripcion}", fHeader, bGrafito, x + 500, y);
 
@@ -421,7 +407,7 @@ namespace CapaPresentacion
 
                 if (orden.FechaValidez.HasValue)
                 {
-                    g.DrawString($"Válido hasta: {orden.FechaValidez.Value:dd/MM/yyyy}", fSub, bGris, x, y);
+                    g.DrawString($"Válido hasta: {FechaHelper.ToArgentinaString(orden.FechaValidez.Value, "dd/MM/yyyy")}", fSub, bGris, x, y);
                     y += 18;
                 }
 
@@ -429,9 +415,6 @@ namespace CapaPresentacion
                 g.DrawLine(penLinea, x, y, 750, y);
                 y += 15;
 
-                // ============================
-                // CABECERAS DE DETALLE
-                // ============================
                 g.DrawString("Código", fHeader, bOcre, x, y);
                 g.DrawString("Descripción", fHeader, bOcre, x + 80, y);
                 g.DrawString("Cant.", fHeader, bOcre, x + 420, y);
@@ -442,9 +425,6 @@ namespace CapaPresentacion
                 g.DrawLine(penLinea, x, y, 750, y);
                 y += 10;
 
-                // ============================
-                // DETALLES
-                // ============================
                 if (orden.Detalles != null)
                 {
                     foreach (var d in orden.Detalles)
@@ -459,13 +439,9 @@ namespace CapaPresentacion
                     }
                 }
 
-                // ============================
-                // TOTAL
-                // ============================
                 y += 20;
                 g.DrawLine(penLinea, x, y, 750, y);
                 y += 12;
-
                 g.DrawString($"TOTAL: {orden.Total:C2}", fTitulo, bOcre, x + 500, y);
             }
         }

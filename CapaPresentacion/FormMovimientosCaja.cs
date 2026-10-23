@@ -9,20 +9,15 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using CapaLogica;
 using CapaDatos.DTOs;
+using CapaDatos.Helpers;
 
 namespace CapaPresentacion
 {
     public partial class FormMovimientosCaja : Form
     {
-        // ============================================================
-        // LÓGICA DE LA API
-        // ============================================================
         private readonly CajaLogica _cajaLogica = new CajaLogica();
         private readonly MovimientoCajaLogica _movimientoLogica = new MovimientoCajaLogica();
 
-        // ============================================================
-        // ESTADO
-        // ============================================================
         private List<MovimientoCajaDto> _todosLosMovimientos = new List<MovimientoCajaDto>();
         private List<MovimientoCajaDto> _movimientosFiltrados = new List<MovimientoCajaDto>();
         private List<CajaDto> _todasLasCajas = new List<CajaDto>();
@@ -39,9 +34,6 @@ namespace CapaPresentacion
             InitializeComponent();
         }
 
-        // ============================================================
-        // LOAD
-        // ============================================================
         private async void FormMovimientosCaja_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -49,15 +41,12 @@ namespace CapaPresentacion
             if (pbIconoTitulo != null)
                 pbIconoTitulo.Image = GenerarIconoCaja(Color.FromArgb(212, 131, 53));
 
-            // ✅ Fechas por defecto: hoy
             dtpDesde.Value = DateTime.Today;
             dtpHasta.Value = DateTime.Today;
 
-            // ✅ Inicializar combos
             if (cboTipoMovimiento.Items.Count > 0) cboTipoMovimiento.SelectedIndex = 0;
             if (cboMedioPago.Items.Count > 0) cboMedioPago.SelectedIndex = 0;
 
-            // ✅ Suscribir eventos
             btnBuscar.Click += async (s, ev) => await AplicarFiltrosYRecargarAsync();
             btnLimpiar.Click += async (s, ev) => await LimpiarFiltrosAsync();
             btnArqueo.Click += btnArqueo_Click;
@@ -68,9 +57,6 @@ namespace CapaPresentacion
             await CargarTodosLosMovimientosAsync(_ctsCarga.Token);
         }
 
-        // ============================================================
-        // CANCELAR AL CERRAR
-        // ============================================================
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -80,18 +66,13 @@ namespace CapaPresentacion
                 _ctsCarga = null;
             }
             catch { }
-
             base.OnFormClosing(e);
         }
 
-        // ============================================================
-        // CARGA TODOS LOS MOVIMIENTOS DEL RANGO DE FECHAS
-        // ============================================================
         private async Task CargarTodosLosMovimientosAsync(CancellationToken token = default(CancellationToken))
         {
             try
             {
-                // 1. Obtener TODAS las cajas
                 var cajas = await _cajaLogica.ObtenerTodos();
 
                 if (token.IsCancellationRequested) return;
@@ -108,19 +89,21 @@ namespace CapaPresentacion
                     return;
                 }
 
-                // 2. Guardar cajas en caché
                 _todasLasCajas = cajas;
                 _cajasCache = cajas.ToDictionary(c => c.Id, c => c);
 
-                // 3. Filtrar cajas por rango de fechas
+                // ✅ Filtramos por fecha de apertura comparando con hora local
                 DateTime desde = dtpDesde.Value.Date;
                 DateTime hasta = dtpHasta.Value.Date.AddDays(1);
 
                 var cajasDelRango = cajas
-                    .Where(c => c.FechaApertura >= desde && c.FechaApertura < hasta)
+                    .Where(c =>
+                    {
+                        DateTime aperturaLocal = FechaHelper.ToArgentina(c.FechaApertura);
+                        return aperturaLocal >= desde && aperturaLocal < hasta;
+                    })
                     .ToList();
 
-                // 4. Para cada caja, traer sus movimientos
                 var todosMovimientos = new List<MovimientoCajaDto>();
 
                 foreach (var caja in cajasDelRango)
@@ -142,15 +125,12 @@ namespace CapaPresentacion
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
-                // 5. Guardar todos los movimientos
                 _todosLosMovimientos = todosMovimientos
                     .OrderByDescending(m => m.FechaMovimiento)
                     .ToList();
 
-                // 6. Aplicar filtros de UI
                 AplicarFiltrosUI();
 
-                // 7. Mostrar y calcular
                 MostrarMovimientos(_movimientosFiltrados);
                 RecalcularBalance(_movimientosFiltrados);
             }
@@ -165,14 +145,10 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // APLICAR FILTROS DE UI SOBRE _todosLosMovimientos
-        // ============================================================
         private void AplicarFiltrosUI()
         {
             var lista = _todosLosMovimientos.AsEnumerable();
 
-            // ✅ Filtro por Tipo
             string tipoFiltro = cboTipoMovimiento.Text;
             if (!string.IsNullOrEmpty(tipoFiltro) && tipoFiltro != "Todos")
             {
@@ -181,18 +157,15 @@ namespace CapaPresentacion
                     m.TipoMovimientoDescripcion.Equals(tipoFiltro, StringComparison.OrdinalIgnoreCase));
             }
 
-            // ✅ Filtro por Medio Pago
-            // NOTA: el DTO no tiene medioPago todavía. Se activa cuando la API lo devuelva.
             string medioFiltro = cboMedioPago.Text;
             if (!string.IsNullOrEmpty(medioFiltro) && medioFiltro != "Todos")
             {
-                // Intentar leer la propiedad "medioPagoDescripcion" por reflexión
                 lista = lista.Where(m =>
                 {
                     try
                     {
                         var prop = m.GetType().GetProperty("MedioPagoDescripcion");
-                        if (prop == null) return true; // Si el DTO no lo tiene, no filtramos
+                        if (prop == null) return true;
                         var valor = prop.GetValue(m) as string;
                         return !string.IsNullOrEmpty(valor) &&
                                valor.Equals(medioFiltro, StringComparison.OrdinalIgnoreCase);
@@ -204,17 +177,11 @@ namespace CapaPresentacion
             _movimientosFiltrados = lista.ToList();
         }
 
-        // ============================================================
-        // APLICAR FILTROS Y RECARGAR (desde btnBuscar)
-        // ============================================================
         private async Task AplicarFiltrosYRecargarAsync()
         {
             await CargarTodosLosMovimientosAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
 
-        // ============================================================
-        // LIMPIAR FILTROS (volver a hoy)
-        // ============================================================
         private async Task LimpiarFiltrosAsync()
         {
             dtpDesde.Value = DateTime.Today;
@@ -225,9 +192,6 @@ namespace CapaPresentacion
             await CargarTodosLosMovimientosAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
 
-        // ============================================================
-        // Convertir dynamic → List<MovimientoCajaDto>
-        // ============================================================
         private List<MovimientoCajaDto> ConvertirAMovimientoDto(dynamic movimientosRaw)
         {
             var resultado = new List<MovimientoCajaDto>();
@@ -271,9 +235,6 @@ namespace CapaPresentacion
             return resultado;
         }
 
-        // ============================================================
-        // Mostrar movimientos en la grilla
-        // ============================================================
         private void MostrarMovimientos(List<MovimientoCajaDto> movimientos)
         {
             dgvMovimientos.SuspendLayout();
@@ -291,24 +252,20 @@ namespace CapaPresentacion
                 string ingresoStr = (!esEgresoPorTipo && esIngreso) ? mov.Monto.ToString("C2") : "";
                 string egresoStr = (esEgresoPorTipo || !esIngreso) ? Math.Abs(mov.Monto).ToString("C2") : "";
 
-                string cajaStr = $"#{mov.CajaId}";
+                string cajaStr = mov.NumeroCaja.HasValue
+                    ? $"Caja {mov.NumeroCaja.Value}"
+                    : $"Caja (id {mov.CajaId})";
 
-                // ✅ Medio Pago (por reflexión, si el DTO lo tiene)
-                string medioPagoStr = "—";
-                try
-                {
-                    var prop = mov.GetType().GetProperty("MedioPagoDescripcion");
-                    if (prop != null)
-                    {
-                        var valor = prop.GetValue(mov) as string;
-                        if (!string.IsNullOrWhiteSpace(valor)) medioPagoStr = valor;
-                    }
-                }
-                catch { }
+                string medioPagoStr = string.IsNullOrWhiteSpace(mov.MedioPagoDescripcion)
+                    ? "—"
+                    : mov.MedioPagoDescripcion;
+
+                // ✅ Fecha convertida a hora local
+                string fechaStr = FechaHelper.ToArgentinaString(mov.FechaMovimiento, "dd/MM/yyyy HH:mm");
 
                 dgvMovimientos.Rows.Add(
                     mov.Id,
-                    mov.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"),
+                    fechaStr,
                     cajaStr,
                     tipo,
                     mov.Descripcion ?? "",
@@ -325,16 +282,12 @@ namespace CapaPresentacion
                 dgvMovimientos.CurrentCell = null;
         }
 
-        // ============================================================
-        // Recalcular balance a partir de movimientos visibles
-        // ============================================================
         private void RecalcularBalance(List<MovimientoCajaDto> movimientos)
         {
             decimal fondoTotal = 0m;
             decimal ingresos = 0m;
             decimal egresos = 0m;
 
-            // Sumar fondos iniciales de las cajas involucradas
             var cajasInvolucradas = movimientos.Select(m => m.CajaId).Distinct().ToList();
             foreach (var cajaId in cajasInvolucradas)
             {
@@ -363,9 +316,6 @@ namespace CapaPresentacion
             ActualizarBalance(fondoTotal, ingresos, egresos);
         }
 
-        // ============================================================
-        // Actualizar el panel de balance
-        // ============================================================
         private void ActualizarBalance(decimal fondoInicial, decimal ingresos, decimal egresos)
         {
             dgvBalance.SuspendLayout();
@@ -393,9 +343,6 @@ namespace CapaPresentacion
                 dgvBalance.CurrentCell = null;
         }
 
-        // ============================================================
-        // ✅ BOTÓN "CIERRE / ARQUEO" → Muestra arqueo del período
-        // ============================================================
         private void btnArqueo_Click(object sender, EventArgs e)
         {
             decimal totalEsperado = _fondoInicialFiltrado + _totalIngresosFiltrado - _totalEgresosFiltrado;
@@ -431,9 +378,6 @@ namespace CapaPresentacion
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
 
-        // ============================================================
-        // ✅ BOTÓN "EXPORTAR PDF" → Vista previa con grilla + balance
-        // ============================================================
         private void btnImprimirInforme_Click(object sender, EventArgs e)
         {
             if (_movimientosFiltrados.Count == 0)
@@ -466,9 +410,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // Impresión del PDF
-        // ============================================================
         private void ImprimirMovimientos_PrintPage(object sender, PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -491,9 +432,6 @@ namespace CapaPresentacion
             using (Pen penLinea = new Pen(Color.FromArgb(180, 185, 190), 1))
             using (Pen penLineaFina = new Pen(Color.FromArgb(210, 215, 220), 1))
             {
-                // ============================
-                // ENCABEZADO
-                // ============================
                 g.DrawString("HIERRO Y FORJA", fTitulo, bOcre, x, y);
                 g.DrawString("MOVIMIENTOS DE CAJA - REPORTE GERENCIAL", fSub, bGrafito, x, y + 28);
 
@@ -508,9 +446,6 @@ namespace CapaPresentacion
                 g.DrawLine(penLinea, x, y, x + ancho, y);
                 y += 12;
 
-                // ============================
-                // CABECERAS DE TABLA
-                // ============================
                 float colFecha = x;
                 float colCaja = x + 110;
                 float colTipo = x + 155;
@@ -533,9 +468,6 @@ namespace CapaPresentacion
                 g.DrawLine(penLinea, x, y, x + ancho, y);
                 y += 8;
 
-                // ============================
-                // FILAS
-                // ============================
                 foreach (var mov in _movimientosFiltrados)
                 {
                     string tipo = mov.TipoMovimientoDescripcion ?? "";
@@ -544,11 +476,14 @@ namespace CapaPresentacion
                                            tipo.Equals("Cierre", StringComparison.OrdinalIgnoreCase);
                     bool esIngreso = !esEgresoPorTipo && mov.Monto > 0;
 
-                    // Si llegamos al final de la página, cortamos (por ahora simple)
                     if (y > e.PageBounds.Height - 100) break;
 
-                    g.DrawString(mov.FechaMovimiento.ToString("dd/MM/yyyy HH:mm"), fRow, bGrafito, colFecha, y);
-                    g.DrawString($"#{mov.CajaId}", fRow, bGrafito, colCaja, y);
+                    // ✅ Fecha convertida a hora local
+                    string fechaStr = FechaHelper.ToArgentinaString(mov.FechaMovimiento, "dd/MM/yyyy HH:mm");
+                    string cajaStr = mov.NumeroCaja.HasValue ? $"Caja {mov.NumeroCaja.Value}" : $"#{mov.CajaId}";
+
+                    g.DrawString(fechaStr, fRow, bGrafito, colFecha, y);
+                    g.DrawString(cajaStr, fRow, bGrafito, colCaja, y);
                     g.DrawString(tipo, fRow, bGrafito, colTipo, y);
                     g.DrawString(TruncarTexto(mov.Descripcion ?? "", 40), fRow, bGrafito, colConcepto, y);
                     g.DrawString("—", fRow, bGrafito, colMedio, y);
@@ -564,9 +499,6 @@ namespace CapaPresentacion
                     g.DrawLine(penLineaFina, x, y - 4, x + ancho, y - 4);
                 }
 
-                // ============================
-                // BALANCE
-                // ============================
                 y += 25;
                 g.DrawLine(penLinea, x, y, x + ancho, y);
                 y += 12;
@@ -585,9 +517,6 @@ namespace CapaPresentacion
 
                 g.DrawString($"TOTAL EN GAVETA:         {totalEsperado,15:C2}", fTotal, bOcre, x + 20, y);
 
-                // ============================
-                // PIE
-                // ============================
                 y = e.PageBounds.Height - 80;
                 g.DrawLine(penLinea, x, y, x + ancho, y);
                 y += 15;
@@ -603,16 +532,12 @@ namespace CapaPresentacion
             }
         }
 
-        // Helper: truncar texto largo
         private string TruncarTexto(string texto, int max)
         {
             if (string.IsNullOrEmpty(texto)) return "";
             return texto.Length <= max ? texto : texto.Substring(0, max) + "…";
         }
 
-        // ============================================================
-        // Ícono vectorial del título
-        // ============================================================
         private Image GenerarIconoCaja(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);

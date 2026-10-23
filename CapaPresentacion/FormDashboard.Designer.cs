@@ -331,8 +331,8 @@
             this.colVentaId.Visible = false;
             this.colVentaId.Name = "colVentaId";
 
-            this.colVentaHora.HeaderText = "Hora";
-            this.colVentaHora.Width = 70;
+            this.colVentaHora.HeaderText = "Fecha / Hora";
+            this.colVentaHora.Width = 125;
             this.colVentaHora.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.colVentaHora.Name = "colVentaHora";
 

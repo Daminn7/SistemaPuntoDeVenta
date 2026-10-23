@@ -76,6 +76,7 @@
     <Compile Include="DTOs\LoginResponseDto.cs" />
     <Compile Include="DTOs\ProductoDto.cs" />
     <Compile Include="DTOs\VentaDto.cs" />
+    <Compile Include="Helpers\FechaHelper.cs" />
     <Compile Include="Helpers\TokenManager.cs" />
     <Compile Include="Services\ApiClient.cs" />
     <Compile Include="UsuarioDatos.cs" />

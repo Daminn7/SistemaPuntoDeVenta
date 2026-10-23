@@ -2,15 +2,8 @@
 {
     partial class FormCierreCaja
     {
-        /// <summary>
-        /// Required designer variable.
-        /// </summary>
         private System.ComponentModel.IContainer components = null;
 
-        /// <summary>
-        /// Clean up any resources being used.
-        /// </summary>
-        /// <param name="disposing">true if managed resources should be disposed; otherwise, false.</param>
         protected override void Dispose(bool disposing)
         {
             if (disposing && (components != null))
@@ -22,10 +15,6 @@
 
         #region Windows Form Designer generated code
 
-        /// <summary>
-        /// Required method for Designer support - do not modify
-        /// the contents of this method with the code editor.
-        /// </summary>
         private void InitializeComponent()
         {
             this.PFondo = new System.Windows.Forms.Panel();
@@ -38,15 +27,18 @@
             this.PGrupoVentasEfectivo = new System.Windows.Forms.Panel();
             this.TBVentasEfectivo = new System.Windows.Forms.TextBox();
             this.LVentasEfectivo = new System.Windows.Forms.Label();
+            this.PGrupoIngreso = new System.Windows.Forms.Panel();
+            this.TBINGRESO = new System.Windows.Forms.TextBox();
+            this.LINGRESO = new System.Windows.Forms.Label();
+            this.PGrupoEgresosMenores = new System.Windows.Forms.Panel();
+            this.TBEgresosMenores = new System.Windows.Forms.TextBox();
+            this.LEgresosMenores = new System.Windows.Forms.Label();
             this.PGrupoCobrosDigitales = new System.Windows.Forms.Panel();
             this.TBCobrosDigitales = new System.Windows.Forms.TextBox();
             this.LCobrosDigitales = new System.Windows.Forms.Label();
             this.PGrupoCobrosTarjetas = new System.Windows.Forms.Panel();
             this.TBCobrosTarjetas = new System.Windows.Forms.TextBox();
             this.LCobrosTarjetas = new System.Windows.Forms.Label();
-            this.PGrupoEgresosMenores = new System.Windows.Forms.Panel();
-            this.TBEgresosMenores = new System.Windows.Forms.TextBox();
-            this.LEgresosMenores = new System.Windows.Forms.Label();
             this.PGrupoTotalGaveta = new System.Windows.Forms.Panel();
             this.TBTotalGaveta = new System.Windows.Forms.TextBox();
             this.LTotalGaveta = new System.Windows.Forms.Label();
@@ -55,7 +47,8 @@
             this.PTarjetaAcciones = new System.Windows.Forms.Panel();
             this.PContenedorBotones = new System.Windows.Forms.Panel();
             this.BCerrarTurno = new System.Windows.Forms.Button();
-            this.BMovimientoMenor = new System.Windows.Forms.Button();
+            this.BEgreso = new System.Windows.Forms.Button();
+            this.BIngreso = new System.Windows.Forms.Button();
             this.BAbrirTurno = new System.Windows.Forms.Button();
             this.LSubtituloAcciones = new System.Windows.Forms.Label();
             this.LTituloAcciones = new System.Windows.Forms.Label();
@@ -71,9 +64,10 @@
             this.TLPResumenTurno.SuspendLayout();
             this.PGrupoFondoInicial.SuspendLayout();
             this.PGrupoVentasEfectivo.SuspendLayout();
+            this.PGrupoIngreso.SuspendLayout();
+            this.PGrupoEgresosMenores.SuspendLayout();
             this.PGrupoCobrosDigitales.SuspendLayout();
             this.PGrupoCobrosTarjetas.SuspendLayout();
-            this.PGrupoEgresosMenores.SuspendLayout();
             this.PGrupoTotalGaveta.SuspendLayout();
             this.PTarjetaAcciones.SuspendLayout();
             this.PContenedorBotones.SuspendLayout();
@@ -98,8 +92,8 @@
             // TLPContenedorPrincipal
             // 
             this.TLPContenedorPrincipal.ColumnCount = 2;
-            this.TLPContenedorPrincipal.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 58F));
-            this.TLPContenedorPrincipal.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 42F));
+            this.TLPContenedorPrincipal.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 60F));
+            this.TLPContenedorPrincipal.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 40F));
             this.TLPContenedorPrincipal.Controls.Add(this.PTarjetaResumen, 0, 0);
             this.TLPContenedorPrincipal.Controls.Add(this.PTarjetaAcciones, 1, 0);
             this.TLPContenedorPrincipal.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -122,7 +116,7 @@
             this.PTarjetaResumen.Margin = new System.Windows.Forms.Padding(0, 0, 10, 0);
             this.PTarjetaResumen.Name = "PTarjetaResumen";
             this.PTarjetaResumen.Padding = new System.Windows.Forms.Padding(18, 14, 18, 14);
-            this.PTarjetaResumen.Size = new System.Drawing.Size(661, 604);
+            this.PTarjetaResumen.Size = new System.Drawing.Size(684, 604);
             this.PTarjetaResumen.TabIndex = 0;
             // 
             // TLPResumenTurno
@@ -132,19 +126,20 @@
             this.TLPResumenTurno.ColumnStyles.Add(new System.Windows.Forms.ColumnStyle(System.Windows.Forms.SizeType.Percent, 50F));
             this.TLPResumenTurno.Controls.Add(this.PGrupoFondoInicial, 0, 0);
             this.TLPResumenTurno.Controls.Add(this.PGrupoVentasEfectivo, 1, 0);
-            this.TLPResumenTurno.Controls.Add(this.PGrupoCobrosDigitales, 0, 1);
-            this.TLPResumenTurno.Controls.Add(this.PGrupoCobrosTarjetas, 1, 1);
-            this.TLPResumenTurno.Controls.Add(this.PGrupoEgresosMenores, 0, 2);
+            this.TLPResumenTurno.Controls.Add(this.PGrupoIngreso, 0, 1);
+            this.TLPResumenTurno.Controls.Add(this.PGrupoEgresosMenores, 1, 1);
+            this.TLPResumenTurno.Controls.Add(this.PGrupoCobrosDigitales, 0, 2);
+            this.TLPResumenTurno.Controls.Add(this.PGrupoCobrosTarjetas, 1, 2);
             this.TLPResumenTurno.Controls.Add(this.PGrupoTotalGaveta, 0, 3);
             this.TLPResumenTurno.Dock = System.Windows.Forms.DockStyle.Fill;
             this.TLPResumenTurno.Location = new System.Drawing.Point(18, 62);
             this.TLPResumenTurno.Name = "TLPResumenTurno";
             this.TLPResumenTurno.RowCount = 4;
-            this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
-            this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
-            this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 70F));
+            this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
+            this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
+            this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Absolute, 75F));
             this.TLPResumenTurno.RowStyles.Add(new System.Windows.Forms.RowStyle(System.Windows.Forms.SizeType.Percent, 100F));
-            this.TLPResumenTurno.Size = new System.Drawing.Size(623, 526);
+            this.TLPResumenTurno.Size = new System.Drawing.Size(646, 526);
             this.TLPResumenTurno.TabIndex = 2;
             // 
             // PGrupoFondoInicial
@@ -153,9 +148,9 @@
             this.PGrupoFondoInicial.Controls.Add(this.LFondoInicial);
             this.PGrupoFondoInicial.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PGrupoFondoInicial.Location = new System.Drawing.Point(0, 0);
-            this.PGrupoFondoInicial.Margin = new System.Windows.Forms.Padding(0, 0, 8, 4);
+            this.PGrupoFondoInicial.Margin = new System.Windows.Forms.Padding(0, 0, 8, 8);
             this.PGrupoFondoInicial.Name = "PGrupoFondoInicial";
-            this.PGrupoFondoInicial.Size = new System.Drawing.Size(303, 66);
+            this.PGrupoFondoInicial.Size = new System.Drawing.Size(315, 67);
             this.PGrupoFondoInicial.TabIndex = 0;
             // 
             // TBFondoInicial
@@ -165,10 +160,10 @@
             this.TBFondoInicial.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBFondoInicial.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
             this.TBFondoInicial.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(40)))), ((int)(((byte)(40)))), ((int)(((byte)(40)))));
-            this.TBFondoInicial.Location = new System.Drawing.Point(0, 34);
+            this.TBFondoInicial.Location = new System.Drawing.Point(0, 35);
             this.TBFondoInicial.Name = "TBFondoInicial";
             this.TBFondoInicial.ReadOnly = true;
-            this.TBFondoInicial.Size = new System.Drawing.Size(303, 32);
+            this.TBFondoInicial.Size = new System.Drawing.Size(315, 32);
             this.TBFondoInicial.TabIndex = 1;
             this.TBFondoInicial.Text = "$ 0,00";
             this.TBFondoInicial.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -189,10 +184,10 @@
             this.PGrupoVentasEfectivo.Controls.Add(this.TBVentasEfectivo);
             this.PGrupoVentasEfectivo.Controls.Add(this.LVentasEfectivo);
             this.PGrupoVentasEfectivo.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PGrupoVentasEfectivo.Location = new System.Drawing.Point(319, 0);
-            this.PGrupoVentasEfectivo.Margin = new System.Windows.Forms.Padding(8, 0, 0, 4);
+            this.PGrupoVentasEfectivo.Location = new System.Drawing.Point(331, 0);
+            this.PGrupoVentasEfectivo.Margin = new System.Windows.Forms.Padding(8, 0, 0, 8);
             this.PGrupoVentasEfectivo.Name = "PGrupoVentasEfectivo";
-            this.PGrupoVentasEfectivo.Size = new System.Drawing.Size(304, 66);
+            this.PGrupoVentasEfectivo.Size = new System.Drawing.Size(315, 67);
             this.PGrupoVentasEfectivo.TabIndex = 1;
             // 
             // TBVentasEfectivo
@@ -202,10 +197,10 @@
             this.TBVentasEfectivo.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBVentasEfectivo.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
             this.TBVentasEfectivo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
-            this.TBVentasEfectivo.Location = new System.Drawing.Point(0, 34);
+            this.TBVentasEfectivo.Location = new System.Drawing.Point(0, 35);
             this.TBVentasEfectivo.Name = "TBVentasEfectivo";
             this.TBVentasEfectivo.ReadOnly = true;
-            this.TBVentasEfectivo.Size = new System.Drawing.Size(304, 32);
+            this.TBVentasEfectivo.Size = new System.Drawing.Size(315, 32);
             this.TBVentasEfectivo.TabIndex = 1;
             this.TBVentasEfectivo.Text = "$ 0,00";
             this.TBVentasEfectivo.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -221,16 +216,90 @@
             this.LVentasEfectivo.TabIndex = 0;
             this.LVentasEfectivo.Text = "Cobros en Efectivo (+):";
             // 
+            // PGrupoIngreso
+            // 
+            this.PGrupoIngreso.Controls.Add(this.TBINGRESO);
+            this.PGrupoIngreso.Controls.Add(this.LINGRESO);
+            this.PGrupoIngreso.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.PGrupoIngreso.Location = new System.Drawing.Point(0, 75);
+            this.PGrupoIngreso.Margin = new System.Windows.Forms.Padding(0, 0, 8, 8);
+            this.PGrupoIngreso.Name = "PGrupoIngreso";
+            this.PGrupoIngreso.Size = new System.Drawing.Size(315, 67);
+            this.PGrupoIngreso.TabIndex = 2;
+            // 
+            // TBINGRESO
+            // 
+            this.TBINGRESO.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
+            this.TBINGRESO.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.TBINGRESO.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.TBINGRESO.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            this.TBINGRESO.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
+            this.TBINGRESO.Location = new System.Drawing.Point(0, 35);
+            this.TBINGRESO.Name = "TBINGRESO";
+            this.TBINGRESO.ReadOnly = true;
+            this.TBINGRESO.Size = new System.Drawing.Size(315, 32);
+            this.TBINGRESO.TabIndex = 1;
+            this.TBINGRESO.Text = "$ 0,00";
+            this.TBINGRESO.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // LINGRESO
+            // 
+            this.LINGRESO.AutoSize = true;
+            this.LINGRESO.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.LINGRESO.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.LINGRESO.Location = new System.Drawing.Point(0, 5);
+            this.LINGRESO.Name = "LINGRESO";
+            this.LINGRESO.Size = new System.Drawing.Size(155, 20);
+            this.LINGRESO.TabIndex = 0;
+            this.LINGRESO.Text = "Ingresos Menores (+):";
+            // 
+            // PGrupoEgresosMenores
+            // 
+            this.PGrupoEgresosMenores.Controls.Add(this.TBEgresosMenores);
+            this.PGrupoEgresosMenores.Controls.Add(this.LEgresosMenores);
+            this.PGrupoEgresosMenores.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.PGrupoEgresosMenores.Location = new System.Drawing.Point(331, 75);
+            this.PGrupoEgresosMenores.Margin = new System.Windows.Forms.Padding(8, 0, 0, 8);
+            this.PGrupoEgresosMenores.Name = "PGrupoEgresosMenores";
+            this.PGrupoEgresosMenores.Size = new System.Drawing.Size(315, 67);
+            this.PGrupoEgresosMenores.TabIndex = 3;
+            // 
+            // TBEgresosMenores
+            // 
+            this.TBEgresosMenores.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
+            this.TBEgresosMenores.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.TBEgresosMenores.Dock = System.Windows.Forms.DockStyle.Bottom;
+            this.TBEgresosMenores.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
+            this.TBEgresosMenores.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(57)))), ((int)(((byte)(43)))));
+            this.TBEgresosMenores.Location = new System.Drawing.Point(0, 35);
+            this.TBEgresosMenores.Name = "TBEgresosMenores";
+            this.TBEgresosMenores.ReadOnly = true;
+            this.TBEgresosMenores.Size = new System.Drawing.Size(315, 32);
+            this.TBEgresosMenores.TabIndex = 1;
+            this.TBEgresosMenores.Text = "$ 0,00";
+            this.TBEgresosMenores.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // LEgresosMenores
+            // 
+            this.LEgresosMenores.AutoSize = true;
+            this.LEgresosMenores.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.LEgresosMenores.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
+            this.LEgresosMenores.Location = new System.Drawing.Point(0, 5);
+            this.LEgresosMenores.Name = "LEgresosMenores";
+            this.LEgresosMenores.Size = new System.Drawing.Size(184, 20);
+            this.LEgresosMenores.TabIndex = 0;
+            this.LEgresosMenores.Text = "Egresos Menores (-):";
+            // 
             // PGrupoCobrosDigitales
             // 
             this.PGrupoCobrosDigitales.Controls.Add(this.TBCobrosDigitales);
             this.PGrupoCobrosDigitales.Controls.Add(this.LCobrosDigitales);
             this.PGrupoCobrosDigitales.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PGrupoCobrosDigitales.Location = new System.Drawing.Point(0, 70);
-            this.PGrupoCobrosDigitales.Margin = new System.Windows.Forms.Padding(0, 0, 8, 4);
+            this.PGrupoCobrosDigitales.Location = new System.Drawing.Point(0, 150);
+            this.PGrupoCobrosDigitales.Margin = new System.Windows.Forms.Padding(0, 0, 8, 8);
             this.PGrupoCobrosDigitales.Name = "PGrupoCobrosDigitales";
-            this.PGrupoCobrosDigitales.Size = new System.Drawing.Size(303, 66);
-            this.PGrupoCobrosDigitales.TabIndex = 2;
+            this.PGrupoCobrosDigitales.Size = new System.Drawing.Size(315, 67);
+            this.PGrupoCobrosDigitales.TabIndex = 4;
             // 
             // TBCobrosDigitales
             // 
@@ -239,10 +308,10 @@
             this.TBCobrosDigitales.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBCobrosDigitales.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
             this.TBCobrosDigitales.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
-            this.TBCobrosDigitales.Location = new System.Drawing.Point(0, 34);
+            this.TBCobrosDigitales.Location = new System.Drawing.Point(0, 35);
             this.TBCobrosDigitales.Name = "TBCobrosDigitales";
             this.TBCobrosDigitales.ReadOnly = true;
-            this.TBCobrosDigitales.Size = new System.Drawing.Size(303, 32);
+            this.TBCobrosDigitales.Size = new System.Drawing.Size(315, 32);
             this.TBCobrosDigitales.TabIndex = 1;
             this.TBCobrosDigitales.Text = "$ 0,00";
             this.TBCobrosDigitales.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -263,11 +332,11 @@
             this.PGrupoCobrosTarjetas.Controls.Add(this.TBCobrosTarjetas);
             this.PGrupoCobrosTarjetas.Controls.Add(this.LCobrosTarjetas);
             this.PGrupoCobrosTarjetas.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PGrupoCobrosTarjetas.Location = new System.Drawing.Point(319, 70);
-            this.PGrupoCobrosTarjetas.Margin = new System.Windows.Forms.Padding(8, 0, 0, 4);
+            this.PGrupoCobrosTarjetas.Location = new System.Drawing.Point(331, 150);
+            this.PGrupoCobrosTarjetas.Margin = new System.Windows.Forms.Padding(8, 0, 0, 8);
             this.PGrupoCobrosTarjetas.Name = "PGrupoCobrosTarjetas";
-            this.PGrupoCobrosTarjetas.Size = new System.Drawing.Size(304, 66);
-            this.PGrupoCobrosTarjetas.TabIndex = 3;
+            this.PGrupoCobrosTarjetas.Size = new System.Drawing.Size(315, 67);
+            this.PGrupoCobrosTarjetas.TabIndex = 5;
             // 
             // TBCobrosTarjetas
             // 
@@ -276,10 +345,10 @@
             this.TBCobrosTarjetas.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.TBCobrosTarjetas.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
             this.TBCobrosTarjetas.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(128)))), ((int)(((byte)(185)))));
-            this.TBCobrosTarjetas.Location = new System.Drawing.Point(0, 34);
+            this.TBCobrosTarjetas.Location = new System.Drawing.Point(0, 35);
             this.TBCobrosTarjetas.Name = "TBCobrosTarjetas";
             this.TBCobrosTarjetas.ReadOnly = true;
-            this.TBCobrosTarjetas.Size = new System.Drawing.Size(304, 32);
+            this.TBCobrosTarjetas.Size = new System.Drawing.Size(315, 32);
             this.TBCobrosTarjetas.TabIndex = 1;
             this.TBCobrosTarjetas.Text = "$ 0,00";
             this.TBCobrosTarjetas.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -295,54 +364,17 @@
             this.LCobrosTarjetas.TabIndex = 0;
             this.LCobrosTarjetas.Text = "Tarjetas Débito / Crédito:";
             // 
-            // PGrupoEgresosMenores
-            // 
-            this.PGrupoEgresosMenores.Controls.Add(this.TBEgresosMenores);
-            this.PGrupoEgresosMenores.Controls.Add(this.LEgresosMenores);
-            this.PGrupoEgresosMenores.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PGrupoEgresosMenores.Location = new System.Drawing.Point(0, 140);
-            this.PGrupoEgresosMenores.Margin = new System.Windows.Forms.Padding(0, 0, 8, 4);
-            this.PGrupoEgresosMenores.Name = "PGrupoEgresosMenores";
-            this.PGrupoEgresosMenores.Size = new System.Drawing.Size(303, 66);
-            this.PGrupoEgresosMenores.TabIndex = 4;
-            // 
-            // TBEgresosMenores
-            // 
-            this.TBEgresosMenores.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(245)))), ((int)(((byte)(246)))), ((int)(((byte)(248)))));
-            this.TBEgresosMenores.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.TBEgresosMenores.Dock = System.Windows.Forms.DockStyle.Bottom;
-            this.TBEgresosMenores.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.TBEgresosMenores.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(57)))), ((int)(((byte)(43)))));
-            this.TBEgresosMenores.Location = new System.Drawing.Point(0, 34);
-            this.TBEgresosMenores.Name = "TBEgresosMenores";
-            this.TBEgresosMenores.ReadOnly = true;
-            this.TBEgresosMenores.Size = new System.Drawing.Size(303, 32);
-            this.TBEgresosMenores.TabIndex = 1;
-            this.TBEgresosMenores.Text = "$ 0,00";
-            this.TBEgresosMenores.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // LEgresosMenores
-            // 
-            this.LEgresosMenores.AutoSize = true;
-            this.LEgresosMenores.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
-            this.LEgresosMenores.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(70)))), ((int)(((byte)(70)))), ((int)(((byte)(70)))));
-            this.LEgresosMenores.Location = new System.Drawing.Point(0, 5);
-            this.LEgresosMenores.Name = "LEgresosMenores";
-            this.LEgresosMenores.Size = new System.Drawing.Size(184, 20);
-            this.LEgresosMenores.TabIndex = 0;
-            this.LEgresosMenores.Text = "Retiros / Gastos Caja (-):";
-            // 
             // PGrupoTotalGaveta
             // 
             this.TLPResumenTurno.SetColumnSpan(this.PGrupoTotalGaveta, 2);
             this.PGrupoTotalGaveta.Controls.Add(this.TBTotalGaveta);
             this.PGrupoTotalGaveta.Controls.Add(this.LTotalGaveta);
             this.PGrupoTotalGaveta.Dock = System.Windows.Forms.DockStyle.Top;
-            this.PGrupoTotalGaveta.Location = new System.Drawing.Point(0, 220);
+            this.PGrupoTotalGaveta.Location = new System.Drawing.Point(0, 235);
             this.PGrupoTotalGaveta.Margin = new System.Windows.Forms.Padding(0, 10, 0, 0);
             this.PGrupoTotalGaveta.Name = "PGrupoTotalGaveta";
-            this.PGrupoTotalGaveta.Size = new System.Drawing.Size(623, 110);
-            this.PGrupoTotalGaveta.TabIndex = 5;
+            this.PGrupoTotalGaveta.Size = new System.Drawing.Size(646, 110);
+            this.PGrupoTotalGaveta.TabIndex = 6;
             // 
             // TBTotalGaveta
             // 
@@ -354,7 +386,7 @@
             this.TBTotalGaveta.Location = new System.Drawing.Point(0, 39);
             this.TBTotalGaveta.Name = "TBTotalGaveta";
             this.TBTotalGaveta.ReadOnly = true;
-            this.TBTotalGaveta.Size = new System.Drawing.Size(623, 47);
+            this.TBTotalGaveta.Size = new System.Drawing.Size(646, 47);
             this.TBTotalGaveta.TabIndex = 1;
             this.TBTotalGaveta.Text = "$ 0,00";
             this.TBTotalGaveta.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -377,7 +409,7 @@
             this.LSubtituloResumen.ForeColor = System.Drawing.Color.Gray;
             this.LSubtituloResumen.Location = new System.Drawing.Point(18, 38);
             this.LSubtituloResumen.Name = "LSubtituloResumen";
-            this.LSubtituloResumen.Size = new System.Drawing.Size(623, 24);
+            this.LSubtituloResumen.Size = new System.Drawing.Size(646, 24);
             this.LSubtituloResumen.TabIndex = 1;
             this.LSubtituloResumen.Text = "Balance contable acumulado de la sesión en curso";
             // 
@@ -388,7 +420,7 @@
             this.LTituloResumen.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
             this.LTituloResumen.Location = new System.Drawing.Point(18, 14);
             this.LTituloResumen.Name = "LTituloResumen";
-            this.LTituloResumen.Size = new System.Drawing.Size(623, 24);
+            this.LTituloResumen.Size = new System.Drawing.Size(646, 24);
             this.LTituloResumen.TabIndex = 0;
             this.LTituloResumen.Text = "ESTADO DE RECAUDACIÓN Y MOVIMIENTOS";
             // 
@@ -400,23 +432,24 @@
             this.PTarjetaAcciones.Controls.Add(this.LSubtituloAcciones);
             this.PTarjetaAcciones.Controls.Add(this.LTituloAcciones);
             this.PTarjetaAcciones.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PTarjetaAcciones.Location = new System.Drawing.Point(681, 0);
+            this.PTarjetaAcciones.Location = new System.Drawing.Point(704, 0);
             this.PTarjetaAcciones.Margin = new System.Windows.Forms.Padding(10, 0, 0, 0);
             this.PTarjetaAcciones.Name = "PTarjetaAcciones";
             this.PTarjetaAcciones.Padding = new System.Windows.Forms.Padding(18, 14, 18, 14);
-            this.PTarjetaAcciones.Size = new System.Drawing.Size(477, 604);
+            this.PTarjetaAcciones.Size = new System.Drawing.Size(454, 604);
             this.PTarjetaAcciones.TabIndex = 1;
             // 
             // PContenedorBotones
             // 
             this.PContenedorBotones.Controls.Add(this.BCerrarTurno);
-            this.PContenedorBotones.Controls.Add(this.BMovimientoMenor);
+            this.PContenedorBotones.Controls.Add(this.BEgreso);
+            this.PContenedorBotones.Controls.Add(this.BIngreso);
             this.PContenedorBotones.Controls.Add(this.BAbrirTurno);
             this.PContenedorBotones.Dock = System.Windows.Forms.DockStyle.Fill;
             this.PContenedorBotones.Location = new System.Drawing.Point(18, 62);
             this.PContenedorBotones.Name = "PContenedorBotones";
             this.PContenedorBotones.Padding = new System.Windows.Forms.Padding(0, 15, 0, 0);
-            this.PContenedorBotones.Size = new System.Drawing.Size(439, 526);
+            this.PContenedorBotones.Size = new System.Drawing.Size(416, 526);
             this.PContenedorBotones.TabIndex = 2;
             // 
             // BCerrarTurno
@@ -428,35 +461,55 @@
             this.BCerrarTurno.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BCerrarTurno.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
             this.BCerrarTurno.ForeColor = System.Drawing.Color.White;
-            this.BCerrarTurno.Location = new System.Drawing.Point(0, 145);
+            this.BCerrarTurno.Location = new System.Drawing.Point(0, 210);
             this.BCerrarTurno.Name = "BCerrarTurno";
             this.BCerrarTurno.Padding = new System.Windows.Forms.Padding(18, 0, 0, 0);
-            this.BCerrarTurno.Size = new System.Drawing.Size(439, 55);
-            this.BCerrarTurno.TabIndex = 2;
+            this.BCerrarTurno.Size = new System.Drawing.Size(416, 55);
+            this.BCerrarTurno.TabIndex = 3;
             this.BCerrarTurno.Text = "🔒 Arqueo y Cierre de Turno";
             this.BCerrarTurno.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             this.BCerrarTurno.UseVisualStyleBackColor = false;
             this.BCerrarTurno.Click += new System.EventHandler(this.BCerrarTurno_Click);
             // 
-            // BMovimientoMenor
+            // BEgreso
             // 
-            this.BMovimientoMenor.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(48)))), ((int)(((byte)(51)))), ((int)(((byte)(57)))));
-            this.BMovimientoMenor.Cursor = System.Windows.Forms.Cursors.Hand;
-            this.BMovimientoMenor.Dock = System.Windows.Forms.DockStyle.Top;
-            this.BMovimientoMenor.FlatAppearance.BorderSize = 0;
-            this.BMovimientoMenor.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.BMovimientoMenor.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
-            this.BMovimientoMenor.ForeColor = System.Drawing.Color.White;
-            this.BMovimientoMenor.Location = new System.Drawing.Point(0, 80);
-            this.BMovimientoMenor.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
-            this.BMovimientoMenor.Name = "BMovimientoMenor";
-            this.BMovimientoMenor.Padding = new System.Windows.Forms.Padding(18, 0, 0, 0);
-            this.BMovimientoMenor.Size = new System.Drawing.Size(439, 55);
-            this.BMovimientoMenor.TabIndex = 1;
-            this.BMovimientoMenor.Text = "💸 Registrar Ingreso / Egreso Menor";
-            this.BMovimientoMenor.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
-            this.BMovimientoMenor.UseVisualStyleBackColor = false;
-            this.BMovimientoMenor.Click += new System.EventHandler(this.BMovimientoMenor_Click);
+            this.BEgreso.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(192)))), ((int)(((byte)(57)))), ((int)(((byte)(43)))));
+            this.BEgreso.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BEgreso.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BEgreso.FlatAppearance.BorderSize = 0;
+            this.BEgreso.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BEgreso.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.BEgreso.ForeColor = System.Drawing.Color.White;
+            this.BEgreso.Location = new System.Drawing.Point(0, 145);
+            this.BEgreso.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+            this.BEgreso.Name = "BEgreso";
+            this.BEgreso.Padding = new System.Windows.Forms.Padding(18, 0, 0, 0);
+            this.BEgreso.Size = new System.Drawing.Size(416, 55);
+            this.BEgreso.TabIndex = 2;
+            this.BEgreso.Text = "➖ Registrar Egreso";
+            this.BEgreso.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.BEgreso.UseVisualStyleBackColor = false;
+            this.BEgreso.Click += new System.EventHandler(this.BEgreso_Click);
+            // 
+            // BIngreso
+            // 
+            this.BIngreso.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
+            this.BIngreso.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.BIngreso.Dock = System.Windows.Forms.DockStyle.Top;
+            this.BIngreso.FlatAppearance.BorderSize = 0;
+            this.BIngreso.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.BIngreso.Font = new System.Drawing.Font("Segoe UI", 10F, System.Drawing.FontStyle.Bold);
+            this.BIngreso.ForeColor = System.Drawing.Color.White;
+            this.BIngreso.Location = new System.Drawing.Point(0, 80);
+            this.BIngreso.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
+            this.BIngreso.Name = "BIngreso";
+            this.BIngreso.Padding = new System.Windows.Forms.Padding(18, 0, 0, 0);
+            this.BIngreso.Size = new System.Drawing.Size(416, 55);
+            this.BIngreso.TabIndex = 1;
+            this.BIngreso.Text = "➕ Registrar Ingreso";
+            this.BIngreso.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
+            this.BIngreso.UseVisualStyleBackColor = false;
+            this.BIngreso.Click += new System.EventHandler(this.BIngreso_Click);
             // 
             // BAbrirTurno
             // 
@@ -471,7 +524,7 @@
             this.BAbrirTurno.Margin = new System.Windows.Forms.Padding(0, 0, 0, 10);
             this.BAbrirTurno.Name = "BAbrirTurno";
             this.BAbrirTurno.Padding = new System.Windows.Forms.Padding(18, 0, 0, 0);
-            this.BAbrirTurno.Size = new System.Drawing.Size(439, 55);
+            this.BAbrirTurno.Size = new System.Drawing.Size(416, 55);
             this.BAbrirTurno.TabIndex = 0;
             this.BAbrirTurno.Text = "🔓 Apertura de Turno y Caja";
             this.BAbrirTurno.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
@@ -485,9 +538,9 @@
             this.LSubtituloAcciones.ForeColor = System.Drawing.Color.Gray;
             this.LSubtituloAcciones.Location = new System.Drawing.Point(18, 38);
             this.LSubtituloAcciones.Name = "LSubtituloAcciones";
-            this.LSubtituloAcciones.Size = new System.Drawing.Size(439, 24);
+            this.LSubtituloAcciones.Size = new System.Drawing.Size(416, 24);
             this.LSubtituloAcciones.TabIndex = 1;
-            this.LSubtituloAcciones.Text = "Control operativo de inicio, egresos menores y corte de turno";
+            this.LSubtituloAcciones.Text = "Control operativo de inicio, ingresos, egresos y corte de turno";
             // 
             // LTituloAcciones
             // 
@@ -496,7 +549,7 @@
             this.LTituloAcciones.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(212)))), ((int)(((byte)(131)))), ((int)(((byte)(53)))));
             this.LTituloAcciones.Location = new System.Drawing.Point(18, 14);
             this.LTituloAcciones.Name = "LTituloAcciones";
-            this.LTituloAcciones.Size = new System.Drawing.Size(439, 24);
+            this.LTituloAcciones.Size = new System.Drawing.Size(416, 24);
             this.LTituloAcciones.TabIndex = 0;
             this.LTituloAcciones.Text = "OPERACIONES DE CAJA";
             // 
@@ -521,7 +574,7 @@
             this.LEstadoTurno.Name = "LEstadoTurno";
             this.LEstadoTurno.Size = new System.Drawing.Size(300, 48);
             this.LEstadoTurno.TabIndex = 1;
-            this.LEstadoTurno.Text = "ESTADO: CAJA ABIERTA ●";
+            this.LEstadoTurno.Text = "ESTADO: CAJA CERRADA ●";
             this.LEstadoTurno.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
             // LInfoOperador
@@ -533,7 +586,7 @@
             this.LInfoOperador.Name = "LInfoOperador";
             this.LInfoOperador.Size = new System.Drawing.Size(650, 48);
             this.LInfoOperador.TabIndex = 0;
-            this.LInfoOperador.Text = "Operador de Caja: - | Turno: - | Fecha: -";
+            this.LInfoOperador.Text = "Operador de Caja: - | Fecha: -";
             this.LInfoOperador.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
             // 
             // PEncabezado
@@ -586,12 +639,14 @@
             this.PGrupoFondoInicial.PerformLayout();
             this.PGrupoVentasEfectivo.ResumeLayout(false);
             this.PGrupoVentasEfectivo.PerformLayout();
+            this.PGrupoIngreso.ResumeLayout(false);
+            this.PGrupoIngreso.PerformLayout();
+            this.PGrupoEgresosMenores.ResumeLayout(false);
+            this.PGrupoEgresosMenores.PerformLayout();
             this.PGrupoCobrosDigitales.ResumeLayout(false);
             this.PGrupoCobrosDigitales.PerformLayout();
             this.PGrupoCobrosTarjetas.ResumeLayout(false);
             this.PGrupoCobrosTarjetas.PerformLayout();
-            this.PGrupoEgresosMenores.ResumeLayout(false);
-            this.PGrupoEgresosMenores.PerformLayout();
             this.PGrupoTotalGaveta.ResumeLayout(false);
             this.PGrupoTotalGaveta.PerformLayout();
             this.PTarjetaAcciones.ResumeLayout(false);
@@ -623,15 +678,18 @@
         private System.Windows.Forms.Panel PGrupoVentasEfectivo;
         private System.Windows.Forms.Label LVentasEfectivo;
         private System.Windows.Forms.TextBox TBVentasEfectivo;
+        private System.Windows.Forms.Panel PGrupoIngreso;
+        private System.Windows.Forms.Label LINGRESO;
+        private System.Windows.Forms.TextBox TBINGRESO;
+        private System.Windows.Forms.Panel PGrupoEgresosMenores;
+        private System.Windows.Forms.Label LEgresosMenores;
+        private System.Windows.Forms.TextBox TBEgresosMenores;
         private System.Windows.Forms.Panel PGrupoCobrosDigitales;
         private System.Windows.Forms.Label LCobrosDigitales;
         private System.Windows.Forms.TextBox TBCobrosDigitales;
         private System.Windows.Forms.Panel PGrupoCobrosTarjetas;
         private System.Windows.Forms.Label LCobrosTarjetas;
         private System.Windows.Forms.TextBox TBCobrosTarjetas;
-        private System.Windows.Forms.Panel PGrupoEgresosMenores;
-        private System.Windows.Forms.Label LEgresosMenores;
-        private System.Windows.Forms.TextBox TBEgresosMenores;
         private System.Windows.Forms.Panel PGrupoTotalGaveta;
         private System.Windows.Forms.Label LTotalGaveta;
         private System.Windows.Forms.TextBox TBTotalGaveta;
@@ -640,7 +698,8 @@
         private System.Windows.Forms.Label LSubtituloAcciones;
         private System.Windows.Forms.Panel PContenedorBotones;
         private System.Windows.Forms.Button BAbrirTurno;
-        private System.Windows.Forms.Button BMovimientoMenor;
+        private System.Windows.Forms.Button BIngreso;
+        private System.Windows.Forms.Button BEgreso;
         private System.Windows.Forms.Button BCerrarTurno;
     }
 }

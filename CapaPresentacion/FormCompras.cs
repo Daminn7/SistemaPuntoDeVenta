@@ -1,15 +1,14 @@
-﻿using CapaDatos.DTOs;
-using System;
+﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Globalization;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using CapaDatos.DTOs;
 
 namespace CapaPresentacion
 {
@@ -17,8 +16,8 @@ namespace CapaPresentacion
     {
         private DataTable _dtDetalle = new DataTable();
         private bool _actualizandoNroFactura = false;
+        private CancellationTokenSource _ctsCarga;
 
-        // Catálogo simulado (reemplazable por llamadas a _productoLogica y _proveedorLogica)
         private class ItemCatalogo
         {
             public int Id { get; set; }
@@ -35,8 +34,11 @@ namespace CapaPresentacion
             InitializeComponent();
         }
 
-        private void FormCompras_Load(object sender, EventArgs e)
+        private async void FormCompras_Load(object sender, EventArgs e)
         {
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = GenerarIconoCompras(Color.FromArgb(212, 131, 53));
 
@@ -47,9 +49,36 @@ namespace CapaPresentacion
             ConfigurarFiltrosDetalle();
             CargarDesplegables();
             CargarCatalogoSimulado();
-            LimpiarFormularioCompleto();
+
+            try
+            {
+                await CargarProveedoresAsync();
+                if (token.IsCancellationRequested) return;
+
+                await CargarProductosAsync();
+                if (token.IsCancellationRequested) return;
+            }
+            catch (OperationCanceledException) { }
+
+            if (!this.IsDisposed)
+                LimpiarFormularioCompleto();
         }
 
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+            base.OnFormClosing(e);
+        }
+
+        // ============================================================
+        // ICONOS Y ESTILOS
+        // ============================================================
         private void AsignarEstiloEIconos()
         {
             try
@@ -57,10 +86,7 @@ namespace CapaPresentacion
                 BGuardarCompra.Image = EscalarIcono(Properties.Resources.boton_guardar_blanco, 32, 32);
                 BCancelar.Image = EscalarIcono(Properties.Resources.boton_desactivar_blanco, 32, 32);
             }
-            catch
-            {
-                // Fallback silencioso
-            }
+            catch { }
         }
 
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
@@ -83,7 +109,6 @@ namespace CapaPresentacion
             using (Graphics g = Graphics.FromImage(bmp))
             {
                 g.SmoothingMode = SmoothingMode.AntiAlias;
-
                 using (Pen pen = new Pen(color, 2.2f))
                 using (Brush brush = new SolidBrush(color))
                 {
@@ -105,12 +130,14 @@ namespace CapaPresentacion
             }
             return bmp;
         }
+
+        // ============================================================
+        // FILTROS DE DETALLE
+        // ============================================================
         private void ConfigurarFiltrosDetalle()
         {
-            // Filtro al hacer clic en Buscar
             btnBuscar.Click += (s, e) => AplicarFiltroDetalle();
 
-            // Filtro al presionar Enter en el cuadro de búsqueda
             TBBuscar.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter)
@@ -137,6 +164,10 @@ namespace CapaPresentacion
                     $"ColCodigo LIKE '%{texto}%' OR ColDescripcion LIKE '%{texto}%'";
             }
         }
+
+        // ============================================================
+        // ESTRUCTURA DEL DETALLE
+        // ============================================================
         private void InicializarEstructuraDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -160,6 +191,9 @@ namespace CapaPresentacion
             DGVDetalleCompra.DataSource = _dtDetalle;
         }
 
+        // ============================================================
+        // RESTRICCIONES DE TECLADO
+        // ============================================================
         private void ConfigurarRestriccionesTeclado()
         {
             TBNroComprobante.MaxLength = 20;
@@ -217,6 +251,9 @@ namespace CapaPresentacion
             };
         }
 
+        // ============================================================
+        // CARGAR DESPLEGABLES Y CATÁLOGO
+        // ============================================================
         private void CargarDesplegables()
         {
             CBTipoComprobante.Items.Clear();
@@ -252,21 +289,18 @@ namespace CapaPresentacion
             CBProducto.DataSource = null;
             CBProducto.Items.Clear();
 
-            // 1. Si no hay nada seleccionado, bloqueamos el combo de productos
             if (CBProveedor.SelectedIndex == -1 || string.IsNullOrWhiteSpace(CBProveedor.Text))
             {
                 CBProducto.Enabled = false;
                 return;
             }
 
-            // 2. Comparamos contra la propiedad que ya existe en tu clase
             string proveedorSeleccionado = CBProveedor.Text.Trim();
 
             var productosFiltrados = _catalogoDisponible
                 .Where(p => string.Equals(p.ProveedorAsociado?.Trim(), proveedorSeleccionado, StringComparison.OrdinalIgnoreCase))
                 .ToList();
 
-            // 3. Si tiene productos, los cargamos; si no, queda deshabilitado
             if (productosFiltrados.Count > 0)
             {
                 CBProducto.DisplayMember = "Nombre";
@@ -294,9 +328,9 @@ namespace CapaPresentacion
             }
         }
 
-        // =========================================================================
-        // ACCIONES DE DETALLE (AGREGAR / QUITAR RENGLÓN)
-        // =========================================================================
+        // ============================================================
+        // AGREGAR / QUITAR RENGLÓN
+        // ============================================================
         private void BAgregarItem_Click(object sender, EventArgs e)
         {
             if (CBProducto.SelectedItem == null || !(CBProducto.SelectedItem is ItemCatalogo item))
@@ -322,7 +356,6 @@ namespace CapaPresentacion
 
             decimal subtotalRenglon = costo * cantidad;
 
-            // Si ya existe en la lista, acumulamos la cantidad
             DataRow filaExistente = _dtDetalle.AsEnumerable()
                 .FirstOrDefault(r => Convert.ToInt32(r["ColIdProducto"]) == item.Id);
 
@@ -350,7 +383,6 @@ namespace CapaPresentacion
 
             RecalcularLiquidacion();
 
-            // Limpiamos los campos del ítem
             CBProducto.SelectedIndex = -1;
             TBCostoUnitario.Clear();
             NUDCantidad.Value = 1;
@@ -361,7 +393,6 @@ namespace CapaPresentacion
         {
             if (e.RowIndex < 0) return;
 
-            // Clic en la columna "Quitar"
             if (DGVDetalleCompra.Columns[e.ColumnIndex].Name == "ColAccionEliminar")
             {
                 _dtDetalle.Rows.RemoveAt(e.RowIndex);
@@ -389,9 +420,9 @@ namespace CapaPresentacion
             TBTotalCompra.Text = totalFinal.ToString("N2");
         }
 
-        // =========================================================================
-        // CONFIRMACIÓN Y CANCELACIÓN DEL COMPROBANTE
-        // =========================================================================
+        // ============================================================
+        // GUARDAR / CANCELAR
+        // ============================================================
         private void BGuardarCompra_Click(object sender, EventArgs e)
         {
             if (CBProveedor.SelectedIndex == -1)
@@ -415,7 +446,6 @@ namespace CapaPresentacion
                 return;
             }
 
-            // Aquí se conecta con _compraLogica.RegistrarCompra(dto) cuando esté disponible
             DialogResult confirmacion = MessageBox.Show(
                 $"¿Desea asentar la factura {TBNroComprobante.Text} por un total de $ {TBTotalCompra.Text}?\n\nLos {_dtDetalle.Rows.Count} artículos ingresarán inmediatamente al stock.",
                 "Confirmar Recepción de Compra",
@@ -466,7 +496,9 @@ namespace CapaPresentacion
                 DGVDetalleCompra.CurrentCell = null;
         }
 
-        // 1. ALTA RÁPIDA DE PROVEEDOR DESDE COMPRAS
+        // ============================================================
+        // ALTA RÁPIDA DE PROVEEDOR / PRODUCTO
+        // ============================================================
         private async void BNuevoProveedor_Click(object sender, EventArgs e)
         {
             using (FormProveedores frmProv = new FormProveedores())
@@ -475,16 +507,11 @@ namespace CapaPresentacion
                 frmProv.FormBorderStyle = FormBorderStyle.FixedDialog;
                 frmProv.ShowInTaskbar = false;
 
-                // Abre el formulario como diálogo modal
                 if (frmProv.ShowDialog(this) == DialogResult.OK || frmProv.DialogResult == DialogResult.Cancel)
                 {
-                    // Guarda el ID o texto seleccionado previamente si existía
                     var proveedorPrevio = CBProveedor.SelectedValue;
-
-                    // Recarga los proveedores reales desde tu capa lógica / API
                     await CargarProveedoresAsync();
 
-                    // Si tenía uno seleccionado, intenta conservarlo
                     if (proveedorPrevio != null)
                     {
                         CBProveedor.SelectedValue = proveedorPrevio;
@@ -493,9 +520,6 @@ namespace CapaPresentacion
             }
         }
 
-        // =========================================================================
-        // 2. ALTA RÁPIDA DE PRODUCTO DESDE COMPRAS
-        // =========================================================================
         private async void BNuevoProducto_Click(object sender, EventArgs e)
         {
             using (FormProductos frmProd = new FormProductos())
@@ -504,55 +528,47 @@ namespace CapaPresentacion
                 frmProd.FormBorderStyle = FormBorderStyle.FixedDialog;
                 frmProd.ShowInTaskbar = false;
 
-                // Abre el catálogo para que dé de alta el artículo nuevo
                 if (frmProd.ShowDialog(this) == DialogResult.OK || frmProd.DialogResult == DialogResult.Cancel)
                 {
-                    // Recarga el catálogo general de productos desde la capa lógica
                     await CargarProductosAsync();
-
-                    // Si hay un proveedor seleccionado en la cabecera de compras,
-                    // refrescamos la lista filtrada de productos de ese proveedor:
                     ActualizarProductosPorProveedor();
                 }
             }
         }
 
-        // Método auxiliar para refrescar el combo de productos según el proveedor actual:
         private void ActualizarProductosPorProveedor()
         {
             if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
             {
-                //CBProducto.DataSource = null;
-                //CBProducto.Items.Clear();
                 return;
             }
-
-            // Dispara el refresco del combo de productos vinculados al proveedor
-            //CBProveedor_SelectedIndexChanged(CBProveedor, EventArgs.Empty);
         }
-        // VARIABLES EN MEMORIA EN FormCompras.cs hasta que se conecte dbo
+
+        // ============================================================
+        // CARGA DE DATOS DESDE API (o simulación)
+        // ============================================================
         private List<ProductoDto> _listaProductosCompleta = new List<ProductoDto>();
         private List<ProveedorDto> _listaProveedores = new List<ProveedorDto>();
 
-        // MÉTODOS DE CARGA DE DATOS ASYNC
         private async Task CargarProveedoresAsync()
         {
             try
             {
-                // Conexión con tu capa de negocio real:
-                // _listaProveedores = await _proveedorLogica.ListarActivos();
-                await Task.Delay(50); // Simulación temporal si aún no enlazas la lógica
+                await Task.Delay(50);
 
                 CBProveedor.DataSource = null;
-                CBProveedor.DisplayMember = "RazonSocial"; // O "Nombre" según tu DTO
+                CBProveedor.DisplayMember = "RazonSocial";
                 CBProveedor.ValueMember = "Id";
                 CBProveedor.DataSource = _listaProveedores;
                 CBProveedor.SelectedIndex = -1;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
 
@@ -560,14 +576,15 @@ namespace CapaPresentacion
         {
             try
             {
-                // Conexión con tu capa de negocio real:
-                // _listaProductosCompleta = await _productoLogica.ListarActivos();
-                await Task.Delay(50); // Simulación temporal si aún no enlazas la lógica
+                await Task.Delay(50);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
-                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (!this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
         }
     }

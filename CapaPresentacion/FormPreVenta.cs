@@ -1,23 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Data;
 using System.Drawing;
 using System.Drawing.Drawing2D;
 using System.Drawing.Printing;
 using System.Linq;
-using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using static CapaPresentacion.FormPrincipal;
 using CapaLogica;
 using CapaDatos.DTOs;
+using CapaDatos.Helpers;
 
 namespace CapaPresentacion
 {
     public partial class FormPreVenta : Form
     {
-        // Estructura interna para el catálogo de insumos
         private class ArticuloCatalogo
         {
             public int Id { get; set; }
@@ -32,20 +31,17 @@ namespace CapaPresentacion
         private DataTable _dtDetalle = new DataTable();
         private ArticuloCatalogo _insumoSeleccionado = null;
 
-        // ✅ Clientes reales
         private readonly ClienteLogica _clienteLogica = new ClienteLogica();
         private List<ClienteResponseDto> _clientes;
 
-        // ✅ Productos reales
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
         private List<ProductoDto> _productos;
 
-        // ✅ Órdenes de venta (API)
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
 
-        // ✅ NUEVO: Controla si se está editando un presupuesto existente
         private int _ordenIdCargado = 0;
         private string _tituloOriginal = "PREVENTA Y ATENCIÓN A CLIENTES";
+        private CancellationTokenSource _ctsCarga;
 
         public FormPreVenta()
         {
@@ -53,21 +49,46 @@ namespace CapaPresentacion
             ConfigurarBuscadorReactivo();
         }
 
-        // ✅ MODIFICADO: Ahora cancela los vencidos al iniciar
         private async void FormPreVenta_Load(object sender, EventArgs e)
         {
+            _ctsCarga = new CancellationTokenSource();
+            var token = _ctsCarga.Token;
+
             AsignarIconoTitulo();
             _tituloOriginal = LTituloPrincipal.Text;
 
-            await CancelarPresupuestosVencidosAsync();
-            await CargarClientesAsync();
-            await CargarProductosAsync();
+            try
+            {
+                await CancelarPresupuestosVencidosAsync();
+                if (token.IsCancellationRequested) return;
+
+                await CargarClientesAsync();
+                if (token.IsCancellationRequested) return;
+
+                await CargarProductosAsync();
+                if (token.IsCancellationRequested) return;
+            }
+            catch (OperationCanceledException) { }
+
+            if (this.IsDisposed || this.Disposing) return;
+
             ConfigurarEstructuraDetalle();
             LimpiarFormulario();
             ActualizarBotonGuardar();
         }
 
-        // ✅ NUEVO: Cancelar vencidos al iniciar
+        protected override void OnFormClosing(FormClosingEventArgs e)
+        {
+            try
+            {
+                _ctsCarga?.Cancel();
+                _ctsCarga?.Dispose();
+                _ctsCarga = null;
+            }
+            catch { }
+            base.OnFormClosing(e);
+        }
+
         private async Task CancelarPresupuestosVencidosAsync()
         {
             try
@@ -115,9 +136,6 @@ namespace CapaPresentacion
                 PBIconoTitulo.Image = DibujarIconoPreVenta(Color.FromArgb(212, 131, 53));
         }
 
-        // ============================================================
-        // ✅ Carga productos desde la API
-        // ============================================================
         private async Task CargarProductosAsync()
         {
             try
@@ -265,9 +283,6 @@ namespace CapaPresentacion
             };
         }
 
-        // ============================================================
-        // CLIENTES
-        // ============================================================
         private async Task CargarClientesAsync()
         {
             try
@@ -324,9 +339,6 @@ namespace CapaPresentacion
             return 0;
         }
 
-        // ============================================================
-        // DETALLE
-        // ============================================================
         private void ConfigurarEstructuraDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -478,28 +490,20 @@ namespace CapaPresentacion
                 DGVDetalle.CurrentCell = null;
         }
 
-        // ============================================================
-        // ✅ NUEVO: Actualizar botón Guardar según modo
-        // ============================================================
         private void ActualizarBotonGuardar()
         {
             if (_ordenIdCargado > 0)
             {
-                // Editando presupuesto existente → Guardar deshabilitado
                 BGuardarPresupuesto.Enabled = false;
                 BGuardarPresupuesto.BackColor = Color.FromArgb(180, 180, 180);
             }
             else
             {
-                // Modo nuevo → Guardar habilitado
                 BGuardarPresupuesto.Enabled = true;
                 BGuardarPresupuesto.BackColor = Color.FromArgb(41, 128, 185);
             }
         }
 
-        // ============================================================
-        // ✅ BOTÓN: Cargar Presupuesto Pendiente
-        // ============================================================
         private async void BCargarPresupuesto_Click(object sender, EventArgs e)
         {
             try
@@ -508,9 +512,7 @@ namespace CapaPresentacion
 
                 var ahora = DateTime.Now;
                 var pendientes = todas?
-                    .Where(o => o.EstadoVentaId == 1 &&                          // Pendiente
-                                o.FechaValidez.HasValue &&
-                                o.FechaValidez.Value >= ahora)                   // No vencido
+                    .Where(o => o.EstadoVentaId == 1 && o.FechaValidez.HasValue && o.FechaValidez.Value >= ahora)
                     .OrderByDescending(o => o.FechaCreacion)
                     .ToList() ?? new List<OrdenVentaDto>();
 
@@ -549,9 +551,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ Modal de selección de presupuestos
-        // ============================================================
         private Form CrearModalSeleccionPresupuesto(List<OrdenVentaDto> pendientes)
         {
             var modal = new Form
@@ -606,9 +605,11 @@ namespace CapaPresentacion
             {
                 int cantItems = orden.Detalles?.Sum(d => d.Cantidad) ?? 0;
 
+                string fechaStr = FechaHelper.ToArgentinaString(orden.FechaCreacion, "dd/MM/yyyy HH:mm");
+
                 dgv.Rows.Add(
                     orden.NumeroPresupuesto ?? $"#{orden.IdOrden}",
-                    orden.FechaCreacion.ToString("dd/MM/yyyy HH:mm"),
+                    fechaStr,
                     orden.ClienteNombre ?? "Consumidor Final",
                     cantItems,
                     orden.Total.ToString("N2"),
@@ -677,16 +678,12 @@ namespace CapaPresentacion
             return modal;
         }
 
-        // ============================================================
-        // ✅ Carga la orden seleccionada en el formulario
-        // ============================================================
         private async Task CargarPresupuestoEnFormularioAsync(OrdenVentaDto orden)
         {
             try
             {
                 _dtDetalle.Rows.Clear();
 
-                // 1. Cargar el cliente
                 bool clienteEncontrado = false;
                 for (int i = 0; i < CBClientes.Items.Count; i++)
                 {
@@ -710,7 +707,6 @@ namespace CapaPresentacion
                     CBClientes.SelectedIndex = 0;
                 }
 
-                // 2. Traer la orden completa con detalles
                 var ordenCompleta = await _ordenVentaLogica.ObtenerPorId(orden.IdOrden);
 
                 if (ordenCompleta?.Detalles == null || ordenCompleta.Detalles.Count == 0)
@@ -720,7 +716,6 @@ namespace CapaPresentacion
                     return;
                 }
 
-                // 3. Detectar tipo de precio
                 bool esMayorista = false;
                 foreach (var detalle in ordenCompleta.Detalles)
                 {
@@ -737,7 +732,6 @@ namespace CapaPresentacion
                 RBPremioMayorista.Checked = esMayorista;
                 RBPremioMinorista.Checked = !esMayorista;
 
-                // 4. Cargar los ítems
                 foreach (var detalle in ordenCompleta.Detalles)
                 {
                     var articulo = _catalogoInsumos.FirstOrDefault(a => a.Id == detalle.ProductoId);
@@ -754,7 +748,6 @@ namespace CapaPresentacion
                     );
                 }
 
-                // 5. Actualizar totales y estado
                 ActualizarTotales();
 
                 _ordenIdCargado = orden.IdOrden;
@@ -778,9 +771,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ BOTÓN: Guardar Presupuesto (solo modo nuevo)
-        // ============================================================
         private async void BGuardarPresupuesto_Click(object sender, EventArgs e)
         {
             if (_ordenIdCargado > 0)
@@ -856,9 +846,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ BOTÓN: Imprimir (sin guardar)
-        // ============================================================
         private void BImprimirPresupuesto_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count == 0)
@@ -879,11 +866,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ BOTÓN: Enviar a Caja
-        //   - Si hay presupuesto cargado → Actualizar detalles + Confirmar
-        //   - Si es nuevo → Crear orden + Confirmar
-        // ============================================================
         private async void BEnviarACaja_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count == 0)
@@ -913,7 +895,6 @@ namespace CapaPresentacion
             {
                 BEnviarACaja.Enabled = false;
 
-                // Armar el DTO con los datos actuales
                 var dto = new CrearOrdenVentaDto
                 {
                     ClienteId = idCliente,
@@ -938,18 +919,15 @@ namespace CapaPresentacion
 
                 if (_ordenIdCargado > 0)
                 {
-                    // ✅ Actualizar detalles de la orden cargada
                     await _ordenVentaLogica.ActualizarDetalles(_ordenIdCargado, dto);
                     idOrden = _ordenIdCargado;
                 }
                 else
                 {
-                    // ✅ Crear nueva orden
                     var respuesta = await _ordenVentaLogica.Crear(dto);
                     idOrden = respuesta.IdOrden;
                 }
 
-                // Confirmar (descuenta stock y valida)
                 await _ordenVentaLogica.Confirmar(idOrden);
 
                 MessageBox.Show(
@@ -963,7 +941,6 @@ namespace CapaPresentacion
             }
             catch (Exception ex)
             {
-                // El mensaje puede incluir la lista de productos sin stock
                 MessageBox.Show($"Error al enviar a Caja:\n{ex.Message}", "Error",
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Error);
@@ -974,9 +951,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ✅ BOTÓN: Limpiar
-        // ============================================================
         private void BCancelarVenta_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count > 0 || _ordenIdCargado > 0)
@@ -1014,9 +988,6 @@ namespace CapaPresentacion
             ActualizarTotales();
         }
 
-        // ============================================================
-        // GENERAR PDF
-        // ============================================================
         private void GenerarPDFPresupuesto(string numeroPresupuesto)
         {
             PrintDocument pd = new PrintDocument();
@@ -1085,9 +1056,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // CLASES AUXILIARES
-        // ============================================================
         private class ClienteItem
         {
             public int IdCliente { get; set; }
