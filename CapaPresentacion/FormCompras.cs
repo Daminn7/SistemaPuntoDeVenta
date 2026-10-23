@@ -9,6 +9,8 @@ using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using CapaDatos.DTOs;
+using CapaLogica;
+using static CapaPresentacion.FormPrincipal;
 
 namespace CapaPresentacion
 {
@@ -18,16 +20,13 @@ namespace CapaPresentacion
         private bool _actualizandoNroFactura = false;
         private CancellationTokenSource _ctsCarga;
 
-        private class ItemCatalogo
-        {
-            public int Id { get; set; }
-            public string Codigo { get; set; }
-            public string Nombre { get; set; }
-            public decimal UltimoCosto { get; set; }
-            public string ProveedorAsociado { get; set; }
-        }
+        // ✅ Lógica de la API
+        private readonly CompraLogica _compraLogica = new CompraLogica();
+        private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
+        private readonly ProductoLogica _productoLogica = new ProductoLogica();
 
-        private List<ItemCatalogo> _catalogoDisponible = new List<ItemCatalogo>();
+        private List<ProveedorDto> _proveedoresReales = new List<ProveedorDto>();
+        private List<ProductoDto> _productosReales = new List<ProductoDto>();
 
         public FormCompras()
         {
@@ -47,15 +46,15 @@ namespace CapaPresentacion
             ConfigurarFormatoNroComprobante();
             InicializarEstructuraDetalle();
             ConfigurarFiltrosDetalle();
-            CargarDesplegables();
-            CargarCatalogoSimulado();
+            CargarDesplegablesFijos();
 
             try
             {
-                await CargarProveedoresAsync();
-                if (token.IsCancellationRequested) return;
-
-                await CargarProductosAsync();
+                // ✅ Cargar proveedores y productos REALES en paralelo
+                await Task.WhenAll(
+                    CargarProveedoresAsync(token),
+                    CargarProductosAsync(token)
+                );
                 if (token.IsCancellationRequested) return;
             }
             catch (OperationCanceledException) { }
@@ -76,6 +75,97 @@ namespace CapaPresentacion
             base.OnFormClosing(e);
         }
 
+        private async Task CargarProveedoresAsync(CancellationToken token = default(CancellationToken))
+        {
+            try
+            {
+                var proveedores = await _proveedorLogica.ObtenerTodos();
+                if (token.IsCancellationRequested || this.IsDisposed) return;
+
+                _proveedoresReales = proveedores?.Where(p => p.Estado).ToList() ?? new List<ProveedorDto>();
+
+                CBProveedor.DataSource = null;
+                CBProveedor.DisplayMember = "Nombre"; // o "RazonSocial" según tu DTO
+                CBProveedor.ValueMember = "Id";
+                CBProveedor.DataSource = _proveedoresReales;
+                CBProveedor.SelectedIndex = -1;
+            }
+            catch (Exception ex)
+            {
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private async Task CargarProductosAsync(CancellationToken token = default(CancellationToken))
+        {
+            try
+            {
+                var productos = await _productoLogica.ObtenerTodos();
+                if (token.IsCancellationRequested || this.IsDisposed) return;
+
+                _productosReales = productos?.Where(p => p.Estado).ToList() ?? new List<ProductoDto>();
+            }
+            catch (Exception ex)
+            {
+                if (!token.IsCancellationRequested && !this.IsDisposed)
+                {
+                    MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
+                        MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void CBProveedor_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            CBProducto.DataSource = null;
+            CBProducto.Items.Clear();
+
+            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
+            {
+                CBProducto.Enabled = false;
+                return;
+            }
+
+            int idProveedor = (int)CBProveedor.SelectedValue;
+
+            // Filtrar productos de ese proveedor
+            var productosDelProveedor = _productosReales
+                .Where(p => p.ProveedorId.HasValue && p.ProveedorId.Value == idProveedor)
+                .ToList();
+
+            if (productosDelProveedor.Count > 0)
+            {
+                CBProducto.DisplayMember = "Nombre";
+                CBProducto.ValueMember = "Id";
+                CBProducto.DataSource = productosDelProveedor;
+                CBProducto.SelectedIndex = -1;
+                CBProducto.Enabled = true;
+            }
+            else
+            {
+                CBProducto.Enabled = false;
+                MessageBox.Show("Este proveedor no tiene productos asociados.", "Aviso",
+                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+        }
+
+        private void CBProducto_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (CBProducto.SelectedItem is ProductoDto prod)
+            {
+                TBCostoUnitario.Text = prod.Costo.ToString("0.00");
+                NUDCantidad.Value = 1;
+            }
+            else
+            {
+                TBCostoUnitario.Clear();
+            }
+        }
+
         // ============================================================
         // ICONOS Y ESTILOS
         // ============================================================
@@ -92,7 +182,6 @@ namespace CapaPresentacion
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
-
             Bitmap nuevoBitmap = new Bitmap(ancho, alto);
             using (Graphics g = Graphics.FromImage(nuevoBitmap))
             {
@@ -132,12 +221,11 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // FILTROS DE DETALLE
+        // FILTROS Y ESTRUCTURA DE LA GRILLA
         // ============================================================
         private void ConfigurarFiltrosDetalle()
         {
             btnBuscar.Click += (s, e) => AplicarFiltroDetalle();
-
             TBBuscar.KeyDown += (s, e) =>
             {
                 if (e.KeyCode == Keys.Enter)
@@ -165,9 +253,6 @@ namespace CapaPresentacion
             }
         }
 
-        // ============================================================
-        // ESTRUCTURA DEL DETALLE
-        // ============================================================
         private void InicializarEstructuraDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -191,9 +276,6 @@ namespace CapaPresentacion
             DGVDetalleCompra.DataSource = _dtDetalle;
         }
 
-        // ============================================================
-        // RESTRICCIONES DE TECLADO
-        // ============================================================
         private void ConfigurarRestriccionesTeclado()
         {
             TBNroComprobante.MaxLength = 20;
@@ -251,10 +333,7 @@ namespace CapaPresentacion
             };
         }
 
-        // ============================================================
-        // CARGAR DESPLEGABLES Y CATÁLOGO
-        // ============================================================
-        private void CargarDesplegables()
+        private void CargarDesplegablesFijos()
         {
             CBTipoComprobante.Items.Clear();
             CBTipoComprobante.Items.AddRange(new object[] { "Factura A", "Factura B", "Factura C", "Remito de Compra" });
@@ -263,69 +342,6 @@ namespace CapaPresentacion
             CBFormaPago.Items.Clear();
             CBFormaPago.Items.AddRange(new object[] { "Efectivo", "Transferencia / Débito", "Cuenta Corriente (30 días)", "Cheque Propio" });
             CBFormaPago.SelectedIndex = 0;
-
-            string[] proveedores = { "Acindar S.A.", "Siderca Techint", "Distribuidora Metalúrgica S.R.L.", "Ferretería Industrial Mayorista" };
-            CBProveedor.Items.Clear();
-            CBProveedor.Items.AddRange(proveedores);
-            CBProveedor.SelectedIndex = -1;
-        }
-
-        private void CargarCatalogoSimulado()
-        {
-            _catalogoDisponible = new List<ItemCatalogo>
-            {
-                new ItemCatalogo { Id = 1, Codigo = "AC-001", Nombre = "Hierro del 8 Nervado (Barra 12m)", UltimoCosto = 12500m, ProveedorAsociado = "Acindar S.A." },
-                new ItemCatalogo { Id = 2, Codigo = "AC-002", Nombre = "Hierro del 10 Nervado (Barra 12m)", UltimoCosto = 19200m, ProveedorAsociado = "Acindar S.A." },
-                new ItemCatalogo { Id = 3, Codigo = "TB-101", Nombre = "Caño Estructural 40x40x1.6mm", UltimoCosto = 15800m, ProveedorAsociado = "Siderca Techint" },
-                new ItemCatalogo { Id = 4, Codigo = "TB-102", Nombre = "Caño Redondo 2 Pulgadas Calibre 16", UltimoCosto = 21400m, ProveedorAsociado = "Siderca Techint" },
-                new ItemCatalogo { Id = 5, Codigo = "CH-501", Nombre = "Chapa Galvanizada N° 25 (1.10 x 3.00)", UltimoCosto = 34500m, ProveedorAsociado = "Distribuidora Metalúrgica S.R.L." },
-                new ItemCatalogo { Id = 6, Codigo = "EL-009", Nombre = "Electrodos Punta Azul 2.5mm (Caja 5kg)", UltimoCosto = 28900m, ProveedorAsociado = "Ferretería Industrial Mayorista" },
-                new ItemCatalogo { Id = 7, Codigo = "DC-045", Nombre = "Disco de Corte 115x1.0mm (Pack x 25)", UltimoCosto = 11200m, ProveedorAsociado = "Ferretería Industrial Mayorista" }
-            };
-        }
-
-        private void CBProveedor_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            CBProducto.DataSource = null;
-            CBProducto.Items.Clear();
-
-            if (CBProveedor.SelectedIndex == -1 || string.IsNullOrWhiteSpace(CBProveedor.Text))
-            {
-                CBProducto.Enabled = false;
-                return;
-            }
-
-            string proveedorSeleccionado = CBProveedor.Text.Trim();
-
-            var productosFiltrados = _catalogoDisponible
-                .Where(p => string.Equals(p.ProveedorAsociado?.Trim(), proveedorSeleccionado, StringComparison.OrdinalIgnoreCase))
-                .ToList();
-
-            if (productosFiltrados.Count > 0)
-            {
-                CBProducto.DisplayMember = "Nombre";
-                CBProducto.ValueMember = "Id";
-                CBProducto.DataSource = productosFiltrados;
-                CBProducto.SelectedIndex = -1;
-                CBProducto.Enabled = true;
-            }
-            else
-            {
-                CBProducto.Enabled = false;
-            }
-        }
-
-        private void CBProducto_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (CBProducto.SelectedItem is ItemCatalogo item)
-            {
-                TBCostoUnitario.Text = item.UltimoCosto.ToString("0.00");
-                NUDCantidad.Value = 1;
-            }
-            else
-            {
-                TBCostoUnitario.Clear();
-            }
         }
 
         // ============================================================
@@ -333,7 +349,7 @@ namespace CapaPresentacion
         // ============================================================
         private void BAgregarItem_Click(object sender, EventArgs e)
         {
-            if (CBProducto.SelectedItem == null || !(CBProducto.SelectedItem is ItemCatalogo item))
+            if (!(CBProducto.SelectedItem is ProductoDto prod))
             {
                 MessageBox.Show("Seleccione un producto para agregar a la compra.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 CBProducto.Focus();
@@ -357,7 +373,7 @@ namespace CapaPresentacion
             decimal subtotalRenglon = costo * cantidad;
 
             DataRow filaExistente = _dtDetalle.AsEnumerable()
-                .FirstOrDefault(r => Convert.ToInt32(r["ColIdProducto"]) == item.Id);
+                .FirstOrDefault(r => Convert.ToInt32(r["ColIdProducto"]) == prod.Id);
 
             if (filaExistente != null)
             {
@@ -372,9 +388,9 @@ namespace CapaPresentacion
             else
             {
                 _dtDetalle.Rows.Add(
-                    item.Id,
-                    item.Codigo,
-                    item.Nombre,
+                    prod.Id,
+                    prod.CodigoInterno ?? "",
+                    prod.Nombre,
                     cantidad,
                     costo.ToString("0.00"),
                     subtotalRenglon.ToString("0.00")
@@ -421,11 +437,11 @@ namespace CapaPresentacion
         }
 
         // ============================================================
-        // GUARDAR / CANCELAR
+        // GUARDAR COMPRA (CONECTADO A LA API)
         // ============================================================
-        private void BGuardarCompra_Click(object sender, EventArgs e)
+        private async void BGuardarCompra_Click(object sender, EventArgs e)
         {
-            if (CBProveedor.SelectedIndex == -1)
+            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
             {
                 MessageBox.Show("Debe seleccionar un Proveedor.", "Validación", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 CBProveedor.Focus();
@@ -453,10 +469,54 @@ namespace CapaPresentacion
                 MessageBoxIcon.Question
             );
 
-            if (confirmacion == DialogResult.Yes)
+            if (confirmacion != DialogResult.Yes) return;
+
+            try
             {
-                MessageBox.Show("Compra registrada correctamente. El stock y los costos fueron actualizados.", "Éxito", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                BGuardarCompra.Enabled = false;
+
+                var nuevaCompra = new CrearCompraDto
+                {
+                    NumeroFactura = TBNroComprobante.Text.Trim(),
+                    ProveedorId = (int)CBProveedor.SelectedValue,
+                    PersonalId = SesionUsuario.IdPersonal,
+                    TipoComprobante = CBTipoComprobante.Text,
+                    FormaPago = CBFormaPago.Text,
+                    FechaEmision = DTPFechaEmision.Value,
+                    Detalles = new List<CrearDetalleCompraDto>()
+                };
+
+                foreach (DataRow row in _dtDetalle.Rows)
+                {
+                    nuevaCompra.Detalles.Add(new CrearDetalleCompraDto
+                    {
+                        ProductoId = Convert.ToInt32(row["ColIdProducto"]),
+                        Cantidad = Convert.ToInt32(row["ColCantidad"]),
+                        CostoUnitario = decimal.Parse(row["ColCostoUnitario"].ToString(), NumberStyles.Any, CultureInfo.InvariantCulture)
+                    });
+                }
+
+                var resultado = await _compraLogica.Crear(nuevaCompra);
+
+                MessageBox.Show(
+                    $"Compra registrada correctamente.\n\n" +
+                    $"Factura: {nuevaCompra.NumeroFactura}\n" +
+                    $"Total: {TBTotalCompra.Text}\n" +
+                    "El stock de los productos fue actualizado.",
+                    "Compra Exitosa",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Information);
+
                 LimpiarFormularioCompleto();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al registrar compra:\n{ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                BGuardarCompra.Enabled = true;
             }
         }
 
@@ -510,7 +570,7 @@ namespace CapaPresentacion
                 if (frmProv.ShowDialog(this) == DialogResult.OK || frmProv.DialogResult == DialogResult.Cancel)
                 {
                     var proveedorPrevio = CBProveedor.SelectedValue;
-                    await CargarProveedoresAsync();
+                    await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
 
                     if (proveedorPrevio != null)
                     {
@@ -530,7 +590,7 @@ namespace CapaPresentacion
 
                 if (frmProd.ShowDialog(this) == DialogResult.OK || frmProd.DialogResult == DialogResult.Cancel)
                 {
-                    await CargarProductosAsync();
+                    await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
                     ActualizarProductosPorProveedor();
                 }
             }
@@ -538,54 +598,10 @@ namespace CapaPresentacion
 
         private void ActualizarProductosPorProveedor()
         {
-            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
-            {
-                return;
-            }
-        }
+            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null) return;
 
-        // ============================================================
-        // CARGA DE DATOS DESDE API (o simulación)
-        // ============================================================
-        private List<ProductoDto> _listaProductosCompleta = new List<ProductoDto>();
-        private List<ProveedorDto> _listaProveedores = new List<ProveedorDto>();
-
-        private async Task CargarProveedoresAsync()
-        {
-            try
-            {
-                await Task.Delay(50);
-
-                CBProveedor.DataSource = null;
-                CBProveedor.DisplayMember = "RazonSocial";
-                CBProveedor.ValueMember = "Id";
-                CBProveedor.DataSource = _listaProveedores;
-                CBProveedor.SelectedIndex = -1;
-            }
-            catch (Exception ex)
-            {
-                if (!this.IsDisposed)
-                {
-                    MessageBox.Show($"Error al cargar proveedores: {ex.Message}", "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
-        }
-
-        private async Task CargarProductosAsync()
-        {
-            try
-            {
-                await Task.Delay(50);
-            }
-            catch (Exception ex)
-            {
-                if (!this.IsDisposed)
-                {
-                    MessageBox.Show($"Error al cargar productos: {ex.Message}", "Error",
-                        MessageBoxButtons.OK, MessageBoxIcon.Error);
-                }
-            }
+            // Dispara el refresco del combo de productos vinculados al proveedor
+            CBProveedor_SelectedIndexChanged(CBProveedor, EventArgs.Empty);
         }
     }
 }

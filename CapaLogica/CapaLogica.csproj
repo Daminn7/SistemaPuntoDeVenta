@@ -48,6 +48,7 @@
   <ItemGroup>
     <Compile Include="CajaLogica.cs" />
     <Compile Include="CategoriaLogica.cs" />
+    <Compile Include="CompraLogica.cs" />
     <Compile Include="DetalleVentaLogica.cs" />
     <Compile Include="MovimientoCajaLogica.cs" />
     <Compile Include="OrdenVentaLogica.cs" />

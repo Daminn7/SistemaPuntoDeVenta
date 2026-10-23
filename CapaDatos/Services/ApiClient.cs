@@ -98,6 +98,44 @@ namespace CapaDatos.Services
             var response = await _httpClient.DeleteAsync($"/api/usuarios/{id}");
             response.EnsureSuccessStatusCode();
         }
+        // ============================================================
+        // COMPRAS
+        // ============================================================
+        public async Task<List<CompraDto>> GetComprasAsync()
+        {
+            var response = await _httpClient.GetAsync("/api/compras");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<List<CompraDto>>(content);
+        }
+
+        public async Task<CompraDto> GetCompraAsync(int id)
+        {
+            var response = await _httpClient.GetAsync($"/api/compras/{id}");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<CompraDto>(content);
+        }
+
+        public async Task<dynamic> CreateCompraAsync(CrearCompraDto compra)
+        {
+            var json = JsonConvert.SerializeObject(compra);
+            System.Diagnostics.Debug.WriteLine($"JSON enviado a /api/compras: {json}");
+
+            var content = new StringContent(json, Encoding.UTF8, "application/json");
+            var response = await _httpClient.PostAsync("/api/compras", content);
+
+            var responseContent = await response.Content.ReadAsStringAsync();
+            System.Diagnostics.Debug.WriteLine($"Status: {response.StatusCode}");
+            System.Diagnostics.Debug.WriteLine($"Respuesta: {responseContent}");
+
+            if (!response.IsSuccessStatusCode)
+            {
+                throw new Exception($"Error {response.StatusCode}: {responseContent}");
+            }
+
+            return JsonConvert.DeserializeObject<dynamic>(responseContent);
+        }
 
         // ============================================================
         // PERSONAL
