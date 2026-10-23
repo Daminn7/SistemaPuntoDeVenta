@@ -1,4 +1,5 @@
-﻿using CapaDatos.Services;
+﻿using System;
+using CapaDatos.Services;
 using CapaDatos.Helpers;
 using System.Threading.Tasks;
 
@@ -68,5 +69,22 @@ namespace CapaLogica
         /// Se usa en: GET /api/reportes/resumen
         /// </summary>
         public async Task<dynamic> ResumenGeneral() => await _apiClient.GetResumenGeneralAsync();
+
+        // ============================================================
+        // Reportes nuevos (Evolución, Medios de Pago, Rentabilidad)
+        // ============================================================
+        public async Task<dynamic> ObtenerEvolucion(DateTime? desde = null, DateTime? hasta = null)
+            => await _apiClient.GetReporteEvolucionAsync(desde, hasta);
+
+        public async Task<dynamic> ObtenerMediosPago(DateTime? desde = null, DateTime? hasta = null)
+            => await _apiClient.GetReporteMediosPagoAsync(desde, hasta);
+
+        public async Task<dynamic> ObtenerRentabilidad(DateTime? desde = null, DateTime? hasta = null)
+            => await _apiClient.GetReporteRentabilidadAsync(desde, hasta);
+        public async Task<dynamic> ObtenerProductosMasVendidos(int limite = 10)
+    => await _apiClient.GetReporteProductosMasVendidosAsync(limite);
+
+
     }
+
 }

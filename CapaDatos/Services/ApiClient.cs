@@ -963,6 +963,74 @@ namespace CapaDatos.Services
         }
 
         // ============================================================
+        // REPORTES — Nuevos (Evolución, Medios de Pago, Rentabilidad)
+        // ============================================================
+        public async Task<dynamic> GetReporteEvolucionAsync(DateTime? desde = null, DateTime? hasta = null)
+        {
+            string url = "/api/reportes/evolucion";
+            var parametros = new List<string>();
+
+            if (desde.HasValue)
+                parametros.Add($"desde={desde.Value:yyyy-MM-dd}");
+            if (hasta.HasValue)
+                parametros.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+
+            if (parametros.Count > 0)
+                url += "?" + string.Join("&", parametros);
+
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<dynamic>(content);
+        }
+
+        public async Task<dynamic> GetReporteMediosPagoAsync(DateTime? desde = null, DateTime? hasta = null)
+        {
+            string url = "/api/reportes/medios-pago";
+            var parametros = new List<string>();
+
+            if (desde.HasValue)
+                parametros.Add($"desde={desde.Value:yyyy-MM-dd}");
+            if (hasta.HasValue)
+                parametros.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+
+            if (parametros.Count > 0)
+                url += "?" + string.Join("&", parametros);
+
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<dynamic>(content);
+        }
+
+        public async Task<dynamic> GetReporteRentabilidadAsync(DateTime? desde = null, DateTime? hasta = null)
+        {
+            string url = "/api/reportes/rentabilidad";
+            var parametros = new List<string>();
+
+            if (desde.HasValue)
+                parametros.Add($"desde={desde.Value:yyyy-MM-dd}");
+            if (hasta.HasValue)
+                parametros.Add($"hasta={hasta.Value:yyyy-MM-dd}");
+
+            if (parametros.Count > 0)
+                url += "?" + string.Join("&", parametros);
+
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<dynamic>(content);
+        }
+
+        public async Task<dynamic> GetReporteProductosMasVendidosAsync(int limite = 10)
+        {
+            var response = await _httpClient.GetAsync($"/api/reportes/productos/mas-vendidos?limite={limite}");
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<dynamic>(content);
+        }
+
+        // ============================================================
         // HEALTH CHECK
         // ============================================================
         public async Task<dynamic> HealthCheckAsync()
