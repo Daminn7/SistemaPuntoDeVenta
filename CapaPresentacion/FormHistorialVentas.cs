@@ -248,7 +248,17 @@ namespace CapaPresentacion
 
         private async Task AnularOrdenAsync()
         {
+            // ✅ NUEVO: Validar que no sea Cajero
+            string rol = (SesionUsuario.Rol ?? "").Trim().ToUpper();
+            if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
+            {
+                MessageBox.Show("El perfil de Cajero no tiene permisos para anular ventas.",
+                    "Acceso Denegado", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (dgvVentas.CurrentRow == null) return;
+
             try
             {
                 int idOrden = Convert.ToInt32(dgvVentas.CurrentRow.Cells["colIdVenta"].Value ?? 0);
@@ -266,7 +276,6 @@ namespace CapaPresentacion
             }
             catch (Exception ex) { MessageBox.Show($"Error al anular: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
-
         private Image GenerarIconoHistorial(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);

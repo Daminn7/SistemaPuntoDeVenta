@@ -20,7 +20,6 @@ namespace CapaPresentacion
         private bool _actualizandoNroFactura = false;
         private CancellationTokenSource _ctsCarga;
 
-        // ✅ Lógica de la API
         private readonly CompraLogica _compraLogica = new CompraLogica();
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
@@ -50,7 +49,6 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ Cargar proveedores y productos REALES en paralelo
                 await Task.WhenAll(
                     CargarProveedoresAsync(token),
                     CargarProductosAsync(token)
@@ -85,7 +83,7 @@ namespace CapaPresentacion
                 _proveedoresReales = proveedores?.Where(p => p.Estado).ToList() ?? new List<ProveedorDto>();
 
                 CBProveedor.DataSource = null;
-                CBProveedor.DisplayMember = "Nombre"; // o "RazonSocial" según tu DTO
+                CBProveedor.DisplayMember = "Nombre";
                 CBProveedor.ValueMember = "Id";
                 CBProveedor.DataSource = _proveedoresReales;
                 CBProveedor.SelectedIndex = -1;
@@ -108,6 +106,9 @@ namespace CapaPresentacion
                 if (token.IsCancellationRequested || this.IsDisposed) return;
 
                 _productosReales = productos?.Where(p => p.Estado).ToList() ?? new List<ProductoDto>();
+
+                // ✅ Cargar el combo con todos los productos
+                CargarProductosEnCombo(_productosReales);
             }
             catch (Exception ex)
             {
@@ -119,14 +120,32 @@ namespace CapaPresentacion
             }
         }
 
+        private void CargarProductosEnCombo(List<ProductoDto> productos)
+        {
+            if (productos == null || productos.Count == 0)
+            {
+                CBProducto.DataSource = null;
+                CBProducto.Items.Clear();
+                CBProducto.Enabled = false;
+                return;
+            }
+
+            CBProducto.DataSource = null;
+            CBProducto.DisplayMember = "Nombre";
+            CBProducto.ValueMember = "Id";
+            CBProducto.DataSource = productos;
+            CBProducto.SelectedIndex = -1;
+            CBProducto.Enabled = true;
+        }
+
         private void CBProveedor_SelectedIndexChanged(object sender, EventArgs e)
         {
-            CBProducto.DataSource = null;
-            CBProducto.Items.Clear();
+            if (_productosReales == null || _productosReales.Count == 0) return;
 
+            // Si no hay proveedor seleccionado, mostrar todos
             if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
             {
-                CBProducto.Enabled = false;
+                CargarProductosEnCombo(_productosReales);
                 return;
             }
 
@@ -139,17 +158,11 @@ namespace CapaPresentacion
 
             if (productosDelProveedor.Count > 0)
             {
-                CBProducto.DisplayMember = "Nombre";
-                CBProducto.ValueMember = "Id";
-                CBProducto.DataSource = productosDelProveedor;
-                CBProducto.SelectedIndex = -1;
-                CBProducto.Enabled = true;
+                CargarProductosEnCombo(productosDelProveedor);
             }
             else
             {
-                CBProducto.Enabled = false;
-                MessageBox.Show("Este proveedor no tiene productos asociados.", "Aviso",
-                    MessageBoxButtons.OK, MessageBoxIcon.Information);
+                CargarProductosEnCombo(_productosReales);
             }
         }
 
@@ -225,32 +238,39 @@ namespace CapaPresentacion
         // ============================================================
         private void ConfigurarFiltrosDetalle()
         {
-            btnBuscar.Click += (s, e) => AplicarFiltroDetalle();
-            TBBuscar.KeyDown += (s, e) =>
-            {
-                if (e.KeyCode == Keys.Enter)
-                {
-                    e.SuppressKeyPress = true;
-                    AplicarFiltroDetalle();
-                }
-            };
+            TBBuscar.TextChanged += (s, e) => FiltrarComboProductos();
         }
 
-        private void AplicarFiltroDetalle()
+        private void FiltrarComboProductos()
         {
-            if (_dtDetalle == null || _dtDetalle.DefaultView == null) return;
+            string texto = TBBuscar.Text.Trim().ToLower();
 
-            string texto = TBBuscar.Text.Trim().Replace("'", "''");
+            var baseProductos = _productosReales;
+            if (CBProveedor.SelectedIndex != -1 && CBProveedor.SelectedValue != null)
+            {
+                int idProveedor = (int)CBProveedor.SelectedValue;
+                var delProveedor = _productosReales
+                    .Where(p => p.ProveedorId.HasValue && p.ProveedorId.Value == idProveedor)
+                    .ToList();
 
-            if (string.IsNullOrWhiteSpace(texto))
-            {
-                _dtDetalle.DefaultView.RowFilter = string.Empty;
+                if (delProveedor.Count > 0)
+                    baseProductos = delProveedor;
             }
-            else
+
+            if (string.IsNullOrEmpty(texto))
             {
-                _dtDetalle.DefaultView.RowFilter =
-                    $"ColCodigo LIKE '%{texto}%' OR ColDescripcion LIKE '%{texto}%'";
+                CargarProductosEnCombo(baseProductos);
+                return;
             }
+
+            var filtrados = baseProductos
+                .Where(p =>
+                    (!string.IsNullOrEmpty(p.Nombre) && p.Nombre.ToLower().Contains(texto)) ||
+                    (!string.IsNullOrEmpty(p.CodigoInterno) && p.CodigoInterno.ToLower().Contains(texto)) ||
+                    (!string.IsNullOrEmpty(p.CodBarras) && p.CodBarras.ToLower().Contains(texto)))
+                .ToList();
+
+            CargarProductosEnCombo(filtrados);
         }
 
         private void InicializarEstructuraDetalle()
@@ -554,6 +574,8 @@ namespace CapaPresentacion
             DGVDetalleCompra.ClearSelection();
             if (DGVDetalleCompra.CurrentCell != null)
                 DGVDetalleCompra.CurrentCell = null;
+
+            CargarProductosEnCombo(_productosReales);
         }
 
         // ============================================================
@@ -591,17 +613,8 @@ namespace CapaPresentacion
                 if (frmProd.ShowDialog(this) == DialogResult.OK || frmProd.DialogResult == DialogResult.Cancel)
                 {
                     await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
-                    ActualizarProductosPorProveedor();
                 }
             }
-        }
-
-        private void ActualizarProductosPorProveedor()
-        {
-            if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null) return;
-
-            // Dispara el refresco del combo de productos vinculados al proveedor
-            CBProveedor_SelectedIndexChanged(CBProveedor, EventArgs.Empty);
         }
     }
 }
