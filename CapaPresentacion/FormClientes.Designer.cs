@@ -781,32 +781,6 @@
             this.LLocalidad.TabIndex = 1;
             this.LLocalidad.Text = "Localidad:";
             // 
-            // PHabilitado
-            // 
-            this.TLPFormularioEdicion.SetColumnSpan(this.PHabilitado, 2);
-            this.PHabilitado.Controls.Add(this.ChBClienteHabilitado);
-            this.PHabilitado.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PHabilitado.Location = new System.Drawing.Point(2, 271);
-            this.PHabilitado.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.PHabilitado.Name = "PHabilitado";
-            this.PHabilitado.Padding = new System.Windows.Forms.Padding(0, 3, 0, 0);
-            this.PHabilitado.Size = new System.Drawing.Size(257, 111);
-            this.PHabilitado.TabIndex = 13;
-            // 
-            // ChBClienteHabilitado
-            // 
-            this.ChBClienteHabilitado.Checked = true;
-            this.ChBClienteHabilitado.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ChBClienteHabilitado.Dock = System.Windows.Forms.DockStyle.Top;
-            this.ChBClienteHabilitado.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
-            this.ChBClienteHabilitado.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
-            this.ChBClienteHabilitado.Location = new System.Drawing.Point(0, 3);
-            this.ChBClienteHabilitado.Margin = new System.Windows.Forms.Padding(2, 2, 2, 2);
-            this.ChBClienteHabilitado.Name = "ChBClienteHabilitado";
-            this.ChBClienteHabilitado.Size = new System.Drawing.Size(257, 21);
-            this.ChBClienteHabilitado.TabIndex = 0;
-            this.ChBClienteHabilitado.Text = "Cliente Habilitado";
-            // 
             // PBotonesAccion
             // 
             this.PBotonesAccion.Controls.Add(this.TLPBotonesMed);
