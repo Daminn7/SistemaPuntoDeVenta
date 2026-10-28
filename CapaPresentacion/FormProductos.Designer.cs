@@ -735,32 +735,6 @@ namespace CapaPresentacion
             this.LStockMinimo.TabIndex = 1;
             this.LStockMinimo.Text = "Stock Mínimo:";
             // 
-            // PHabilitado
-            // 
-            this.TLPFormularioEdicion.SetColumnSpan(this.PHabilitado, 2);
-            this.PHabilitado.Controls.Add(this.ChBProductoHabilitado);
-            this.PHabilitado.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.PHabilitado.Location = new System.Drawing.Point(2, 289);
-            this.PHabilitado.Margin = new System.Windows.Forms.Padding(2);
-            this.PHabilitado.Name = "PHabilitado";
-            this.PHabilitado.Padding = new System.Windows.Forms.Padding(4, 5, 0, 0);
-            this.PHabilitado.Size = new System.Drawing.Size(253, 19);
-            this.PHabilitado.TabIndex = 10;
-            // 
-            // ChBProductoHabilitado
-            // 
-            this.ChBProductoHabilitado.Checked = true;
-            this.ChBProductoHabilitado.CheckState = System.Windows.Forms.CheckState.Checked;
-            this.ChBProductoHabilitado.Dock = System.Windows.Forms.DockStyle.Left;
-            this.ChBProductoHabilitado.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
-            this.ChBProductoHabilitado.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(39)))), ((int)(((byte)(174)))), ((int)(((byte)(96)))));
-            this.ChBProductoHabilitado.Location = new System.Drawing.Point(4, 5);
-            this.ChBProductoHabilitado.Margin = new System.Windows.Forms.Padding(2);
-            this.ChBProductoHabilitado.Name = "ChBProductoHabilitado";
-            this.ChBProductoHabilitado.Size = new System.Drawing.Size(140, 14);
-            this.ChBProductoHabilitado.TabIndex = 0;
-            this.ChBProductoHabilitado.Text = "Producto Habilitado";
-            // 
             // PBotonesAccion
             // 
             this.PBotonesAccion.Controls.Add(this.TLPBotonesMed);

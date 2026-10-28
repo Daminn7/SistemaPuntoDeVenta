@@ -57,7 +57,21 @@ namespace CapaPresentacion
         // Transforma el título HIERRO Y FORJA en un botón de acceso al Dashboard
         private void ConfigurarBotonLogoInicio()
         {
-            // Asume que el label o picturebox se llama LTitulo o PBLogo en el designer
+            string rolActual = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+
+            // Solo el Administrador tiene habilitado el logo como acceso al Dashboard
+            if (rolActual != "ADMINISTRADOR")
+            {
+                // Asegura cursor por defecto sin interactividad
+                Control[] logosInactivos = this.Controls.Find("LTitulo", true);
+                if (logosInactivos.Length > 0) logosInactivos[0].Cursor = Cursors.Default;
+
+                Control[] panelesInactivos = this.Controls.Find("PLogo", true);
+                if (panelesInactivos.Length > 0) panelesInactivos[0].Cursor = Cursors.Default;
+
+                return;
+            }
+            
             Control[] posiblesLogos = this.Controls.Find("LTitulo", true);
             if (posiblesLogos.Length > 0)
             {
@@ -74,6 +88,22 @@ namespace CapaPresentacion
         }
         private void IrAlDashboard()
         {
+            string rolActual = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
+
+            // Restricción estricta: solo el Administrador puede ingresar al Dashboard
+            if (rolActual != "ADMINISTRADOR")
+            {
+                // Redirige al módulo correspondiente a su rol para no dejar la pantalla vacía
+                if (rolActual == "VENDEDOR")
+                {
+                    BMenuVentas_Click(BMenuVentas, EventArgs.Empty);
+                }
+                else if (rolActual == "CAJERO" || rolActual == "CAJERO / OPERADOR" || rolActual == "OPERADOR")
+                {
+                    BMenuVentas_Click(BMenuVentas, EventArgs.Empty);
+                }
+                return;
+            }
             ResaltarBotonActivo(null); // Desmarca cualquier botón de módulo
             AbrirFormularioEnContenedor<FormDashboard>();
         }
