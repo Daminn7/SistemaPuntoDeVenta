@@ -41,7 +41,7 @@ namespace CapaPresentacion
             if (pbIconoTitulo != null)
                 pbIconoTitulo.Image = GenerarIconoCaja(Color.FromArgb(212, 131, 53));
 
-            dtpDesde.Value = DateTime.Today;
+            dtpDesde.Value = DateTime.Today.AddDays(-7);
             dtpHasta.Value = DateTime.Today;
 
             if (cboTipoMovimiento.Items.Count > 0) cboTipoMovimiento.SelectedIndex = 0;
@@ -73,62 +73,36 @@ namespace CapaPresentacion
         {
             try
             {
+                // 1. Traer TODAS las cajas (para el caché del balance)
                 var cajas = await _cajaLogica.ObtenerTodos();
 
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
-                if (cajas == null || cajas.Count == 0)
+                if (cajas != null)
                 {
-                    _todasLasCajas = new List<CajaDto>();
-                    _cajasCache = new Dictionary<int, CajaDto>();
-                    _todosLosMovimientos = new List<MovimientoCajaDto>();
-                    _movimientosFiltrados = new List<MovimientoCajaDto>();
-                    MostrarMovimientos(_movimientosFiltrados);
-                    ActualizarBalance(0m, 0m, 0m);
-                    return;
+                    _todasLasCajas = cajas;
+                    _cajasCache = cajas.ToDictionary(c => c.Id, c => c);
                 }
 
-                _todasLasCajas = cajas;
-                _cajasCache = cajas.ToDictionary(c => c.Id, c => c);
-
-                // ✅ Filtramos por fecha de apertura comparando con hora local
-                DateTime desde = dtpDesde.Value.Date;
+                // 2. Traer TODOS los movimientos en UNA SOLA petición
+                DateTime desde = dtpDesde.Value.Date.AddDays(-1);
                 DateTime hasta = dtpHasta.Value.Date.AddDays(1);
 
-                var cajasDelRango = cajas
-                    .Where(c =>
-                    {
-                        DateTime aperturaLocal = FechaHelper.ToArgentina(c.FechaApertura);
-                        return aperturaLocal >= desde && aperturaLocal < hasta;
-                    })
-                    .ToList();
 
-                var todosMovimientos = new List<MovimientoCajaDto>();
-
-                foreach (var caja in cajasDelRango)
-                {
-                    if (token.IsCancellationRequested) return;
-
-                    try
-                    {
-                        var movimientosRaw = await _movimientoLogica.ObtenerPorCajaId(caja.Id);
-                        var movimientos = ConvertirAMovimientoDto(movimientosRaw);
-                        todosMovimientos.AddRange(movimientos);
-                    }
-                    catch (Exception ex)
-                    {
-                        System.Diagnostics.Debug.WriteLine($"Error al cargar movimientos de caja {caja.Id}: {ex.Message}");
-                    }
-                }
+                var movimientosRaw = await _movimientoLogica.ObtenerTodos(desde, hasta);
 
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
-                _todosLosMovimientos = todosMovimientos
+                // ✅ Acá forzamos el tipo para evitar el error CS1977
+                List<MovimientoCajaDto> movimientos = ConvertirAMovimientoDto(movimientosRaw);
+
+                _todosLosMovimientos = movimientos
                     .OrderByDescending(m => m.FechaMovimiento)
                     .ToList();
 
+                // 3. Aplicar filtros (tipo, medio pago, y el filtro de fecha local)
                 AplicarFiltrosUI();
 
                 MostrarMovimientos(_movimientosFiltrados);
@@ -149,6 +123,17 @@ namespace CapaPresentacion
         {
             var lista = _todosLosMovimientos.AsEnumerable();
 
+            // ✅ Filtramos por fecha del MOVIMIENTO en HORA LOCAL
+            DateTime desdeFiltro = dtpDesde.Value.Date;
+            DateTime hastaFiltro = dtpHasta.Value.Date.AddDays(1);
+
+            lista = lista.Where(m =>
+            {
+                DateTime fechaLocal = FechaHelper.ToArgentina(m.FechaMovimiento);
+                return fechaLocal >= desdeFiltro && fechaLocal < hastaFiltro;
+            });
+
+            // Filtro por Tipo
             string tipoFiltro = cboTipoMovimiento.Text;
             if (!string.IsNullOrEmpty(tipoFiltro) && tipoFiltro != "Todos")
             {
@@ -157,6 +142,7 @@ namespace CapaPresentacion
                     m.TipoMovimientoDescripcion.Equals(tipoFiltro, StringComparison.OrdinalIgnoreCase));
             }
 
+            // Filtro por Medio Pago
             string medioFiltro = cboMedioPago.Text;
             if (!string.IsNullOrEmpty(medioFiltro) && medioFiltro != "Todos")
             {
@@ -184,7 +170,7 @@ namespace CapaPresentacion
 
         private async Task LimpiarFiltrosAsync()
         {
-            dtpDesde.Value = DateTime.Today;
+            dtpDesde.Value = DateTime.Today.AddDays(-7);
             dtpHasta.Value = DateTime.Today;
             if (cboTipoMovimiento.Items.Count > 0) cboTipoMovimiento.SelectedIndex = 0;
             if (cboMedioPago.Items.Count > 0) cboMedioPago.SelectedIndex = 0;

@@ -1,6 +1,7 @@
 ﻿using CapaDatos.DTOs;
 using CapaDatos.Services;
 using CapaDatos.Helpers;
+using System;
 using System.Threading.Tasks;
 
 namespace CapaLogica
@@ -40,6 +41,9 @@ namespace CapaLogica
         /// </summary>
         /// <param name="cajaId">ID de la caja</param>
         public async Task<dynamic> ObtenerPorCajaId(int cajaId) => await _apiClient.GetMovimientosCajaAsync(cajaId);
+
+        public async Task<dynamic> ObtenerTodos(DateTime desde, DateTime hasta)
+    => await _apiClient.GetTodosLosMovimientosAsync(desde, hasta);
 
         /// <summary>
         /// Registra un nuevo movimiento de caja.

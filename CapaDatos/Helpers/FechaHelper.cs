@@ -8,15 +8,22 @@ namespace CapaDatos.Helpers
 
         private static TimeZoneInfo ObtenerZonaArgentina()
         {
+            // ✅ En Windows, el nombre correcto de la zona horaria de Argentina es "Argentina Standard Time"
             try
             {
-                // Funciona en .NET 6+ y Windows moderno
-                return TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
+                return TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
             }
             catch
             {
-                // Fallback para Windows clásico / .NET Framework
-                return TimeZoneInfo.FindSystemTimeZoneById("Argentina Standard Time");
+                try
+                {
+                    return TimeZoneInfo.FindSystemTimeZoneById("America/Argentina/Buenos_Aires");
+                }
+                catch
+                {
+                    // Si no se encuentra ninguna, usar UTC como fallback
+                    return TimeZoneInfo.Utc;
+                }
             }
         }
 
