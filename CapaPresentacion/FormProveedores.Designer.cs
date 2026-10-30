@@ -87,6 +87,8 @@
             this.PBarraFiltros = new System.Windows.Forms.Panel();
             this.LBuscar = new System.Windows.Forms.Label();
             this.TBBuscar = new System.Windows.Forms.TextBox();
+            this.LFiltroProvincia = new System.Windows.Forms.Label();
+            this.CBFiltroProvincia = new System.Windows.Forms.ComboBox();
             this.LFiltroLocalidad = new System.Windows.Forms.Label();
             this.CBFiltroLocalidad = new System.Windows.Forms.ComboBox();
             this.BLimpiarFiltros = new System.Windows.Forms.Button();
@@ -164,6 +166,8 @@
             // 
             this.PBarraFiltros.Controls.Add(this.LBuscar);
             this.PBarraFiltros.Controls.Add(this.TBBuscar);
+            this.PBarraFiltros.Controls.Add(this.LFiltroProvincia);
+            this.PBarraFiltros.Controls.Add(this.CBFiltroProvincia);
             this.PBarraFiltros.Controls.Add(this.LFiltroLocalidad);
             this.PBarraFiltros.Controls.Add(this.CBFiltroLocalidad);
             this.PBarraFiltros.Controls.Add(this.BLimpiarFiltros);
@@ -192,25 +196,45 @@
             this.TBBuscar.Size = new System.Drawing.Size(290, 27);
             this.TBBuscar.TabIndex = 1;
             // 
+            // LFiltroProvincia
+            // 
+            this.LFiltroProvincia.AutoSize = true;
+            this.LFiltroProvincia.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
+            this.LFiltroProvincia.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
+            this.LFiltroProvincia.Location = new System.Drawing.Point(540, 15);
+            this.LFiltroProvincia.Name = "LFiltroProvincia";
+            this.LFiltroProvincia.Size = new System.Drawing.Size(78, 20);
+            this.LFiltroProvincia.TabIndex = 2;
+            this.LFiltroProvincia.Text = "Provincia:";
+            // 
+            // CBFiltroProvincia
+            // 
+            this.CBFiltroProvincia.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.CBFiltroProvincia.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.CBFiltroProvincia.Location = new System.Drawing.Point(624, 10);
+            this.CBFiltroProvincia.Name = "CBFiltroProvincia";
+            this.CBFiltroProvincia.Size = new System.Drawing.Size(160, 28);
+            this.CBFiltroProvincia.TabIndex = 3;
+            // 
             // LFiltroLocalidad
             // 
             this.LFiltroLocalidad.AutoSize = true;
             this.LFiltroLocalidad.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             this.LFiltroLocalidad.ForeColor = System.Drawing.Color.FromArgb(60, 60, 60);
-            this.LFiltroLocalidad.Location = new System.Drawing.Point(540, 15);
+            this.LFiltroLocalidad.Location = new System.Drawing.Point(794, 15);
             this.LFiltroLocalidad.Name = "LFiltroLocalidad";
             this.LFiltroLocalidad.Size = new System.Drawing.Size(79, 20);
-            this.LFiltroLocalidad.TabIndex = 2;
+            this.LFiltroLocalidad.TabIndex = 4;
             this.LFiltroLocalidad.Text = "Localidad:";
             // 
             // CBFiltroLocalidad
             // 
             this.CBFiltroLocalidad.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.CBFiltroLocalidad.Font = new System.Drawing.Font("Segoe UI", 9F);
-            this.CBFiltroLocalidad.Location = new System.Drawing.Point(625, 10);
+            this.CBFiltroLocalidad.Location = new System.Drawing.Point(879, 10);
             this.CBFiltroLocalidad.Name = "CBFiltroLocalidad";
             this.CBFiltroLocalidad.Size = new System.Drawing.Size(190, 28);
-            this.CBFiltroLocalidad.TabIndex = 3;
+            this.CBFiltroLocalidad.TabIndex = 5;
             // 
             // BLimpiarFiltros
             // 
@@ -220,10 +244,10 @@
             this.BLimpiarFiltros.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.BLimpiarFiltros.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
             this.BLimpiarFiltros.ForeColor = System.Drawing.Color.White;
-            this.BLimpiarFiltros.Location = new System.Drawing.Point(835, 9);
+            this.BLimpiarFiltros.Location = new System.Drawing.Point(1089, 9);
             this.BLimpiarFiltros.Name = "BLimpiarFiltros";
             this.BLimpiarFiltros.Size = new System.Drawing.Size(86, 29);
-            this.BLimpiarFiltros.TabIndex = 4;
+            this.BLimpiarFiltros.TabIndex = 6;
             this.BLimpiarFiltros.Text = "Limpiar";
             this.BLimpiarFiltros.UseVisualStyleBackColor = false;
             // 
@@ -826,6 +850,8 @@
         private System.Windows.Forms.Panel PBarraFiltros;
         private System.Windows.Forms.Label LBuscar;
         private System.Windows.Forms.TextBox TBBuscar;
+        private System.Windows.Forms.Label LFiltroProvincia;
+        private System.Windows.Forms.ComboBox CBFiltroProvincia;
         private System.Windows.Forms.Label LFiltroLocalidad;
         private System.Windows.Forms.ComboBox CBFiltroLocalidad;
         private System.Windows.Forms.Button BLimpiarFiltros;
