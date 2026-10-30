@@ -1068,6 +1068,15 @@ namespace CapaDatos.Services
             return JsonConvert.DeserializeObject<dynamic>(content);
         }
 
+        public async Task<dynamic> GetTodosLosMovimientosAsync(DateTime desde, DateTime hasta)
+        {
+            string url = $"/api/caja/movimientos/todos?desde={desde:yyyy-MM-dd}&hasta={hasta:yyyy-MM-dd}";
+            var response = await _httpClient.GetAsync(url);
+            response.EnsureSuccessStatusCode();
+            var content = await response.Content.ReadAsStringAsync();
+            return JsonConvert.DeserializeObject<dynamic>(content);
+        }
+
         // ============================================================
         // HEALTH CHECK
         // ============================================================

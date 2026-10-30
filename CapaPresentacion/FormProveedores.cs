@@ -25,6 +25,7 @@ namespace CapaPresentacion
 
         private bool _mostrarSoloActivos = true;
         private bool _actualizandoCuit = false;
+        private bool _cargandoFiltros = false;
 
         // ✅ NUEVO: CancellationTokenSource
         private CancellationTokenSource _ctsCarga;
@@ -83,14 +84,32 @@ namespace CapaPresentacion
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
+                // Combo del formulario (alta/edición)
                 CBProvincia.DataSource = _provincias;
                 CBProvincia.DisplayMember = "Descripcion";
                 CBProvincia.ValueMember = "Id";
                 CBProvincia.SelectedIndex = -1;
 
+                // ✅ NUEVO: Pausar eventos mientras se carga el filtro
+                _cargandoFiltros = true;
+
+                // ✅ NUEVO: Combo del FILTRO (con opción "Todas")
+                var provinciasFiltro = new List<ProvinciaDto>();
+                provinciasFiltro.Add(new ProvinciaDto { Id = 0, Descripcion = "(Todas)" });
+                if (_provincias != null) provinciasFiltro.AddRange(_provincias);
+
+                CBFiltroProvincia.DataSource = provinciasFiltro;
+                CBFiltroProvincia.DisplayMember = "Descripcion";
+                CBFiltroProvincia.ValueMember = "Id";
+                CBFiltroProvincia.SelectedIndex = 0;
+
+                // Combo de localidad del filtro: empezar con "Todas"
                 CBFiltroLocalidad.Items.Clear();
                 CBFiltroLocalidad.Items.Add("(Todas)");
                 CBFiltroLocalidad.SelectedIndex = 0;
+
+                // ✅ Reanudar eventos
+                _cargandoFiltros = false;
             }
             catch (OperationCanceledException) { }
             catch (Exception ex)
@@ -102,7 +121,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async Task CargarProveedoresAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -389,15 +407,73 @@ namespace CapaPresentacion
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
-            CBFiltroLocalidad.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
+
+            // ✅ El evento ahora se dispara, pero el método sabe si debe ignorarlo
+            CBFiltroProvincia.SelectedIndexChanged += async (s, e) => await CargarLocalidadesDelFiltroAsync();
+
+            CBFiltroLocalidad.SelectedIndexChanged += (s, e) =>
+            {
+                if (!_cargandoFiltros) AplicarFiltroGrilla();
+            };
+
             BLimpiarFiltros.Click += BLimpiarFiltros_Click;
+        }
+
+        private async Task CargarLocalidadesDelFiltroAsync()
+        {
+            // ✅ Si estamos cargando los datos iniciales, no hacer nada
+            if (_cargandoFiltros) return;
+
+            try
+            {
+                // ✅ Validación segura para evitar el error de conversión
+                if (CBFiltroProvincia.SelectedValue == null || !(CBFiltroProvincia.SelectedValue is int))
+                {
+                    CBFiltroLocalidad.Items.Clear();
+                    CBFiltroLocalidad.Items.Add("(Todas)");
+                    CBFiltroLocalidad.SelectedIndex = 0;
+                    AplicarFiltroGrilla();
+                    return;
+                }
+
+                int idProvincia = (int)CBFiltroProvincia.SelectedValue;
+
+                if (idProvincia == 0)
+                {
+                    CBFiltroLocalidad.Items.Clear();
+                    CBFiltroLocalidad.Items.Add("(Todas)");
+                    CBFiltroLocalidad.SelectedIndex = 0;
+                    AplicarFiltroGrilla();
+                    return;
+                }
+
+                var localidades = await _tablasLogica.GetLocalidadesByProvincia(idProvincia);
+
+                CBFiltroLocalidad.Items.Clear();
+                CBFiltroLocalidad.Items.Add("(Todas)");
+                if (localidades != null)
+                {
+                    foreach (var loc in localidades)
+                        CBFiltroLocalidad.Items.Add(loc.Descripcion);
+                }
+                CBFiltroLocalidad.SelectedIndex = 0;
+
+                AplicarFiltroGrilla();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error al cargar localidades del filtro: {ex.Message}", "Error",
+                    MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
         }
 
         private void AplicarFiltroGrilla()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
-            string localidadFiltro = CBFiltroLocalidad.Text;
+            string provinciaFiltro = CBFiltroProvincia.Text ?? "";
+            string localidadFiltro = CBFiltroLocalidad.Text ?? "";
 
+            bool filtrarPorProvincia = !string.IsNullOrEmpty(provinciaFiltro) && provinciaFiltro != "(Todas)";
             bool filtrarPorLocalidad = !string.IsNullOrEmpty(localidadFiltro) && localidadFiltro != "(Todas)";
 
             DGVProveedores.SuspendLayout();
@@ -415,18 +491,41 @@ namespace CapaPresentacion
                                      razon.Contains(texto) ||
                                      contacto.Contains(texto);
 
+                // Si hay filtro por provincia, solo mostramos las localidades de esa provincia
+                // (asumimos que las localidades ya vienen filtradas del combo, pero por las dudas)
+                bool coincideProvincia = true;
+                if (filtrarPorProvincia)
+                {
+                    // Si el usuario eligió una localidad específica, ya se filtra abajo
+                    // Si no, filtramos por las localidades de esa provincia
+                    coincideProvincia = !string.IsNullOrEmpty(localidad) &&
+                                        CBFiltroLocalidad.Items.Cast<object>()
+                                            .Select(i => i.ToString())
+                                            .Contains(localidad);
+                }
+
                 bool coincideLocalidad = !filtrarPorLocalidad ||
                                          localidad.Equals(localidadFiltro, StringComparison.OrdinalIgnoreCase);
 
-                row.Visible = coincideTexto && coincideLocalidad;
+                row.Visible = coincideTexto && coincideProvincia && coincideLocalidad;
             }
             DGVProveedores.ResumeLayout();
         }
-
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
+            _cargandoFiltros = true;  // ✅ Pausar eventos al limpiar
+
+            TBBuscar.Clear();
+            CBFiltroProvincia.SelectedIndex = 0;
+            CBFiltroLocalidad.Items.Clear();
+            CBFiltroLocalidad.Items.Add("(Todas)");
+            CBFiltroLocalidad.SelectedIndex = 0;
+
+            _cargandoFiltros = false; // ✅ Reanudar
+
             _mostrarSoloActivos = !_mostrarSoloActivos;
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
+
             await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
 

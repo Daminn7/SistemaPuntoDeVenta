@@ -160,6 +160,7 @@ namespace CapaPresentacion
 
             decimal totalEnGaveta = _fondoInicial + _ventasEfectivo + _ingresosMenores - _egresosMenores;
             TBTotalGaveta.Text = $"$ {totalEnGaveta:N2}";
+            this.Refresh();
         }
 
         private void ActualizarInterfazSegunEstado()
@@ -221,15 +222,17 @@ namespace CapaPresentacion
                             FondoInicial = fondo
                         };
 
+                        // 1. Abrir la caja en la API
                         var cajaCreada = await _cajaLogica.Abrir(nuevaCaja);
 
-                        _fondoInicial = cajaCreada.FondoInicial;
-                        _cajaAbierta = true;
-                        _idTurnoCaja = cajaCreada.Id;
-                        _numeroCajaActual = cajaCreada.NumeroCaja;
+                        // 2. Recargar los datos desde la API para asegurar que tenemos los valores reales
+                        await ConsultarEstadoTurnoActualAsync(_ctsCarga?.Token ?? CancellationToken.None);
 
-                        RecalcularMetricasVisuales();
+                        // 3. Actualizar la interfaz
                         ActualizarInterfazSegunEstado();
+
+                        // 4. Forzar el redibujado de la ventana
+                        this.Refresh();
 
                         MessageBox.Show($"Caja {numeroCaja} abierta correctamente con un fondo de $ {fondo:N2}.",
                                         "Apertura Exitosa", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -241,7 +244,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async void BIngreso_Click(object sender, EventArgs e)
         {
             using (FormModalMovimientoMenor modalMov = new FormModalMovimientoMenor(1, 0m))
