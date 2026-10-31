@@ -65,9 +65,18 @@ namespace CapaPresentacion
                     "No hay una caja abierta.\n\n" +
                     "Debe abrir la caja antes de poder cobrar pedidos.\n" +
                     "Vaya al módulo 'Caja' para abrir un turno.",
-                    "Caja Cerrada",
-                    MessageBoxButtons.OK,
-                    MessageBoxIcon.Warning);
+                    "Caja Cerrada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+
+                // Deshabilitar toda la interfaz de cobro
+                DGVPendientes.Enabled = false;
+                BConfirmarCobro.Enabled = false;
+                BAnularPedido.Enabled = false;
+            }
+            else
+            {
+                // Si hay caja, cargar pedidos normalmente
+                await CargarPedidosPendientesAsync();
+                ConfigurarDetalle();
             }
         }
 
@@ -223,11 +232,28 @@ namespace CapaPresentacion
                     _cajaAbierta = false;
                 }
             }
-            catch
+            catch (Exception ex)
             {
+                System.Diagnostics.Debug.WriteLine($"No hay caja activa: {ex.Message}");
                 _cajaActivaId = 0;
                 _fechaAperturaCaja = null;
                 _cajaAbierta = false;
+            }
+
+            // ✅ NUEVO: Bloquear botones si la caja está cerrada
+            if (!_cajaAbierta)
+            {
+                BConfirmarCobro.Enabled = false;
+                BAnularPedido.Enabled = false;
+                BConfirmarCobro.BackColor = Color.FromArgb(180, 180, 180); // gris
+                BAnularPedido.BackColor = Color.FromArgb(180, 180, 180);   // gris
+            }
+            else
+            {
+                BConfirmarCobro.Enabled = true;
+                BAnularPedido.Enabled = true;
+                BConfirmarCobro.BackColor = Color.FromArgb(39, 174, 96);   // verde
+                BAnularPedido.BackColor = Color.FromArgb(192, 57, 43);     // rojo
             }
         }
 
@@ -503,6 +529,14 @@ namespace CapaPresentacion
 
         private async void BConfirmarCobro_Click(object sender, EventArgs e)
         {
+            if (!_cajaAbierta || _cajaActivaId <= 0)
+            {
+                MessageBox.Show(
+                    "No puede registrar cobros porque la caja está cerrada.\n\n" +
+                    "Vaya al módulo 'Caja' y realice la apertura de turno antes de continuar.",
+                    "Caja Cerrada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (_idPedidoSeleccionado == 0)
             {
                 MessageBox.Show("Seleccione un pedido pendiente de la lista para cobrar.",
@@ -667,6 +701,14 @@ namespace CapaPresentacion
 
         private async void BAnularPedido_Click(object sender, EventArgs e)
         {
+            if (!_cajaAbierta || _cajaActivaId <= 0)
+            {
+                MessageBox.Show(
+                    "No puede anular pedidos porque la caja está cerrada.\n\n" +
+                    "Vaya al módulo 'Caja' y realice la apertura de turno antes de continuar.",
+                    "Caja Cerrada", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
             if (_idPedidoSeleccionado == 0)
             {
                 MessageBox.Show("Seleccione un pedido para anular.", "Aviso",
