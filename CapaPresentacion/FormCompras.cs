@@ -19,11 +19,9 @@ namespace CapaPresentacion
         private DataTable _dtDetalle = new DataTable();
         private bool _actualizandoNroFactura = false;
         private CancellationTokenSource _ctsCarga;
-
         private readonly CompraLogica _compraLogica = new CompraLogica();
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
-
         private List<ProveedorDto> _proveedoresReales = new List<ProveedorDto>();
         private List<ProductoDto> _productosReales = new List<ProductoDto>();
 
@@ -31,7 +29,6 @@ namespace CapaPresentacion
         {
             InitializeComponent();
         }
-
         private async void FormCompras_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -60,7 +57,6 @@ namespace CapaPresentacion
             if (!this.IsDisposed)
                 LimpiarFormularioCompleto();
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -72,7 +68,6 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private async Task CargarProveedoresAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -97,7 +92,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async Task CargarProductosAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -107,7 +101,7 @@ namespace CapaPresentacion
 
                 _productosReales = productos?.Where(p => p.Estado).ToList() ?? new List<ProductoDto>();
 
-                // ✅ Cargar el combo con todos los productos
+                // Cargar el combo con todos los productos
                 CargarProductosEnCombo(_productosReales);
             }
             catch (Exception ex)
@@ -119,7 +113,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void CargarProductosEnCombo(List<ProductoDto> productos)
         {
             if (productos == null || productos.Count == 0)
@@ -137,7 +130,6 @@ namespace CapaPresentacion
             CBProducto.SelectedIndex = -1;
             CBProducto.Enabled = true;
         }
-
         private void CBProveedor_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (_productosReales == null || _productosReales.Count == 0) return;
@@ -165,7 +157,6 @@ namespace CapaPresentacion
                 CargarProductosEnCombo(_productosReales);
             }
         }
-
         private void CBProducto_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (CBProducto.SelectedItem is ProductoDto prod)
@@ -178,10 +169,7 @@ namespace CapaPresentacion
                 TBCostoUnitario.Clear();
             }
         }
-
-        // ============================================================
         // ICONOS Y ESTILOS
-        // ============================================================
         private void AsignarEstiloEIconos()
         {
             try
@@ -191,7 +179,6 @@ namespace CapaPresentacion
             }
             catch { }
         }
-
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
@@ -204,7 +191,6 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private Image GenerarIconoCompras(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -232,15 +218,11 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
-        // ============================================================
         // FILTROS Y ESTRUCTURA DE LA GRILLA
-        // ============================================================
         private void ConfigurarFiltrosDetalle()
         {
             TBBuscar.TextChanged += (s, e) => FiltrarComboProductos();
         }
-
         private void FiltrarComboProductos()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
@@ -272,7 +254,6 @@ namespace CapaPresentacion
 
             CargarProductosEnCombo(filtrados);
         }
-
         private void InicializarEstructuraDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -295,7 +276,6 @@ namespace CapaPresentacion
 
             DGVDetalleCompra.DataSource = _dtDetalle;
         }
-
         private void ConfigurarRestriccionesTeclado()
         {
             TBNroComprobante.MaxLength = 20;
@@ -308,7 +288,6 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private void PermitirDecimales_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox txt = (TextBox)sender;
@@ -330,7 +309,6 @@ namespace CapaPresentacion
             if (!char.IsDigit(e.KeyChar))
                 e.Handled = true;
         }
-
         private void ConfigurarFormatoNroComprobante()
         {
             TBNroComprobante.TextChanged += (s, e) =>
@@ -352,7 +330,6 @@ namespace CapaPresentacion
                 _actualizandoNroFactura = false;
             };
         }
-
         private void CargarDesplegablesFijos()
         {
             CBTipoComprobante.Items.Clear();
@@ -363,10 +340,7 @@ namespace CapaPresentacion
             CBFormaPago.Items.AddRange(new object[] { "Efectivo", "Transferencia / Débito", "Cuenta Corriente (30 días)", "Cheque Propio" });
             CBFormaPago.SelectedIndex = 0;
         }
-
-        // ============================================================
         // AGREGAR / QUITAR RENGLÓN
-        // ============================================================
         private void BAgregarItem_Click(object sender, EventArgs e)
         {
             if (!(CBProducto.SelectedItem is ProductoDto prod))
@@ -424,7 +398,6 @@ namespace CapaPresentacion
             NUDCantidad.Value = 1;
             CBProducto.Focus();
         }
-
         private void DGVDetalleCompra_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -435,7 +408,6 @@ namespace CapaPresentacion
                 RecalcularLiquidacion();
             }
         }
-
         private void RecalcularLiquidacion()
         {
             decimal sumaSubtotales = 0m;
@@ -455,10 +427,7 @@ namespace CapaPresentacion
             TBIva.Text = iva.ToString("N2");
             TBTotalCompra.Text = totalFinal.ToString("N2");
         }
-
-        // ============================================================
         // GUARDAR COMPRA (CONECTADO A LA API)
-        // ============================================================
         private async void BGuardarCompra_Click(object sender, EventArgs e)
         {
             if (CBProveedor.SelectedIndex == -1 || CBProveedor.SelectedValue == null)
@@ -539,7 +508,6 @@ namespace CapaPresentacion
                 BGuardarCompra.Enabled = true;
             }
         }
-
         private void BCancelar_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count > 0)
@@ -552,7 +520,6 @@ namespace CapaPresentacion
 
             LimpiarFormularioCompleto();
         }
-
         private void LimpiarFormularioCompleto()
         {
             CBProveedor.SelectedIndex = -1;
@@ -577,10 +544,7 @@ namespace CapaPresentacion
 
             CargarProductosEnCombo(_productosReales);
         }
-
-        // ============================================================
         // ALTA RÁPIDA DE PROVEEDOR / PRODUCTO
-        // ============================================================
         private async void BNuevoProveedor_Click(object sender, EventArgs e)
         {
             using (FormProveedores frmProv = new FormProveedores())
@@ -601,7 +565,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async void BNuevoProducto_Click(object sender, EventArgs e)
         {
             using (FormProductos frmProd = new FormProductos())

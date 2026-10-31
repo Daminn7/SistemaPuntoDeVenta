@@ -9,7 +9,6 @@ namespace CapaPresentacion
     public partial class FormModalCategoria : Form
     {
         private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();
-
         public int IdCategoriaCreada { get; private set; } = 0;
         public string NombreCategoriaCreada { get; private set; } = string.Empty;
 
@@ -17,7 +16,6 @@ namespace CapaPresentacion
         {
             InitializeComponent();
         }
-
         private void FormModalCategoria_Paint(object sender, PaintEventArgs e)
         {
             // Borde exterior sutil
@@ -27,7 +25,7 @@ namespace CapaPresentacion
             }
         }
 
-        // ✅ CORREGIDO: Ahora crea la categoría en la API
+        // CORREGIDO: Ahora crea la categoría en la API
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             string descripcion = TBNombreCategoria.Text.Trim();
@@ -42,13 +40,13 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ Crear el DTO correcto (CrearCategoriaDto, no CategoriaDto)
+                // Crear el DTO correcto (CrearCategoriaDto, no CategoriaDto)
                 var nuevaCategoria = new CrearCategoriaDto
                 {
                     Descripcion = descripcion
                 };
 
-                // ✅ Llamar a la API (descomentado)
+                // Llamar a la API (descomentado)
                 var resultado = await _categoriaLogica.Crear(nuevaCategoria);
 
                 IdCategoriaCreada = resultado.Id;

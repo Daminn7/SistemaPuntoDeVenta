@@ -16,18 +16,14 @@ namespace CapaPresentacion
     {
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
-
         private int _idProveedorSeleccionado = 0;
         private bool _esEdicion = false;
-
         private List<ProvinciaDto> _provincias;
         private List<LocalidadDto> _localidades;
-
         private bool _mostrarSoloActivos = true;
         private bool _actualizandoCuit = false;
         private bool _cargandoFiltros = false;
-
-        // ✅ NUEVO: CancellationTokenSource
+        // NUEVO: CancellationTokenSource
         private CancellationTokenSource _ctsCarga;
 
         public FormProveedores()
@@ -35,7 +31,6 @@ namespace CapaPresentacion
             InitializeComponent();
             InicializarComportamiento();
         }
-
         private async void FormProveedores_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -48,7 +43,7 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ Cargar provincias y proveedores en paralelo
+                // Cargar provincias y proveedores en paralelo
                 await Task.WhenAll(
                     CargarProvinciasAsync(token),
                     CargarProveedoresAsync(token)
@@ -63,7 +58,6 @@ namespace CapaPresentacion
             ActualizarBotonesSegunModo();
             BLimpiarFiltros.Text = "Inactivos";
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -75,7 +69,6 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private async Task CargarProvinciasAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -90,10 +83,10 @@ namespace CapaPresentacion
                 CBProvincia.ValueMember = "Id";
                 CBProvincia.SelectedIndex = -1;
 
-                // ✅ NUEVO: Pausar eventos mientras se carga el filtro
+                // NUEVO: Pausar eventos mientras se carga el filtro
                 _cargandoFiltros = true;
 
-                // ✅ NUEVO: Combo del FILTRO (con opción "Todas")
+                // NUEVO: Combo del FILTRO (con opción "Todas")
                 var provinciasFiltro = new List<ProvinciaDto>();
                 provinciasFiltro.Add(new ProvinciaDto { Id = 0, Descripcion = "(Todas)" });
                 if (_provincias != null) provinciasFiltro.AddRange(_provincias);
@@ -108,7 +101,7 @@ namespace CapaPresentacion
                 CBFiltroLocalidad.Items.Add("(Todas)");
                 CBFiltroLocalidad.SelectedIndex = 0;
 
-                // ✅ Reanudar eventos
+                // Reanudar eventos
                 _cargandoFiltros = false;
             }
             catch (OperationCanceledException) { }
@@ -173,7 +166,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private Image GenerarIconoProveedores(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -200,7 +192,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
@@ -213,7 +204,6 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private void AsignarEstiloEIconos()
         {
             try
@@ -225,7 +215,6 @@ namespace CapaPresentacion
             }
             catch { }
         }
-
         private void InicializarComportamiento()
         {
             TBCuit.MaxLength = 15;
@@ -253,7 +242,6 @@ namespace CapaPresentacion
             ConfigurarCascadaProvincias();
             ConfigurarFiltrosDinamicos();
         }
-
         private void ConfigurarFormateoCuitEnVivo()
         {
             TBCuit.TextChanged += (s, e) =>
@@ -279,7 +267,6 @@ namespace CapaPresentacion
                 _actualizandoCuit = false;
             };
         }
-
         private void ConfigurarValidacionEmailEnVivo()
         {
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
@@ -327,20 +314,17 @@ namespace CapaPresentacion
                 TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             };
         }
-
         private void SoloLetrasYEspacios_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
                 e.Handled = true;
         }
-
         private void SoloLetrasYNumerosYEspacios_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsLetterOrDigit(e.KeyChar) && !char.IsControl(e.KeyChar)
                 && !char.IsWhiteSpace(e.KeyChar) && e.KeyChar != '.' && e.KeyChar != ',')
                 e.Handled = true;
         }
-
         private void ConfigurarCascadaProvincias()
         {
             CBProvincia.SelectedIndexChanged += async (s, e) =>
@@ -366,7 +350,6 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private async Task CargarLocalidadesPorProvinciaAsync(int idProvincia, CancellationToken token = default(CancellationToken))
         {
             try
@@ -403,12 +386,11 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
 
-            // ✅ El evento ahora se dispara, pero el método sabe si debe ignorarlo
+            // El evento ahora se dispara, pero el método sabe si debe ignorarlo
             CBFiltroProvincia.SelectedIndexChanged += async (s, e) => await CargarLocalidadesDelFiltroAsync();
 
             CBFiltroLocalidad.SelectedIndexChanged += (s, e) =>
@@ -418,15 +400,14 @@ namespace CapaPresentacion
 
             BLimpiarFiltros.Click += BLimpiarFiltros_Click;
         }
-
         private async Task CargarLocalidadesDelFiltroAsync()
         {
-            // ✅ Si estamos cargando los datos iniciales, no hacer nada
+            // Si estamos cargando los datos iniciales, no hacer nada
             if (_cargandoFiltros) return;
 
             try
             {
-                // ✅ Validación segura para evitar el error de conversión
+                // Validación segura para evitar el error de conversión
                 if (CBFiltroProvincia.SelectedValue == null || !(CBFiltroProvincia.SelectedValue is int))
                 {
                     CBFiltroLocalidad.Items.Clear();
@@ -466,7 +447,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void AplicarFiltroGrilla()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
@@ -513,7 +493,7 @@ namespace CapaPresentacion
         }
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
-            _cargandoFiltros = true;  // ✅ Pausar eventos al limpiar
+            _cargandoFiltros = true;  // Pausar eventos al limpiar
 
             TBBuscar.Clear();
             CBFiltroProvincia.SelectedIndex = 0;
@@ -521,14 +501,13 @@ namespace CapaPresentacion
             CBFiltroLocalidad.Items.Add("(Todas)");
             CBFiltroLocalidad.SelectedIndex = 0;
 
-            _cargandoFiltros = false; // ✅ Reanudar
+            _cargandoFiltros = false; // Reanudar
 
             _mostrarSoloActivos = !_mostrarSoloActivos;
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
 
             await CargarProveedoresAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
-
         private bool ValidarFormulario(out string mensajeError)
         {
             mensajeError = string.Empty;
@@ -573,7 +552,6 @@ namespace CapaPresentacion
 
             return true;
         }
-
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             if (_esEdicion)
@@ -653,7 +631,6 @@ namespace CapaPresentacion
                 BActualizar.Enabled = false;
             }
         }
-
         private async void BActualizar_Click(object sender, EventArgs e)
         {
             if (!_esEdicion || _idProveedorSeleccionado <= 0)
@@ -733,7 +710,6 @@ namespace CapaPresentacion
                 BActualizar.Enabled = true;
             }
         }
-
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (_idProveedorSeleccionado <= 0)
@@ -770,7 +746,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarFormulario();
@@ -779,7 +754,6 @@ namespace CapaPresentacion
             ActualizarBotonesSegunModo();
             TBCuit.Focus();
         }
-
         private async void DGVProveedores_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -872,7 +846,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void LimpiarFormulario()
         {
             _idProveedorSeleccionado = 0;
@@ -904,7 +877,6 @@ namespace CapaPresentacion
 
             ActualizarBotonesSegunModo();
         }
-
         private void ActualizarBotonesSegunModo()
         {
             if (_esEdicion)

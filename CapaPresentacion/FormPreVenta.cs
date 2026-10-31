@@ -30,15 +30,11 @@ namespace CapaPresentacion
         private List<ArticuloCatalogo> _catalogoInsumos = new List<ArticuloCatalogo>();
         private DataTable _dtDetalle = new DataTable();
         private ArticuloCatalogo _insumoSeleccionado = null;
-
         private readonly ClienteLogica _clienteLogica = new ClienteLogica();
         private List<ClienteResponseDto> _clientes;
-
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
         private List<ProductoDto> _productos;
-
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
-
         private int _ordenIdCargado = 0;
         private string _tituloOriginal = "PREVENTA Y ATENCIÓN A CLIENTES";
         private CancellationTokenSource _ctsCarga;
@@ -48,7 +44,6 @@ namespace CapaPresentacion
             InitializeComponent();
             ConfigurarBuscadorReactivo();
         }
-
         private async void FormPreVenta_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -76,7 +71,6 @@ namespace CapaPresentacion
             LimpiarFormulario();
             ActualizarBotonGuardar();
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -88,7 +82,6 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private async Task CancelarPresupuestosVencidosAsync()
         {
             try
@@ -109,7 +102,6 @@ namespace CapaPresentacion
                 System.Diagnostics.Debug.WriteLine($"Error al cancelar vencidos: {ex.Message}");
             }
         }
-
         private Image DibujarIconoPreVenta(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -129,13 +121,11 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = DibujarIconoPreVenta(Color.FromArgb(212, 131, 53));
         }
-
         private async Task CargarProductosAsync()
         {
             try
@@ -164,7 +154,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void CargarArticulosEnCombo()
         {
             CBArticulos.Items.Clear();
@@ -185,7 +174,6 @@ namespace CapaPresentacion
             CBArticulos.SelectedIndex = -1;
             CBArticulos.Text = "";
         }
-
         private void CBArticulos_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (CBArticulos.SelectedItem is ArticuloItem item)
@@ -243,7 +231,6 @@ namespace CapaPresentacion
                 NUDCantidad.Select(0, NUDCantidad.Text.Length);
             }
         }
-
         private void ConfigurarBuscadorReactivo()
         {
             NUDCantidad.KeyDown += (s, e) =>
@@ -282,7 +269,6 @@ namespace CapaPresentacion
                 }
             };
         }
-
         private async Task CargarClientesAsync()
         {
             try
@@ -330,7 +316,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private int ObtenerIdClienteSeleccionado()
         {
             if (CBClientes.SelectedItem is ClienteItem item)
@@ -338,7 +323,6 @@ namespace CapaPresentacion
 
             return 0;
         }
-
         private void ConfigurarEstructuraDetalle()
         {
             if (_dtDetalle.Columns.Count == 0)
@@ -366,7 +350,6 @@ namespace CapaPresentacion
 
             DGVDetalle.DataSource = _dtDetalle;
         }
-
         private void BAgregarItem_Click(object sender, EventArgs e)
         {
             if (_insumoSeleccionado == null)
@@ -440,7 +423,6 @@ namespace CapaPresentacion
 
             ActualizarTotales();
         }
-
         private void DGVDetalle_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex >= 0 && e.ColumnIndex == DGVDetalle.Columns["ColEliminar"].Index)
@@ -449,7 +431,6 @@ namespace CapaPresentacion
                 ActualizarTotales();
             }
         }
-
         private void TipoPrecio_CheckedChanged(object sender, EventArgs e)
         {
             foreach (DataRow row in _dtDetalle.Rows)
@@ -469,7 +450,6 @@ namespace CapaPresentacion
 
             ActualizarTotales();
         }
-
         private void ActualizarTotales()
         {
             int totalItems = 0;
@@ -489,7 +469,6 @@ namespace CapaPresentacion
             if (DGVDetalle.CurrentCell != null)
                 DGVDetalle.CurrentCell = null;
         }
-
         private void ActualizarBotonGuardar()
         {
             if (_ordenIdCargado > 0)
@@ -503,7 +482,6 @@ namespace CapaPresentacion
                 BGuardarPresupuesto.BackColor = Color.FromArgb(41, 128, 185);
             }
         }
-
         private async void BCargarPresupuesto_Click(object sender, EventArgs e)
         {
             try
@@ -550,7 +528,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private Form CrearModalSeleccionPresupuesto(List<OrdenVentaDto> pendientes)
         {
             var modal = new Form
@@ -677,7 +654,6 @@ namespace CapaPresentacion
 
             return modal;
         }
-
         private async Task CargarPresupuestoEnFormularioAsync(OrdenVentaDto orden)
         {
             try
@@ -770,7 +746,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private async void BGuardarPresupuesto_Click(object sender, EventArgs e)
         {
             if (_ordenIdCargado > 0)
@@ -845,7 +820,6 @@ namespace CapaPresentacion
                 ActualizarBotonGuardar();
             }
         }
-
         private void BImprimirPresupuesto_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count == 0)
@@ -865,7 +839,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private async void BEnviarACaja_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count == 0)
@@ -950,7 +923,6 @@ namespace CapaPresentacion
                 BEnviarACaja.Enabled = true;
             }
         }
-
         private void BCancelarVenta_Click(object sender, EventArgs e)
         {
             if (_dtDetalle.Rows.Count > 0 || _ordenIdCargado > 0)
@@ -965,7 +937,6 @@ namespace CapaPresentacion
                 LimpiarFormulario();
             }
         }
-
         private void LimpiarFormulario()
         {
             _insumoSeleccionado = null;
@@ -987,7 +958,6 @@ namespace CapaPresentacion
             ActualizarBotonGuardar();
             ActualizarTotales();
         }
-
         private void GenerarPDFPresupuesto(string numeroPresupuesto)
         {
             PrintDocument pd = new PrintDocument();
@@ -1003,7 +973,6 @@ namespace CapaPresentacion
             };
             prev.ShowDialog();
         }
-
         private void ImprimirPresupuesto_PrintPage(object sender, PrintPageEventArgs e, string numeroPresupuesto = "")
         {
             Graphics g = e.Graphics;
@@ -1055,15 +1024,12 @@ namespace CapaPresentacion
                 g.DrawString($"TOTAL PRESUPUESTADO: {LTotalMonto.Text}", fTitulo, bOcre, x + 350, y);
             }
         }
-
         private class ClienteItem
         {
             public int IdCliente { get; set; }
             public string Display { get; set; }
-
             public override string ToString() => Display;
         }
-
         private class ArticuloItem
         {
             public int IdProducto { get; set; }
@@ -1072,7 +1038,6 @@ namespace CapaPresentacion
             public int Stock { get; set; }
             public decimal PrecioMinorista { get; set; }
             public decimal PrecioMayorista { get; set; }
-
             public override string ToString() =>
                 $"{Codigo} - {Descripcion} (Stock: {Stock})";
         }

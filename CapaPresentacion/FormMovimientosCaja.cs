@@ -17,23 +17,19 @@ namespace CapaPresentacion
     {
         private readonly CajaLogica _cajaLogica = new CajaLogica();
         private readonly MovimientoCajaLogica _movimientoLogica = new MovimientoCajaLogica();
-
         private List<MovimientoCajaDto> _todosLosMovimientos = new List<MovimientoCajaDto>();
         private List<MovimientoCajaDto> _movimientosFiltrados = new List<MovimientoCajaDto>();
         private List<CajaDto> _todasLasCajas = new List<CajaDto>();
         private Dictionary<int, CajaDto> _cajasCache = new Dictionary<int, CajaDto>();
-
         private decimal _fondoInicialFiltrado = 0m;
         private decimal _totalIngresosFiltrado = 0m;
         private decimal _totalEgresosFiltrado = 0m;
-
         private CancellationTokenSource _ctsCarga;
 
         public FormMovimientosCaja()
         {
             InitializeComponent();
         }
-
         private async void FormMovimientosCaja_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -41,8 +37,25 @@ namespace CapaPresentacion
             if (pbIconoTitulo != null)
                 pbIconoTitulo.Image = GenerarIconoCaja(Color.FromArgb(212, 131, 53));
 
-            dtpDesde.Value = DateTime.Today.AddDays(-7);
+            // 1. Establecer valores iniciales
+            dtpDesde.Value = DateTime.Today;
             dtpHasta.Value = DateTime.Today;
+
+            // 2. Delimitar rangos cruzados nativos (sin auto-ajuste de valores)
+            dtpDesde.MaxDate = dtpHasta.Value.Date;
+            dtpHasta.MinDate = dtpDesde.Value.Date;
+            dtpHasta.MaxDate = DateTime.Today;
+
+            // 3. Sincronizar solo los límites permitidos cuando el usuario cambia de fecha
+            dtpDesde.ValueChanged += (s, ev) =>
+            {
+                dtpHasta.MinDate = dtpDesde.Value.Date;
+            };
+
+            dtpHasta.ValueChanged += (s, ev) =>
+            {
+                dtpDesde.MaxDate = dtpHasta.Value.Date;
+            };
 
             if (cboTipoMovimiento.Items.Count > 0) cboTipoMovimiento.SelectedIndex = 0;
             if (cboMedioPago.Items.Count > 0) cboMedioPago.SelectedIndex = 0;
@@ -56,7 +69,6 @@ namespace CapaPresentacion
 
             await CargarTodosLosMovimientosAsync(_ctsCarga.Token);
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -68,7 +80,6 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private async Task CargarTodosLosMovimientosAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -95,7 +106,7 @@ namespace CapaPresentacion
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
-                // ✅ Acá forzamos el tipo para evitar el error CS1977
+                // Acá forzamos el tipo para evitar el error CS1977
                 List<MovimientoCajaDto> movimientos = ConvertirAMovimientoDto(movimientosRaw);
 
                 _todosLosMovimientos = movimientos
@@ -118,12 +129,11 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void AplicarFiltrosUI()
         {
             var lista = _todosLosMovimientos.AsEnumerable();
 
-            // ✅ Filtramos por fecha del MOVIMIENTO en HORA LOCAL
+            // Filtramos por fecha del MOVIMIENTO en HORA LOCAL
             DateTime desdeFiltro = dtpDesde.Value.Date;
             DateTime hastaFiltro = dtpHasta.Value.Date.AddDays(1);
 
@@ -162,22 +172,28 @@ namespace CapaPresentacion
 
             _movimientosFiltrados = lista.ToList();
         }
-
         private async Task AplicarFiltrosYRecargarAsync()
         {
             await CargarTodosLosMovimientosAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
-
         private async Task LimpiarFiltrosAsync()
         {
-            dtpDesde.Value = DateTime.Today.AddDays(-7);
+            // Liberar límites temporalmente para resetear sin excepciones
+            dtpDesde.MaxDate = DateTime.Today;
+            dtpHasta.MinDate = DateTime.MinValue;
+            dtpHasta.MaxDate = DateTime.Today;
+
+            dtpDesde.Value = DateTime.Today;
             dtpHasta.Value = DateTime.Today;
+
+            // Restablecer restricciones cruzadas
+            dtpDesde.MaxDate = dtpHasta.Value.Date;
+            dtpHasta.MinDate = dtpDesde.Value.Date;
             if (cboTipoMovimiento.Items.Count > 0) cboTipoMovimiento.SelectedIndex = 0;
             if (cboMedioPago.Items.Count > 0) cboMedioPago.SelectedIndex = 0;
 
             await CargarTodosLosMovimientosAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
-
         private List<MovimientoCajaDto> ConvertirAMovimientoDto(dynamic movimientosRaw)
         {
             var resultado = new List<MovimientoCajaDto>();
@@ -220,7 +236,6 @@ namespace CapaPresentacion
 
             return resultado;
         }
-
         private void MostrarMovimientos(List<MovimientoCajaDto> movimientos)
         {
             dgvMovimientos.SuspendLayout();
@@ -246,7 +261,7 @@ namespace CapaPresentacion
                     ? "—"
                     : mov.MedioPagoDescripcion;
 
-                // ✅ Fecha convertida a hora local
+                // Fecha convertida a hora local
                 string fechaStr = FechaHelper.ToArgentinaString(mov.FechaMovimiento, "dd/MM/yyyy HH:mm");
 
                 dgvMovimientos.Rows.Add(
@@ -267,7 +282,6 @@ namespace CapaPresentacion
             if (dgvMovimientos.CurrentCell != null)
                 dgvMovimientos.CurrentCell = null;
         }
-
         private void RecalcularBalance(List<MovimientoCajaDto> movimientos)
         {
             decimal fondoTotal = 0m;
@@ -301,7 +315,6 @@ namespace CapaPresentacion
 
             ActualizarBalance(fondoTotal, ingresos, egresos);
         }
-
         private void ActualizarBalance(decimal fondoInicial, decimal ingresos, decimal egresos)
         {
             dgvBalance.SuspendLayout();
@@ -328,7 +341,6 @@ namespace CapaPresentacion
             if (dgvBalance.CurrentCell != null)
                 dgvBalance.CurrentCell = null;
         }
-
         private void btnArqueo_Click(object sender, EventArgs e)
         {
             decimal totalEsperado = _fondoInicialFiltrado + _totalIngresosFiltrado - _totalEgresosFiltrado;
@@ -363,7 +375,6 @@ namespace CapaPresentacion
             MessageBox.Show(resumen, "Arqueo de Caja",
                 MessageBoxButtons.OK, MessageBoxIcon.Information);
         }
-
         private void btnImprimirInforme_Click(object sender, EventArgs e)
         {
             if (_movimientosFiltrados.Count == 0)
@@ -395,7 +406,6 @@ namespace CapaPresentacion
                     "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void ImprimirMovimientos_PrintPage(object sender, PrintPageEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -464,7 +474,7 @@ namespace CapaPresentacion
 
                     if (y > e.PageBounds.Height - 100) break;
 
-                    // ✅ Fecha convertida a hora local
+                    // Fecha convertida a hora local
                     string fechaStr = FechaHelper.ToArgentinaString(mov.FechaMovimiento, "dd/MM/yyyy HH:mm");
                     string cajaStr = mov.NumeroCaja.HasValue ? $"Caja {mov.NumeroCaja.Value}" : $"#{mov.CajaId}";
 

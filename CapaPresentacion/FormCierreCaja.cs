@@ -20,14 +20,12 @@ namespace CapaPresentacion
         private int _idTurnoCaja = 0;
         private int? _numeroCajaActual = null;
         private string _nombreCajero = "Operador";
-
         private decimal _fondoInicial = 0m;
         private decimal _ventasEfectivo = 0m;
         private decimal _ingresosMenores = 0m;
         private decimal _egresosMenores = 0m;
         private decimal _cobrosDigitales = 0m;
         private decimal _cobrosTarjetas = 0m;
-
         private CancellationTokenSource _ctsCarga;
 
         public FormCierreCaja()
@@ -328,7 +326,7 @@ namespace CapaPresentacion
                         string balance = diferencia == 0m ? "Caja Cuadrada" : (diferencia < 0m ? $"Faltante: $ {Math.Abs(diferencia):N2}" : $"Sobrante: $ {diferencia:N2}");
                         string numeroCajaTexto = _numeroCajaActual.HasValue ? _numeroCajaActual.Value.ToString() : $"id {_idTurnoCaja}";
 
-                        // ✅ Fecha de cierre en hora local
+                        // Fecha de cierre en hora local
                         string fechaCierre = FechaHelper.ToArgentinaString(DateTime.UtcNow, "dd/MM/yyyy HH:mm:ss");
 
                         string resumenCierre = $"=== RESUMEN DE CIERRE DE CAJA {numeroCajaTexto} ===\n\n" +

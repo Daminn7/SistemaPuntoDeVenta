@@ -24,8 +24,7 @@ namespace CapaPresentacion
         private readonly Color ColorGrafito = Color.FromArgb(38, 40, 44);
         private readonly Color ColorRojoAlerta = Color.FromArgb(192, 57, 43);
         private readonly Color ColorBordeCard = Color.FromArgb(226, 221, 214);
-
-        // ✅ Lógica de la API
+        // Lógica de la API
         private readonly OrdenVentaLogica _ordenVentaLogica = new OrdenVentaLogica();
         private readonly VentaLogica _ventaLogica = new VentaLogica();
         private readonly ApiClient _apiClient;
@@ -34,7 +33,7 @@ namespace CapaPresentacion
         {
             InitializeComponent();
 
-            // ✅ Inicializar ApiClient
+            // Inicializar ApiClient
             _apiClient = new ApiClient("https://api.serverlabservices.bot.cd");
             if (CapaDatos.Helpers.TokenManager.IsAuthenticated)
                 _apiClient.SetToken(CapaDatos.Helpers.TokenManager.Token);
@@ -43,13 +42,12 @@ namespace CapaPresentacion
                 pbIconoTitulo.Image = GenerarIconoDashboard(Color.FromArgb(212, 131, 53));
         }
 
-        // ✅ MODIFICADO: Ahora es async
+        // MODIFICADO: Ahora es async
         private async void FormDashboard_Load(object sender, EventArgs e)
         {
             ConfigurarEstilosVisualesCards();
             await CargarDatosRealesAsync();
         }
-
         private void ConfigurarEstilosVisualesCards()
         {
             pnlKpiVentas.Paint += (s, e) => DibujarAcentoCard(e.Graphics, pnlKpiVentas, ColorOcre);
@@ -62,7 +60,6 @@ namespace CapaPresentacion
 
             dgvStockCritico.CellFormatting += DgvStockCritico_CellFormatting;
         }
-
         private void DibujarAcentoCard(Graphics g, Control ctrl, Color colorAcento)
         {
             g.SmoothingMode = SmoothingMode.None;
@@ -82,7 +79,6 @@ namespace CapaPresentacion
                 g.FillRectangle(brushAcento, 1, 1, ctrl.Width - 2, 4);
             }
         }
-
         private void DibujarBordeSimple(Graphics g, Control ctrl)
         {
             g.SmoothingMode = SmoothingMode.None;
@@ -91,7 +87,6 @@ namespace CapaPresentacion
                 g.DrawRectangle(penBorde, 0, 0, ctrl.Width - 1, ctrl.Height - 1);
             }
         }
-
         private void DgvStockCritico_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
         {
             if (dgvStockCritico.Columns[e.ColumnIndex].Name == "colStockActual" && e.Value != null)
@@ -101,10 +96,7 @@ namespace CapaPresentacion
                 e.CellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             }
         }
-
-        // ============================================================
-        // ✅ NUEVO: Carga datos reales desde la API
-        // ============================================================
+        // NUEVO: Carga datos reales desde la API
         private async Task CargarDatosRealesAsync()
         {
             try
@@ -119,10 +111,7 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // ✅ NUEVO: Carga los KPIs desde /api/reportes/resumen
-        // ============================================================
+        // NUEVO: Carga los KPIs desde /api/reportes/resumen
         private async Task CargarResumenAsync()
         {
             try
@@ -131,13 +120,13 @@ namespace CapaPresentacion
 
                 if (resumen == null) return;
 
-                // ✅ KPI 1: Ventas de hoy
+                // KPI 1: Ventas de hoy
                 int ventasCantidad = resumen.ventasHoy?.cantidad ?? 0;
                 decimal ventasTotal = resumen.ventasHoy?.total ?? 0;
                 lblKpiVentasValor.Text = ventasTotal.ToString("C2");
                 lblKpiVentasSub.Text = $"{ventasCantidad} comprobantes";
 
-                // ✅ KPI 2: Caja
+                // KPI 2: Caja
                 decimal fondoInicial = resumen.caja?.fondoInicial ?? 0;
                 decimal totalVentasCaja = resumen.caja?.totalVentas ?? 0;
                 decimal efectivoEnCaja = fondoInicial + totalVentasCaja;
@@ -146,12 +135,12 @@ namespace CapaPresentacion
                 lblKpiCajaValor.Text = efectivoEnCaja.ToString("C2");
                 lblKpiCajaSub.Text = cajaAbierta ? "Turno abierto" : "Sin caja abierta";
 
-                // ✅ KPI 3: Clientes
+                // KPI 3: Clientes
                 int clientes = resumen.clientes ?? 0;
                 lblKpiClientesValor.Text = clientes.ToString();
                 lblKpiClientesSub.Text = "Cartera activa";
 
-                // ✅ KPI 4: Stock crítico
+                // KPI 4: Stock crítico
                 int stockBajo = resumen.inventario?.stockBajo ?? 0;
                 lblKpiStockValor.Text = stockBajo.ToString();
                 lblKpiStockSub.Text = "Insumos a reponer";
@@ -161,10 +150,7 @@ namespace CapaPresentacion
                 System.Diagnostics.Debug.WriteLine($"Error al cargar resumen: {ex.Message}");
             }
         }
-
-        // ============================================================
-        // ✅ NUEVO: Carga las últimas ventas (sin fallar por zona horaria)
-        // ============================================================
+        // NUEVO: Carga las últimas ventas (sin fallar por zona horaria)
         private async Task CargarUltimasVentasAsync()
         {
             try
@@ -179,17 +165,17 @@ namespace CapaPresentacion
                     return;
                 }
 
-                // ✅ 1. Definimos qué es "hoy" en hora local
+                // 1. Definimos qué es "hoy" en hora local
                 DateTime hoyLocal = DateTime.Now.Date;
 
-                // ✅ 2. Filtramos SOLO las ventas de hoy, las ordenamos y tomamos las últimas 5
+                // 2. Filtramos SOLO las ventas de hoy, las ordenamos y tomamos las últimas 5
                 var ventasDeHoy = ventas
                     .Where(v => FechaHelper.ToArgentina(v.FechaCobro).Date == hoyLocal)
                     .OrderByDescending(v => v.FechaCobro)
                     .Take(5)
                     .ToList();
 
-                // ✅ 3. Si no hay ventas hoy, mostramos una fila indicándolo (opcional)
+                // 3. Si no hay ventas hoy, mostramos una fila indicándolo (opcional)
                 if (ventasDeHoy.Count == 0)
                 {
                     dgvUltimasVentas.Rows.Add("", "Sin ventas hoy", "", "", "");
@@ -219,9 +205,7 @@ namespace CapaPresentacion
                 System.Diagnostics.Debug.WriteLine($"Error al cargar últimas ventas: {ex.Message}");
             }
         }
-        // ============================================================
-        // ✅ NUEVO: Carga el stock bajo desde /api/reportes/stock-bajo
-        // ============================================================
+        // NUEVO: Carga el stock bajo desde /api/reportes/stock-bajo
         private async Task CargarStockBajoAsync()
         {
             try
@@ -232,7 +216,7 @@ namespace CapaPresentacion
 
                 if (reporte == null) return;
 
-                // ✅ El reporte trae un objeto con "total" y "productos"
+                // El reporte trae un objeto con "total" y "productos"
                 var json = reporte as JObject;
                 if (json == null) return;
 
@@ -288,7 +272,7 @@ namespace CapaPresentacion
             return bmp;
         }
 
-        // ✅ MODIFICADO: Ahora es async
+        // MODIFICADO: Ahora es async
         private async void BtnActualizar_Click(object sender, EventArgs e)
         {
             btnActualizar.Enabled = false;

@@ -7,14 +7,12 @@ namespace CapaPresentacion
 {
     public partial class FormModalMovimientoMenor : Form
     {
-        // ✅ Tipo fijo: 1 = Ingreso, 2 = Egreso
+        // Tipo fijo: 1 = Ingreso, 2 = Egreso
         private readonly int _tipoMovimientoId;
         private readonly decimal _maximoDisponible;
-
         // Propiedades de salida
         public decimal Monto { get; private set; } = 0m;
         public string Motivo { get; private set; } = string.Empty;
-
         // Compatibilidad con código viejo
         public decimal MontoEgreso => Monto;
         public string MotivoEgreso => Motivo;
@@ -30,16 +28,12 @@ namespace CapaPresentacion
             _tipoMovimientoId = tipoMovimientoId;
             _maximoDisponible = maximoDisponible;
         }
-
         // Constructor viejo (compatibilidad con el código anterior)
         public FormModalMovimientoMenor(decimal maximoDisponible)
             : this(2, maximoDisponible)
         {
         }
-
-        // ============================================================
         // LOAD: Configurar título/colores según tipo
-        // ============================================================
         private void FormModalMovimientoMenor_Load(object sender, EventArgs e)
         {
             if (_tipoMovimientoId == 1)
@@ -65,10 +59,7 @@ namespace CapaPresentacion
                 LSubtitulo.Text = "Extraer efectivo de la gaveta de la caja";
             }
         }
-
-        // ============================================================
         // Paint del borde
-        // ============================================================
         private void FormModalMovimientoMenor_Paint(object sender, PaintEventArgs e)
         {
             using (Pen penBorde = new Pen(Color.FromArgb(65, 68, 74), 1))
@@ -76,10 +67,7 @@ namespace CapaPresentacion
                 e.Graphics.DrawRectangle(penBorde, 0, 0, this.Width - 1, this.Height - 1);
             }
         }
-
-        // ============================================================
         // KeyPress del monto
-        // ============================================================
         private void TBMonto_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
@@ -98,10 +86,7 @@ namespace CapaPresentacion
             if (!char.IsDigit(e.KeyChar))
                 e.Handled = true;
         }
-
-        // ============================================================
         // Botón Registrar
-        // ============================================================
         private void BRegistrar_Click(object sender, EventArgs e)
         {
             // 1) Validar monto

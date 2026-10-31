@@ -12,7 +12,7 @@ namespace CapaPresentacion
 {
     public partial class FormModalAperturaCaja : Form
     {
-        // ✅ NUEVO: número de caja elegido + fondo
+        // NUEVO: número de caja elegido + fondo
         public int NumeroCajaSeleccionada { get; private set; } = 0;
         public decimal FondoInicial { get; private set; } = 0m;
 
@@ -22,10 +22,7 @@ namespace CapaPresentacion
         {
             InitializeComponent();
         }
-
-        // ============================================================
         // LOAD: Cargar cajas y deshabilitar las ocupadas
-        // ============================================================
         private async void FormModalAperturaCaja_Load(object sender, EventArgs e)
         {
             await CargarCajasAsync();
@@ -86,10 +83,7 @@ namespace CapaPresentacion
                 CBCaja.SelectedIndex = 0;
             }
         }
-
-        // ============================================================
         // Paint del borde
-        // ============================================================
         private void FormModalAperturaCaja_Paint(object sender, PaintEventArgs e)
         {
             using (Pen penBorde = new Pen(Color.FromArgb(65, 68, 74), 1))
@@ -97,10 +91,7 @@ namespace CapaPresentacion
                 e.Graphics.DrawRectangle(penBorde, 0, 0, this.Width - 1, this.Height - 1);
             }
         }
-
-        // ============================================================
         // KeyPress del monto (solo números y coma)
-        // ============================================================
         private void TBMontoApertura_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
@@ -119,10 +110,7 @@ namespace CapaPresentacion
             if (!char.IsDigit(e.KeyChar))
                 e.Handled = true;
         }
-
-        // ============================================================
         // Botón Abrir
-        // ============================================================
         private void BAbrir_Click(object sender, EventArgs e)
         {
             // 1) Validar caja seleccionada
@@ -159,10 +147,7 @@ namespace CapaPresentacion
             this.DialogResult = DialogResult.OK;
             this.Close();
         }
-
-        // ============================================================
         // Clase auxiliar para el combo
-        // ============================================================
         private class CajaComboItem
         {
             public int NumeroCaja { get; set; }

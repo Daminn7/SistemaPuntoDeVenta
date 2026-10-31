@@ -18,14 +18,12 @@ namespace CapaPresentacion
         private readonly VentaLogica _ventaLogica = new VentaLogica();
         private readonly CajaLogica _cajaLogica = new CajaLogica();
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
-
         private int _idPedidoSeleccionado = 0;
         private decimal _totalActual = 0m;
         private int _cajaActivaId = 0;
         private bool _cajaAbierta = false;
         private List<MedioPagoDto> _mediosPago = new List<MedioPagoDto>();
         private DateTime? _fechaAperturaCaja = null;
-
         private CancellationTokenSource _ctsCarga;
 
         public FormCobroVenta()

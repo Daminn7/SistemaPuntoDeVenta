@@ -16,17 +16,13 @@ namespace CapaPresentacion
         private readonly ProductoLogica _productoLogica = new ProductoLogica();
         private readonly CategoriaLogica _categoriaLogica = new CategoriaLogica();
         private readonly ProveedorLogica _proveedorLogica = new ProveedorLogica();
-
         private int _productoId = 0;
         private bool _esEdicion = false;
-
         private List<CategoriaDto> _categorias;
         private List<ProveedorDto> _proveedores;
         private List<ProductoDto> _productosOriginales;
-
         private bool _mostrarSoloActivos = true;
-
-        // ✅ NUEVO: CancellationTokenSource
+        // NUEVO: CancellationTokenSource
         private CancellationTokenSource _ctsCarga;
 
         public FormProductos()
@@ -34,18 +30,15 @@ namespace CapaPresentacion
             InitializeComponent();
             InicializarComportamiento();
         }
-
         private void InicializarComportamiento()
         {
             AsignarEstiloEIconos();
             ConfigurarFiltrosDinamicos();
         }
-
         private void CBCategoria_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (CBCategoria.SelectedIndex == -1) return;
         }
-
         private async void FormProductos_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -55,7 +48,7 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ Cargar todo en paralelo
+                // Cargar todo en paralelo
                 await Task.WhenAll(
                     CargarCategoriasAsync(token),
                     CargarProveedoresAsync(token),
@@ -72,7 +65,6 @@ namespace CapaPresentacion
 
             BLimpiarFiltros.Text = "Inactivos";
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -84,7 +76,6 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private void AplicarRestriccionesPorRol()
         {
             string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
@@ -111,7 +102,6 @@ namespace CapaPresentacion
                     LTituloPrincipal.Text = "CATÁLOGO DE PRODUCTOS";
             }
         }
-
         private async Task CargarCategoriasAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -146,7 +136,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async Task CargarProveedoresAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -176,7 +165,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async Task CargarProductosAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -203,7 +191,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void MostrarProductos(List<ProductoDto> productos)
         {
             DGVProductos.SuspendLayout();
@@ -231,7 +218,6 @@ namespace CapaPresentacion
             DGVProductos.ResumeLayout();
             AplicarFiltroGrilla();
         }
-
         private void DGVProductos_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -265,7 +251,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private async void CargarProductoEnFormulario(int id)
         {
             var token = _ctsCarga?.Token ?? CancellationToken.None;
@@ -343,13 +328,11 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void SoloNumeros_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsDigit(e.KeyChar) && !char.IsControl(e.KeyChar))
                 e.Handled = true;
         }
-
         private void ValidarDecimal_KeyPress(object sender, KeyPressEventArgs e)
         {
             TextBox txt = sender as TextBox;
@@ -399,7 +382,6 @@ namespace CapaPresentacion
 
             e.Handled = true;
         }
-
         public static bool IntentarConvertirDecimal(string texto, out decimal valor)
         {
             valor = 0;
@@ -414,7 +396,6 @@ namespace CapaPresentacion
                 out valor
             );
         }
-
         private void FormatearMoneda_Leave(object sender, EventArgs e)
         {
             TextBox txt = sender as TextBox;
@@ -425,7 +406,6 @@ namespace CapaPresentacion
                 txt.Text = valor.ToString("0.00");
             }
         }
-
         private bool ValidarCamposProducto()
         {
             if (string.IsNullOrWhiteSpace(TCodigoInterno.Text))
@@ -513,7 +493,6 @@ namespace CapaPresentacion
 
             return true;
         }
-
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             if (_esEdicion)
@@ -576,7 +555,6 @@ namespace CapaPresentacion
                 BActualizar.Enabled = false;
             }
         }
-
         private async void BActualizar_Click(object sender, EventArgs e)
         {
             if (!_esEdicion || _productoId <= 0)
@@ -639,7 +617,6 @@ namespace CapaPresentacion
                 BActualizar.Enabled = true;
             }
         }
-
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (DGVProductos.SelectedRows.Count == 0)
@@ -684,7 +661,6 @@ namespace CapaPresentacion
                 ActualizarBotonesSegunModo();
             }
         }
-
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarCampos();
@@ -693,7 +669,6 @@ namespace CapaPresentacion
             ActualizarBotonesSegunModo();
             TCodigoInterno.Focus();
         }
-
         private async void BNuevaCategoria_Click(object sender, EventArgs e)
         {
             using (FormModalCategoria modal = new FormModalCategoria())
@@ -709,14 +684,12 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
             CBFiltroCategoria.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
             BLimpiarFiltros.Click += BLimpiarFiltros_Click;
         }
-
         private void AplicarFiltroGrilla()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
@@ -746,14 +719,12 @@ namespace CapaPresentacion
             }
             DGVProductos.ResumeLayout();
         }
-
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
             _mostrarSoloActivos = !_mostrarSoloActivos;
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
             await CargarProductosAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
-
         private void LimpiarCampos()
         {
             TCodigoInterno.Clear();
@@ -782,7 +753,6 @@ namespace CapaPresentacion
 
             ActualizarBotonesSegunModo();
         }
-
         private void ActualizarBotonesSegunModo()
         {
             if (_esEdicion)
@@ -796,7 +766,6 @@ namespace CapaPresentacion
                 BActualizar.Enabled = false;
             }
         }
-
         private int? ObtenerIdProveedorSeleccionado()
         {
             if (CBProveedor.SelectedItem is ProveedorDto prov && prov.Id > 0)
@@ -804,7 +773,6 @@ namespace CapaPresentacion
 
             return null;
         }
-
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
@@ -817,7 +785,6 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private void AsignarEstiloEIconos()
         {
             try
