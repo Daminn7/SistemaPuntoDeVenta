@@ -14,7 +14,6 @@ namespace CapaPresentacion
     public partial class FormModalArqueoCaja : Form
     {
         private readonly decimal _efectivoEsperado;
-
         // Propiedades públicas para que FormCierreCaja consuma el resultado
         public decimal EfectivoReal { get; private set; } = 0m;
         public decimal Diferencia { get; private set; } = 0m;
@@ -26,7 +25,6 @@ namespace CapaPresentacion
             _efectivoEsperado = efectivoEsperado;
             TBEfectivoEsperado.Text = _efectivoEsperado.ToString("N2");
         }
-
         private void FormModalArqueoCaja_Paint(object sender, PaintEventArgs e)
         {
             using (Pen penBorde = new Pen(Color.FromArgb(65, 68, 74), 1))
@@ -34,7 +32,6 @@ namespace CapaPresentacion
                 e.Graphics.DrawRectangle(penBorde, 0, 0, this.Width - 1, this.Height - 1);
             }
         }
-
         private void TBEfectivoReal_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (char.IsControl(e.KeyChar)) return;
@@ -53,7 +50,6 @@ namespace CapaPresentacion
             if (!char.IsDigit(e.KeyChar))
                 e.Handled = true;
         }
-
         private void TBEfectivoReal_TextChanged(object sender, EventArgs e)
         {
             string texto = TBEfectivoReal.Text.Trim().Replace(',', '.');
@@ -82,7 +78,6 @@ namespace CapaPresentacion
                 TBDiferencia.ForeColor = Color.White;
             }
         }
-
         private void BConfirmarCierre_Click(object sender, EventArgs e)
         {
             string texto = TBEfectivoReal.Text.Trim().Replace(',', '.');

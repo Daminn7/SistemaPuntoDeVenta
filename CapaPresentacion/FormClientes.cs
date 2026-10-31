@@ -14,9 +14,7 @@ namespace CapaPresentacion
 {
     public partial class FormClientes : Form
     {
-        // ============================================================
         // DECLARACIÓN DE VARIABLES
-        // ============================================================
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
         private readonly ClienteLogica _clienteLogica = new ClienteLogica();
 
@@ -26,28 +24,23 @@ namespace CapaPresentacion
         private List<ProvinciaDto> _provincias;
         private List<LocalidadDto> _localidades;
 
-        // ✅ Controla qué clientes se muestran (true = activos, false = inactivos)
+        // Controla qué clientes se muestran (true = activos, false = inactivos)
         private bool _mostrarSoloActivos = true;
 
-        // ✅ NUEVO: CancellationTokenSource para cancelar cargas al cerrar el form
+        // NUEVO: CancellationTokenSource para cancelar cargas al cerrar el form
         private CancellationTokenSource _ctsCarga;
 
-        // ✅ NUEVO: Bandera para suspender la cascada de provincias→localidades
+        // NUEVO: Bandera para suspender la cascada de provincias→localidades
         // cuando estamos cargando un cliente manualmente
         private bool _suspendiendoCascada = false;
 
-        // ============================================================
         // CONSTRUCTOR
-        // ============================================================
         public FormClientes()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
-
-        // ============================================================
         // INICIALIZACIÓN
-        // ============================================================
         private void InicializarComportamiento()
         {
             AsignarEstiloEIconos();
@@ -57,15 +50,12 @@ namespace CapaPresentacion
             ConfigurarValidacionEmailEnVivo();
             ConfigurarBuscadorEnVivo();
         }
-
-        // ============================================================
         // CARGA DEL FORMULARIO
-        // ✅ MODIFICADO: Ahora usa CancellationToken para evitar errores
+        // MODIFICADO: Ahora usa CancellationToken para evitar errores
         //    si el usuario cierra el form antes de que termine la carga
-        // ============================================================
         private async void FormClientes_Load(object sender, EventArgs e)
         {
-            // ✅ NUEVO: Crear el token al abrir el form
+            //NUEVO: Crear el token al abrir el form
             _ctsCarga = new CancellationTokenSource();
             var token = _ctsCarga.Token;
 
@@ -85,7 +75,7 @@ namespace CapaPresentacion
                 // Inicializar el texto del botón de estado
                 BLimpiarFiltros.Text = "Inactivos";
 
-                // ✅ Estado inicial de los botones (modo nuevo)
+                // Estado inicial de los botones (modo nuevo)
                 ActualizarBotonesSegunModo();
             }
             catch (OperationCanceledException)
@@ -93,10 +83,7 @@ namespace CapaPresentacion
                 // Cancelación esperada al cerrar el form: no hacer nada
             }
         }
-
-        // ============================================================
-        // ✅ NUEVO: Cancelar cargas al cerrar el form
-        // ============================================================
+        // NUEVO: Cancelar cargas al cerrar el form
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -109,10 +96,7 @@ namespace CapaPresentacion
 
             base.OnFormClosing(e);
         }
-
-        // ============================================================
         // PERMISOS POR ROL
-        // ============================================================
         private void AplicarPermisosPorRol()
         {
             string rol = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
@@ -155,10 +139,7 @@ namespace CapaPresentacion
                 BActualizar.Padding = new Padding(125, 0, 0, 0);
             }
         }
-
-        // ============================================================
         // ESTILO DEL DATAGRIDVIEW
-        // ============================================================
         private void ConfigurarEstiloDataGridView()
         {
             DGVClientes.DefaultCellStyle.ForeColor = Color.Black;
@@ -169,12 +150,9 @@ namespace CapaPresentacion
             DGVClientes.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(235, 235, 235);
             DGVClientes.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 248, 248);
         }
-
-        // ============================================================
         // CARGA DE CLIENTES
-        // ✅ MODIFICADO: Recibe CancellationToken y verifica antes de tocar la UI
-        // ✅ MODIFICADO: Usa SuspendLayout/ResumeLayout para mejor performance
-        // ============================================================
+        // MODIFICADO: Recibe CancellationToken y verifica antes de tocar la UI
+        // MODIFICADO: Usa SuspendLayout/ResumeLayout para mejor performance
         private async Task CargarClientesAsync(CancellationToken token = default(CancellationToken))
 
         {
@@ -182,13 +160,13 @@ namespace CapaPresentacion
             {
                 var clientes = await _clienteLogica.ObtenerTodos();
 
-                // ✅ NUEVO: Si cancelaron mientras cargaba, no tocar la UI
+                // NUEVO: Si cancelaron mientras cargaba, no tocar la UI
                 if (token.IsCancellationRequested) return;
 
-                // ✅ NUEVO: Verificar que el form siga vivo
+                // NUEVO: Verificar que el form siga vivo
                 if (this.IsDisposed || this.Disposing) return;
 
-                // ✅ NUEVO: Suspender el layout para evitar redibujado en cada Add
+                // NUEVO: Suspender el layout para evitar redibujado en cada Add
                 DGVClientes.SuspendLayout();
                 DGVClientes.DataSource = null;
                 DGVClientes.Rows.Clear();
@@ -255,11 +233,8 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // SELECCIÓN DE CLIENTE EN EL DATAGRIDVIEW
-        // ✅ MODIFICADO: Blindado contra form cerrado
-        // ============================================================
+        // MODIFICADO: Blindado contra form cerrado
         private void DGVClientes_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -279,7 +254,7 @@ namespace CapaPresentacion
                 _esEdicion = true;
                 CargarClienteEnFormulario(id);
 
-                // ✅ Cambiar estado de botones (modo edición)
+                // Cambiar estado de botones (modo edición)
                 ActualizarBotonesSegunModo();
             }
             catch (Exception ex)
@@ -288,13 +263,10 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
         // CARGAR CLIENTE EN EL FORMULARIO PARA EDITAR
-        // ✅ MODIFICADO: Eliminado await Task.Delay(300)
-        // ✅ MODIFICADO: Usa _suspendiendoCascada para no re-disparar la cascada
-        // ✅ MODIFICADO: Verifica cancelación antes de tocar controles
-        // ============================================================
+        // MODIFICADO: Eliminado await Task.Delay(300)
+        // MODIFICADO: Usa _suspendiendoCascada para no re-disparar la cascada
+        // MODIFICADO: Verifica cancelación antes de tocar controles
         private async void CargarClienteEnFormulario(int id)
         {
             var token = _ctsCarga?.Token ?? CancellationToken.None;
@@ -303,7 +275,7 @@ namespace CapaPresentacion
             {
                 var cliente = await _clienteLogica.ObtenerPorId(id);
 
-                // ✅ Verificar cancelación / form cerrado
+                // Verificar cancelación / form cerrado
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
@@ -313,19 +285,14 @@ namespace CapaPresentacion
                         MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
-
-                // ============================================================
                 // DATOS PERSONALES
-                // ============================================================
                 TBCodigoInterno.Text = cliente.Dni ?? "";
                 TBCuilCuit.Text = cliente.CuilCuit ?? "";
                 TBNombreRazonSocial.Text = cliente.Nombre ?? "";
                 TApellido.Text = cliente.Apellido ?? "";
                 TBEmail.Text = cliente.Email ?? "";
 
-                // ============================================================
                 // TELÉFONO (Separación de Característica y Número)
-                // ============================================================
                 string telCompleto = (cliente.Telefono ?? "").Trim();
                 if (!string.IsNullOrEmpty(telCompleto))
                 {
@@ -352,10 +319,7 @@ namespace CapaPresentacion
                     TBCaracteristica.Clear();
                     TTelefono.Clear();
                 }
-
-                // ============================================================
                 // DIRECCIÓN
-                // ============================================================
                 TBCalle.Clear();
                 TBNro.Clear();
                 TBPiso.Clear();
@@ -405,11 +369,8 @@ namespace CapaPresentacion
                         TBCalle.Text = direccion;
                     }
                 }
-
-                // ============================================================
                 // PROVINCIA Y LOCALIDAD
-                // ✅ MODIFICADO: Carga ordenada sin Task.Delay
-                // ============================================================
+                // MODIFICADO: Carga ordenada sin Task.Delay
                 if (cliente.LocalidadId.HasValue && cliente.LocalidadId.Value > 0)
                 {
                     int localidadId = cliente.LocalidadId.Value;
@@ -428,7 +389,7 @@ namespace CapaPresentacion
                         var provincia = _provincias?.FirstOrDefault(p => p.Id == localidad.ProvinciaId);
                         if (provincia != null)
                         {
-                            // ✅ NUEVO: Suspender cascada mientras asignamos manualmente
+                            // NUEVO: Suspender cascada mientras asignamos manualmente
                             _suspendiendoCascada = true;
                             try
                             {
@@ -450,7 +411,7 @@ namespace CapaPresentacion
                     }
                 }
 
-                // ✅ Cargar el estado del cliente en el CheckBox
+                // Cargar el estado del cliente en el CheckBox
                 ChBClienteHabilitado.Checked = cliente.Estado;
             }
             catch (OperationCanceledException)
@@ -466,10 +427,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 1. RESTRICCIONES DE TECLADO
-        // ============================================================
         private void ConfigurarRestriccionesTeclado()
         {
             TBCodigoInterno.MaxLength = 8;
@@ -502,10 +460,7 @@ namespace CapaPresentacion
             if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
                 e.Handled = true;
         }
-
-        // ============================================================
         // 2. FORMATEO CUIL EN VIVO
-        // ============================================================
         private void ConfigurarFormateoCuilEnVivo()
         {
             TBCuilCuit.TextChanged += (s, e) =>
@@ -531,10 +486,7 @@ namespace CapaPresentacion
                 _actualizandoCuil = false;
             };
         }
-
-        // ============================================================
         // 3. VALIDACIÓN EMAIL EN VIVO
-        // ============================================================
         private void ConfigurarValidacionEmailEnVivo()
         {
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
@@ -582,10 +534,7 @@ namespace CapaPresentacion
                 TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             };
         }
-
-        // ============================================================
         // 4. BÚSQUEDA REACTIVA EN GRILLA
-        // ============================================================
         private void ConfigurarBuscadorEnVivo()
         {
             TBBuscar.TextChanged += (s, e) =>
@@ -607,11 +556,8 @@ namespace CapaPresentacion
                 }
             };
         }
-
-        // ============================================================
         // 5. CASCADA PROVINCIAS -> LOCALIDADES
-        // ✅ MODIFICADO: Ahora respeta _suspendiendoCascada
-        // ============================================================
+        // MODIFICADO: Ahora respeta _suspendiendoCascada
         private async Task CargarProvinciasAsync(CancellationToken token = default(CancellationToken))
 
         {
@@ -644,7 +590,7 @@ namespace CapaPresentacion
         {
             CBProvincia.SelectedIndexChanged += async (s, e) =>
             {
-                // ✅ NUEVO: Si estamos cargando un cliente manualmente, no re-disparar la cascada
+                // NUEVO: Si estamos cargando un cliente manualmente, no re-disparar la cascada
                 if (_suspendiendoCascada) return;
 
                 try
@@ -700,10 +646,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 6. VALIDAR CAMPOS
-        // ============================================================
         private bool ValidarCamposCliente(out string mensajeError)
         {
             mensajeError = string.Empty;
@@ -776,10 +719,7 @@ namespace CapaPresentacion
 
             return true;
         }
-
-        // ============================================================
         // 7. BOTÓN GUARDAR (SOLO CREAR NUEVO CLIENTE)
-        // ============================================================
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             // Si estamos en modo edición, avisar que use Actualizar
@@ -846,10 +786,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 8. BOTÓN ACTUALIZAR (SOLO ACTUALIZAR CLIENTE SELECCIONADO)
-        // ============================================================
         private async void BActualizar_Click(object sender, EventArgs e)
         {
             // Verificar que haya un cliente seleccionado
@@ -916,10 +853,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 9. BOTÓN DESACTIVAR (DAR DE BAJA)
-        // ============================================================
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (DGVClientes.SelectedRows.Count == 0)
@@ -963,29 +897,20 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 10. BOTÓN NUEVO
-        // ============================================================
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarCampos();
             TBCodigoInterno.Focus();
         }
-
-        // ============================================================
         // 11. FILTROS Y ACTUALIZACIÓN DE LISTA
-        // ============================================================
         private async void BActualizarLista_Click(object sender, EventArgs e)
         {
             TBBuscar.Clear();
             var token = _ctsCarga?.Token ?? CancellationToken.None;
             await CargarClientesAsync(token);
         }
-
-        // ============================================================
         // BOTÓN ESTADO (Alterna entre Activos e Inactivos)
-        // ============================================================
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
             // Alternar el filtro
@@ -998,10 +923,7 @@ namespace CapaPresentacion
             var token = _ctsCarga?.Token ?? CancellationToken.None;
             await CargarClientesAsync(token);
         }
-
-        // ============================================================
         // 12. LIMPIAR CAMPOS
-        // ============================================================
         private void LimpiarCampos()
         {
             TBCodigoInterno.Clear();
@@ -1016,7 +938,7 @@ namespace CapaPresentacion
             TBPiso.Clear();
             TBDpto.Clear();
 
-            // ✅ NUEVO: Suspender cascada mientras limpiamos
+            // NUEVO: Suspender cascada mientras limpiamos
             _suspendiendoCascada = true;
             try
             {
@@ -1033,13 +955,10 @@ namespace CapaPresentacion
             _esEdicion = false;
             _clienteId = 0;
 
-            // ✅ Actualizar botones (modo nuevo)
+            // Actualizar botones (modo nuevo)
             ActualizarBotonesSegunModo();
         }
-
-        // ============================================================
         // 14. Habilita/Deshabilita botones según el modo
-        // ============================================================
         private void ActualizarBotonesSegunModo()
         {
             if (_esEdicion)
@@ -1055,10 +974,7 @@ namespace CapaPresentacion
                 BActualizar.Enabled = false;
             }
         }
-
-        // ============================================================
         // 13. ESTILO E ÍCONOS
-        // ============================================================
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;

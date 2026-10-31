@@ -13,37 +13,24 @@ namespace CapaPresentacion
 {
     public partial class FormPersonal : Form
     {
-        // ============================================================
         // DECLARACIÓN DE VARIABLES
-        // ============================================================
         private readonly PersonalLogica _personalLogica = new PersonalLogica();
         private readonly TablasMaestrasLogica _tablasLogica = new TablasMaestrasLogica();
-
         private int _idPersonalSeleccionado = 0;
         private bool _esEdicion = false;
-
         private List<PerfilDto> _perfiles;
-
         private bool _mostrarSoloActivos = true;
-
-        // ✅ NUEVO: Bandera para el formateo del CUIL en vivo (evita loop infinito)
+        // NUEVO: Bandera para el formateo del CUIL en vivo (evita loop infinito)
         private bool _actualizandoCuil = false;
-
-        // ✅ NUEVO: CancellationTokenSource para cancelar cargas al cerrar
+        // NUEVO: CancellationTokenSource para cancelar cargas al cerrar
         private CancellationTokenSource _ctsCarga;
-
-        // ============================================================
         // CONSTRUCTOR
-        // ============================================================
         public FormPersonal()
         {
             InitializeComponent();
             InicializarComportamiento();
         }
-
-        // ============================================================
         // CARGA DEL FORMULARIO (con CancellationToken + Task.WhenAll)
-        // ============================================================
         private async void FormPersonal_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -53,7 +40,7 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ Cargamos perfiles y personal EN PARALELO
+                // Cargamos perfiles y personal EN PARALELO
                 await Task.WhenAll(
                     CargarPerfilesAsync(token),
                     CargarPersonalAsync(token)
@@ -69,10 +56,7 @@ namespace CapaPresentacion
 
             BLimpiarFiltros.Text = "Inactivos";
         }
-
-        // ============================================================
-        // ✅ NUEVO: Cancelar cargas al cerrar el form
-        // ============================================================
+        // NUEVO: Cancelar cargas al cerrar el form
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -84,10 +68,7 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
-        // ============================================================
         // Carga la lista de perfiles desde la API
-        // ============================================================
         private async Task CargarPerfilesAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -97,13 +78,13 @@ namespace CapaPresentacion
                 if (token.IsCancellationRequested) return;
                 if (this.IsDisposed || this.Disposing) return;
 
-                // ✅ Configurar el combo de roles del formulario
+                // Configurar el combo de roles del formulario
                 CBRol.DataSource = _perfiles;
                 CBRol.DisplayMember = "Nombre";
                 CBRol.ValueMember = "Id";
                 CBRol.SelectedIndex = -1;
 
-                // ✅ Combo de filtro con opción "Todos"
+                // Combo de filtro con opción "Todos"
                 var perfilesFiltro = new List<PerfilDto>();
                 perfilesFiltro.Add(new PerfilDto { Id = 0, Nombre = "(Todos)" });
                 if (_perfiles != null) perfilesFiltro.AddRange(_perfiles);
@@ -123,10 +104,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // Carga el personal desde la API (con SuspendLayout)
-        // ============================================================
         private async Task CargarPersonalAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -179,10 +157,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 1. ÍCONO VECTORIAL DE PERSONAL Y ESCALADO DE BOTONERA
-        // ============================================================
         private Image GenerarIconoPersonal(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -207,7 +182,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image EscalarIcono(Image imagenOriginal, int ancho, int alto)
         {
             if (imagenOriginal == null) return null;
@@ -220,7 +194,6 @@ namespace CapaPresentacion
             }
             return nuevoBitmap;
         }
-
         private void AsignarEstiloEIconos()
         {
             try
@@ -235,10 +208,7 @@ namespace CapaPresentacion
             }
             catch { }
         }
-
-        // ============================================================
         // 2. RESTRICCIONES DE TECLADO Y FILTRADO
-        // ============================================================
         private void InicializarComportamiento()
         {
             // DNI: solo dígitos, máximo 8
@@ -282,14 +252,12 @@ namespace CapaPresentacion
             // Filtros dinámicos de la grilla
             ConfigurarFiltrosDinamicos();
         }
-
         private void SoloLetrasYEspacios_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (!char.IsLetter(e.KeyChar) && !char.IsControl(e.KeyChar) && !char.IsWhiteSpace(e.KeyChar))
                 e.Handled = true;
         }
-
-        // ✅ Formateo CUIL en vivo (XX-XXXXXXXX-X)
+        // Formateo CUIL en vivo (XX-XXXXXXXX-X)
         private void ConfigurarFormateoCuilEnVivo()
         {
             TBCuil.TextChanged += (s, e) =>
@@ -315,8 +283,7 @@ namespace CapaPresentacion
                 _actualizandoCuil = false;
             };
         }
-
-        // ✅ Validación de email en vivo (verde si es válido, rojo si no)
+        // Validación de email en vivo (verde si es válido, rojo si no)
         private void ConfigurarValidacionEmailEnVivo()
         {
             string patronEmail = @"^[^@\s]+@[^@\s]+\.[^@\s]+$";
@@ -364,17 +331,13 @@ namespace CapaPresentacion
                 TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             };
         }
-
         private void ConfigurarFiltrosDinamicos()
         {
             TBBuscar.TextChanged += (s, e) => AplicarFiltroGrilla();
             CBFiltroRol.SelectedIndexChanged += (s, e) => AplicarFiltroGrilla();
             BLimpiarFiltros.Click += BLimpiarFiltros_Click;
         }
-
-        // ============================================================
         // Filtro sobre la grilla (texto + rol)
-        // ============================================================
         private void AplicarFiltroGrilla()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
@@ -402,20 +365,14 @@ namespace CapaPresentacion
             }
             DGVPersonal.ResumeLayout();
         }
-
-        // ============================================================
         // Botón que alterna entre activos e inactivos
-        // ============================================================
         private async void BLimpiarFiltros_Click(object sender, EventArgs e)
         {
             _mostrarSoloActivos = !_mostrarSoloActivos;
             BLimpiarFiltros.Text = _mostrarSoloActivos ? "Inactivos" : "Activos";
             await CargarPersonalAsync(_ctsCarga?.Token ?? CancellationToken.None);
         }
-
-        // ============================================================
         // 3. VALIDACIÓN
-        // ============================================================
         private bool ValidarFormulario(out string mensajeError)
         {
             mensajeError = string.Empty;
@@ -518,10 +475,7 @@ namespace CapaPresentacion
 
             return true;
         }
-
-        // ============================================================
         // 4. ACCIONES DE BOTONES
-        // ============================================================
         private async void BGuardar_Click(object sender, EventArgs e)
         {
             if (_esEdicion)
@@ -566,7 +520,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private async void BActualizar_Click(object sender, EventArgs e)
         {
             if (!_esEdicion || _idPersonalSeleccionado <= 0)
@@ -613,7 +566,6 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private async void BDesactivar_Click(object sender, EventArgs e)
         {
             if (_idPersonalSeleccionado <= 0)
@@ -652,7 +604,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void BNuevo_Click(object sender, EventArgs e)
         {
             LimpiarFormulario();
@@ -661,10 +612,7 @@ namespace CapaPresentacion
             ActualizarBotonesSegunModo();
             TBDni.Focus();
         }
-
-        // ============================================================
         // 5. SELECCIÓN EN LA GRILLA
-        // ============================================================
         private async void DGVPersonal_CellClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
@@ -693,7 +641,7 @@ namespace CapaPresentacion
                     TBTelefono.Text = personal.Telefono ?? "";
                     TBPassword.Clear();
 
-                    // ✅ Seleccionar el perfil en el combo
+                    // Seleccionar el perfil en el combo
                     if (personal.PerfilId > 0)
                     {
                         CBRol.SelectedValue = personal.PerfilId;
@@ -728,10 +676,7 @@ namespace CapaPresentacion
                 }
             }
         }
-
-        // ============================================================
         // 6. LIMPIAR FORMULARIO
-        // ============================================================
         private void LimpiarFormulario()
         {
             _idPersonalSeleccionado = 0;
@@ -748,7 +693,7 @@ namespace CapaPresentacion
             CBRol.SelectedIndex = -1;
             ChBUsuarioHabilitado.Checked = true;
 
-            // ✅ Restaurar color del label de email
+            // Restaurar color del label de email
             TBEmail.ForeColor = Color.FromArgb(38, 40, 44);
             LEmail.Text = "Correo Electrónico:";
             LEmail.ForeColor = Color.FromArgb(70, 70, 70);
@@ -761,10 +706,7 @@ namespace CapaPresentacion
 
             ActualizarBotonesSegunModo();
         }
-
-        // ============================================================
         // Habilita/Deshabilita botones según el modo
-        // ============================================================
         private void ActualizarBotonesSegunModo()
         {
             if (_esEdicion)

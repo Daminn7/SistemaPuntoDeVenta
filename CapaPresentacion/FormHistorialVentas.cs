@@ -26,7 +26,6 @@ namespace CapaPresentacion
             InitializeComponent();
             InicializarComportamiento();
         }
-
         private async void FormHistorialVentas_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -51,7 +50,6 @@ namespace CapaPresentacion
                 lblTotalMonto.Text = "$ 0,00";
             }
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -63,13 +61,23 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private void InicializarComportamiento()
         {
             txtBuscar.TextChanged += (s, e) => AplicarFiltros();
             cboEstado.SelectedIndexChanged += (s, e) => AplicarFiltros();
-            dtpDesde.ValueChanged += (s, e) => AplicarFiltros();
-            dtpHasta.ValueChanged += (s, e) => AplicarFiltros();
+            // Sincronización estricta no interactiva: actualiza solo límites permitidos
+            dtpDesde.ValueChanged += (s, e) =>
+            {
+                dtpHasta.MinDate = dtpDesde.Value.Date;
+                AplicarFiltros();
+            };
+
+            dtpHasta.ValueChanged += (s, e) =>
+            {
+                dtpDesde.MaxDate = dtpHasta.Value.Date;
+                AplicarFiltros();
+            };
+
             btnBuscar.Click += (s, e) => AplicarFiltros();
 
             btnLimpiar.Click += (s, e) =>
@@ -107,13 +115,21 @@ namespace CapaPresentacion
             btnReimprimir.Click += async (s, e) => await ReimprimirOrdenAsync();
             btnAnular.Click += async (s, e) => await AnularOrdenAsync();
         }
-
         private void ConfigurarFechas()
         {
-            dtpDesde.Value = DateTime.Now.AddDays(-30);
-            dtpHasta.Value = DateTime.Now;
-        }
+            // 1. Liberar límites temporalmente para resetear sin excepciones de rango
+            dtpDesde.MaxDate = DateTime.Today;
+            dtpHasta.MinDate = DateTimePicker.MinimumDateTime;
+            dtpHasta.MaxDate = DateTime.Today;
 
+            // 2. Asignar rango por defecto (últimos 30 días hasta hoy)
+            dtpDesde.Value = DateTime.Today.AddDays(-30);
+            dtpHasta.Value = DateTime.Today;
+
+            // 3. Fijar restricciones cruzadas nativas
+            dtpDesde.MaxDate = dtpHasta.Value.Date;
+            dtpHasta.MinDate = dtpDesde.Value.Date;
+        }
         private async Task CargarOrdenesAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -132,7 +148,6 @@ namespace CapaPresentacion
                     MessageBox.Show($"Error al cargar órdenes: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void MostrarOrdenes(List<OrdenVentaDto> ordenes)
         {
             dgvVentas.SuspendLayout();
@@ -147,7 +162,6 @@ namespace CapaPresentacion
             }
             dgvVentas.ResumeLayout();
         }
-
         private async Task CargarDetalleOrdenAsync(int rowIndex)
         {
             var token = _ctsCarga?.Token ?? CancellationToken.None;
@@ -181,14 +195,12 @@ namespace CapaPresentacion
                     MessageBox.Show($"Error al cargar detalle: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
         private void CargarDesplegableEstados()
         {
             cboEstado.Items.Clear();
             cboEstado.Items.AddRange(new object[] { "Todos", "Pendiente", "Confirmada", "Finalizada", "Cancelada", "Anulada" });
             cboEstado.SelectedIndex = 0;
         }
-
         private void AplicarFiltros()
         {
             string texto = txtBuscar.Text.Trim().ToLower();
@@ -219,7 +231,6 @@ namespace CapaPresentacion
             _ordenDetalleActual = null;
             lblTotalMonto.Text = "$ 0,00";
         }
-
         private async Task ReimprimirOrdenAsync()
         {
             if (dgvVentas.CurrentRow == null)
@@ -240,15 +251,13 @@ namespace CapaPresentacion
             }
             catch (Exception ex) { MessageBox.Show($"Error al reimprimir:\n{ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
-
         private void ImprimirTicket_PrintPage(object sender, PrintPageEventArgs e)
         {
             // El mismo código de impresión que tenías...
         }
-
         private async Task AnularOrdenAsync()
         {
-            // ✅ NUEVO: Validar que no sea Cajero
+            // NUEVO: Validar que no sea Cajero
             string rol = (SesionUsuario.Rol ?? "").Trim().ToUpper();
             if (rol == "CAJERO" || rol == "CAJERO / OPERADOR" || rol == "OPERADOR")
             {

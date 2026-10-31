@@ -40,7 +40,7 @@ namespace CapaPresentacion
             InitializeComponent();
             InicializarComponentesAdicionales();
 
-            // ✅ NUEVO: Conectar el cambio de tipo de reporte
+            // NUEVO: Conectar el cambio de tipo de reporte
             CBTipoReporte.SelectedIndexChanged += CBTipoReporte_SelectedIndexChanged;
         }
 
@@ -89,7 +89,7 @@ namespace CapaPresentacion
                         );
                     }
 
-                    // ✅ Reconfiguramos las columnas de la grilla temporalmente
+                    // Reconfiguramos las columnas de la grilla temporalmente
                     DGVResumen.SuspendLayout();
 
                     // Ocultamos las columnas viejas y mostramos las nuevas
@@ -111,7 +111,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -123,13 +122,11 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private void InicializarComponentesAdicionales()
         {
             PPanelGraficoBarras.Resize += (s, e) => PPanelGraficoBarras.Invalidate();
             PPanelGraficoTorta.Resize += (s, e) => PPanelGraficoTorta.Invalidate();
         }
-
         private async Task CargarTodosLosDatosAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -162,7 +159,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async Task CargarEvolucionAsync(DateTime desde, DateTime hasta, CancellationToken token)
         {
             var resultado = await _reporteLogica.ObtenerEvolucion(desde, hasta);
@@ -189,7 +185,6 @@ namespace CapaPresentacion
                 ActualizarTablaEvolucion(json);
             }
         }
-
         private void ActualizarTablaEvolucion(JObject json)
         {
             var periodos = json["periodos"] as JArray;
@@ -233,7 +228,6 @@ namespace CapaPresentacion
             DGVResumen.DataSource = dt;
             DGVResumen.ResumeLayout();
         }
-
         private async Task CargarMediosPagoAsync(DateTime desde, DateTime hasta, CancellationToken token)
         {
             var resultado = await _reporteLogica.ObtenerMediosPago(desde, hasta);
@@ -256,7 +250,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private async Task CargarRentabilidadAsync(DateTime desde, DateTime hasta, CancellationToken token)
         {
             var resultado = await _reporteLogica.ObtenerRentabilidad(desde, hasta);
@@ -273,7 +266,6 @@ namespace CapaPresentacion
                 LValorTickets.Text = $"{cantidadVentas} facturas";
             }
         }
-
         private Image GenerarIconoInformes(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -293,7 +285,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
@@ -301,7 +292,6 @@ namespace CapaPresentacion
                 PBIconoTitulo.Image = GenerarIconoInformes(Color.FromArgb(212, 131, 53));
             }
         }
-
         private void CargarTiposReporte()
         {
             CBTipoReporte.Items.Clear();
@@ -316,8 +306,7 @@ namespace CapaPresentacion
             DTPFechaDesde.Value = DateTime.Now.AddMonths(-6);
             DTPFechaHasta.Value = DateTime.Now;
         }
-
-        // ✅ NUEVO: Al cambiar el tipo de reporte, se ocultan/muestran paneles
+        // NUEVO: Al cambiar el tipo de reporte, se ocultan/muestran paneles
         private void CBTipoReporte_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (CBTipoReporte.SelectedIndex < 0) return;
@@ -331,7 +320,7 @@ namespace CapaPresentacion
                     PPanelGraficoBarras.Visible = true;
                     PPanelGraficoTorta.Visible = true;
 
-                    // ✅ Restaurar las columnas de evolución
+                    // Restaurar las columnas de evolución
                     RestaurarColumnasEvolucion();
                     break;
 
@@ -389,7 +378,6 @@ namespace CapaPresentacion
             // Volver a cargar la evolución (esto rellena los datos)
             _ = CargarEvolucionYTablaAsync();
         }
-
         private async Task CargarEvolucionYTablaAsync()
         {
             DateTime desde = DTPFechaDesde.Value.Date;
@@ -397,7 +385,6 @@ namespace CapaPresentacion
             var token = _ctsCarga?.Token ?? CancellationToken.None;
             await CargarEvolucionAsync(desde, hasta, token);
         }
-
         private void PPanelGraficoBarras_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -469,7 +456,6 @@ namespace CapaPresentacion
                 g.DrawString("Costos", fLabels, bTexto, ancho - 75, 12);
             }
         }
-
         private void PPanelGraficoTorta_Paint(object sender, PaintEventArgs e)
         {
             Graphics g = e.Graphics;
@@ -536,7 +522,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void BExportarExcel_Click(object sender, EventArgs e)
         {
             if (DGVResumen.Rows.Count == 0)
@@ -581,7 +566,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void BExportarPDF_Click(object sender, EventArgs e)
         {
             if (DGVResumen.Rows.Count == 0)
@@ -667,7 +651,6 @@ namespace CapaPresentacion
                 g.DrawString("Documento oficial generado por el Sistema de Gestión Hierro y Forja.", fSub, bGris, x, y);
             }
         }
-
         private async void BFiltrar_Click(object sender, EventArgs e)
         {
             if (_ctsCarga == null || _ctsCarga.IsCancellationRequested)

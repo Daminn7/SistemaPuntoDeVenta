@@ -29,7 +29,6 @@ namespace CapaPresentacion
             InitializeComponent();
             InicializarComportamiento();
         }
-
         private async void FormMisVentas_Load(object sender, EventArgs e)
         {
             _ctsCarga = new CancellationTokenSource();
@@ -52,7 +51,6 @@ namespace CapaPresentacion
                 DGVDetalle.Rows.Clear();
             }
         }
-
         protected override void OnFormClosing(FormClosingEventArgs e)
         {
             try
@@ -64,7 +62,6 @@ namespace CapaPresentacion
             catch { }
             base.OnFormClosing(e);
         }
-
         private Image DibujarIconoMisVentas(Color color)
         {
             Bitmap bmp = new Bitmap(32, 32);
@@ -89,22 +86,41 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private void AsignarIconoTitulo()
         {
             if (PBIconoTitulo != null)
                 PBIconoTitulo.Image = DibujarIconoMisVentas(Color.FromArgb(212, 131, 53));
         }
-
         private void InicializarComportamiento()
         {
-            DTPFechaDesde.Value = DateTime.Now.AddDays(-30);
-            DTPFechaHasta.Value = DateTime.Now;
+            // 1. Liberar topes para establecer fechas iniciales seguras
+            DTPFechaDesde.MaxDate = DateTime.Today;
+            DTPFechaHasta.MinDate = DateTimePicker.MinimumDateTime;
+            DTPFechaHasta.MaxDate = DateTime.Today;
+
+            // 2. Asignar rango por defecto (últimos 30 días hasta hoy)
+            DTPFechaDesde.Value = DateTime.Today.AddDays(-30);
+            DTPFechaHasta.Value = DateTime.Today;
+
+            // 3. Fijar restricciones cruzadas no interactivas
+            DTPFechaDesde.MaxDate = DTPFechaHasta.Value.Date;
+            DTPFechaHasta.MinDate = DTPFechaDesde.Value.Date;
 
             TBBuscar.TextChanged += (s, e) => AplicarFiltros();
             CBFiltroEstado.SelectedIndexChanged += (s, e) => AplicarFiltros();
-            DTPFechaDesde.ValueChanged += (s, e) => AplicarFiltros();
-            DTPFechaHasta.ValueChanged += (s, e) => AplicarFiltros();
+
+            // Sincronización estricta de límites permitidos
+            DTPFechaDesde.ValueChanged += (s, e) =>
+            {
+                DTPFechaHasta.MinDate = DTPFechaDesde.Value.Date;
+                AplicarFiltros();
+            };
+
+            DTPFechaHasta.ValueChanged += (s, e) =>
+            {
+                DTPFechaDesde.MaxDate = DTPFechaHasta.Value.Date;
+                AplicarFiltros();
+            };
 
             BLimpiarFiltros.Click += (s, e) =>
             {
@@ -141,7 +157,21 @@ namespace CapaPresentacion
                 await CargarDetalleOrdenAsync(e.RowIndex);
             };
         }
+        private void RestablecerFechasFiltro()
+        {
+            // Liberar límites temporalmente
+            DTPFechaDesde.MaxDate = DateTime.Today;
+            DTPFechaHasta.MinDate = DateTimePicker.MinimumDateTime;
+            DTPFechaHasta.MaxDate = DateTime.Today;
 
+            // Restablecer valores base
+            DTPFechaDesde.Value = DateTime.Today.AddDays(-30);
+            DTPFechaHasta.Value = DateTime.Today;
+
+            // Reaplicar restricciones cruzadas
+            DTPFechaDesde.MaxDate = DTPFechaHasta.Value.Date;
+            DTPFechaHasta.MinDate = DTPFechaDesde.Value.Date;
+        }
         private async Task CargarOrdenesAsync(CancellationToken token = default(CancellationToken))
         {
             try
@@ -167,7 +197,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void MostrarOrdenes(List<OrdenVentaDto> ordenes)
         {
             DGVVentas.SuspendLayout();
@@ -177,7 +206,7 @@ namespace CapaPresentacion
             {
                 int cantItems = orden.Detalles?.Sum(d => d.Cantidad) ?? 0;
 
-                // ✅ Fecha convertida a hora local
+                // Fecha convertida a hora local
                 string fechaStr = FechaHelper.ToArgentinaString(orden.FechaCreacion, "dd/MM/yyyy HH:mm");
 
                 DGVVentas.Rows.Add(
@@ -194,7 +223,6 @@ namespace CapaPresentacion
             DGVVentas.ResumeLayout();
             RecalcularMetricasPersonales();
         }
-
         private async Task CargarDetalleOrdenAsync(int rowIndex)
         {
             var token = _ctsCarga?.Token ?? CancellationToken.None;
@@ -238,7 +266,6 @@ namespace CapaPresentacion
                 }
             }
         }
-
         private void CargarDesplegableEstados()
         {
             CBFiltroEstado.Items.Clear();
@@ -248,7 +275,6 @@ namespace CapaPresentacion
             });
             CBFiltroEstado.SelectedIndex = 0;
         }
-
         private void AplicarFiltros()
         {
             string texto = TBBuscar.Text.Trim().ToLower();
@@ -286,7 +312,6 @@ namespace CapaPresentacion
             _idOrdenSeleccionada = 0;
             _ordenDetalleActual = null;
         }
-
         private void RecalcularMetricasPersonales()
         {
             decimal totalFacturado = 0m;
@@ -318,10 +343,7 @@ namespace CapaPresentacion
             LValorOperaciones.Text = $"{operacionesCobradas} operaciones";
             LValorComision.Text = comision.ToString("C2");
         }
-
-        // ============================================================
-        // ✅ BOTÓN: Reimprimir comprobante
-        // ============================================================
+        // Reimprimir comprobante
         private async void BReimprimirTicket_Click(object sender, EventArgs e)
         {
             if (DGVVentas.CurrentRow == null)
@@ -364,10 +386,7 @@ namespace CapaPresentacion
                     MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
-
-        // ============================================================
-        // ✅ Impresión del ticket COMPLETO con detalle
-        // ============================================================
+        // Impresión del ticket COMPLETO con detalle
         private void ImprimirTicket_PrintPage(object sender, PrintPageEventArgs e)
         {
             if (_ordenDetalleActual == null) return;
@@ -445,10 +464,7 @@ namespace CapaPresentacion
                 g.DrawString($"TOTAL: {orden.Total:C2}", fTitulo, bOcre, x + 500, y);
             }
         }
-
-        // ============================================================
-        // ✅ BOTÓN: Exportar Excel (con datos reales)
-        // ============================================================
+        // Exportar Excel 
         private void BExportarExcel_Click(object sender, EventArgs e)
         {
             if (DGVVentas.Rows.Count == 0)

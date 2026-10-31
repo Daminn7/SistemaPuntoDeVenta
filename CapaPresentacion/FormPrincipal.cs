@@ -36,7 +36,6 @@ namespace CapaPresentacion
             SesionUsuario.Rol = rolUsuario?.ToUpper() ?? "ADMINISTRADOR";
             this.FormClosing += FormPrincipal_FormClosing;
         }
-
         private void FormPrincipal_Load(object sender, EventArgs e)
         {
             this.Bounds = Screen.FromHandle(this.Handle).Bounds;
@@ -46,16 +45,14 @@ namespace CapaPresentacion
             IniciarReloj();
             AplicarPermisosPorRol();
         }
-
         private void ConfigurarSesion()
         {
             if (LUsuarioInfo != null)
                 LUsuarioInfo.Text = $"Usuario: {_nombreUsuario} | Rol: {_rolUsuario.ToUpper()}";
         }
-
         private void ConfigurarBotonLogoInicio()
         {
-            // ✅ CONSERVADO DE MASTER: Solo el Administrador tiene habilitado el logo como acceso al Dashboard
+            // CONSERVADO DE MASTER: Solo el Administrador tiene habilitado el logo como acceso al Dashboard
             string rolActual = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rolActual != "ADMINISTRADOR")
             {
@@ -81,10 +78,9 @@ namespace CapaPresentacion
                 posiblesPanelesLogo[0].Click += (s, e) => IrAlDashboard();
             }
         }
-
         private void IrAlDashboard()
         {
-            // ✅ CONSERVADO DE MASTER: Restricción estricta de acceso
+            // CONSERVADO DE MASTER: Restricción estricta de acceso
             string rolActual = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
             if (rolActual != "ADMINISTRADOR")
             {
@@ -97,7 +93,6 @@ namespace CapaPresentacion
             ResaltarBotonActivo(null);
             AbrirFormularioEnContenedor<FormDashboard>();
         }
-
         private void AplicarPermisosPorRol()
         {
             string rolActual = (SesionUsuario.Rol ?? "ADMINISTRADOR").Trim().ToUpper();
@@ -124,7 +119,6 @@ namespace CapaPresentacion
                     break;
             }
         }
-
         private void OcultarTodosLosBotonesMenu()
         {
             if (BMenuVentas != null) BMenuVentas.Visible = false;
@@ -137,7 +131,6 @@ namespace CapaPresentacion
             if (BMenuReportes != null) BMenuReportes.Visible = false;
             if (BMenuMisVentas != null) BMenuMisVentas.Visible = false;
         }
-
         private void ConfigurarMenuVendedor()
         {
             if (BMenuVentas != null) { BMenuVentas.Text = "PreVenta"; BMenuVentas.Visible = true; }
@@ -146,7 +139,6 @@ namespace CapaPresentacion
             if (BMenuMisVentas != null) { BMenuMisVentas.Text = "Mis Ventas"; BMenuMisVentas.Visible = true; }
             BMenuVentas_Click(null, EventArgs.Empty);
         }
-
         private void ConfigurarMenuCajero()
         {
             if (BMenuCaja != null) { BMenuCaja.Text = "Caja"; BMenuCaja.Visible = true; }
@@ -155,7 +147,6 @@ namespace CapaPresentacion
             if (BMenuProductos != null) { BMenuProductos.Text = "Ver Productos"; BMenuProductos.Visible = true; }
             BMenuCaja_Click(BMenuCaja, EventArgs.Empty);
         }
-
         private void ConfigurarMenuAdministrador()
         {
             if (BMenuVentas != null) { BMenuVentas.Text = "Ventas"; BMenuVentas.Visible = true; }
@@ -168,7 +159,6 @@ namespace CapaPresentacion
             if (BMenuReportes != null) { BMenuReportes.Text = "Informes"; BMenuReportes.Visible = true; }
             BMenuDashboard_Click(null, EventArgs.Empty);
         }
-
         private void IniciarReloj()
         {
             _timerReloj = new Timer { Interval = 1000 };
@@ -181,7 +171,6 @@ namespace CapaPresentacion
             if (LFechaHora != null)
                 LFechaHora.Text = $"🕒 {DateTime.Now:HH:mm:ss}  •  {DateTime.Now:dd/MM/yyyy}";
         }
-
         public void AbrirFormularioEnContenedor<T>() where T : Form, new()
         {
             if (_formularioActivo is T) return;
@@ -196,7 +185,6 @@ namespace CapaPresentacion
             PContenedor.Tag = _formularioActivo;
             _formularioActivo.Show();
         }
-
         private void ResaltarBotonActivo(Button botonSeleccionado)
         {
             Button[] botones = {
@@ -213,7 +201,6 @@ namespace CapaPresentacion
                 botonSeleccionado.BackColor = ColorBotonActivo;
             _botonMenuActivo = botonSeleccionado;
         }
-
         private void GenerarIconosMenu()
         {
             var listaBotones = new (Button boton, string texto, Image icono)[]
@@ -260,8 +247,7 @@ namespace CapaPresentacion
                 };
             }
         }
-
-        // ✅ ICONOS RESTAURADOS (de pablo)
+        // ICONOS RESTAURADOS (de pablo)
         private Image DibujarIconoCompras(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -284,7 +270,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoProveedores(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -303,7 +288,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoVentas(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -323,7 +307,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoClientes(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -343,7 +326,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoCatalogo(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -360,7 +342,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoCaja(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -376,7 +357,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoPersonal(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -393,7 +373,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoInformes(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -411,7 +390,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private Image DibujarIconoMisVentas(Color color)
         {
             Bitmap bmp = new Bitmap(44, 44);
@@ -430,7 +408,6 @@ namespace CapaPresentacion
             }
             return bmp;
         }
-
         private bool ConfirmarCierreSesion()
         {
             using (Form modal = new Form())
@@ -468,7 +445,6 @@ namespace CapaPresentacion
                 return modal.ShowDialog(this) == DialogResult.Yes;
             }
         }
-
         private void FormPrincipal_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (_cerrandoSesion) return;
@@ -483,14 +459,12 @@ namespace CapaPresentacion
                 e.Cancel = true;
             }
         }
-
         protected override void OnFormClosed(FormClosedEventArgs e)
         {
             base.OnFormClosed(e);
             if (_cerrandoSesion)
                 Application.Restart();
         }
-
         private void DetenerReloj()
         {
             if (_timerReloj != null)
@@ -501,7 +475,7 @@ namespace CapaPresentacion
             }
         }
 
-        // ✅ CORREGIDO: async void para no bloquear la UI
+        // CORREGIDO: async void para no bloquear la UI
         private async void BCerrarSesion_Click(object sender, EventArgs e)
         {
             string rol = (SesionUsuario.Rol ?? "").Trim().ToUpper();
@@ -535,7 +509,6 @@ namespace CapaPresentacion
                 this.Close();
             }
         }
-
         private void BMenuProductos_Click(object sender, EventArgs e)
         {
             ResaltarBotonActivo(BMenuProductos);

@@ -214,7 +214,7 @@ namespace CapaPresentacion
 
             try
             {
-                // ✅ MODIFICADO: Ahora recibe out int personalId
+                // MODIFICADO: Ahora recibe out int personalId
                 string error = _usuarioLogica.ValidarLogin(usuario, clave,
                                                             out string rol,
                                                             out string nombreCompleto,
@@ -222,7 +222,7 @@ namespace CapaPresentacion
 
                 if (string.IsNullOrEmpty(error))
                 {
-                    // ✅ NUEVO: Asignar datos a la sesión global
+                    // NUEVO: Asignar datos a la sesión global
                     SesionUsuario.IdPersonal = personalId;
                     SesionUsuario.Nombre = nombreCompleto;
                     SesionUsuario.Rol = rol;
