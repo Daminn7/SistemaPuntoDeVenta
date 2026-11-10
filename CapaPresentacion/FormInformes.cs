@@ -73,34 +73,78 @@ namespace CapaPresentacion
                 var resultado = await _reporteLogica.ObtenerProductosMasVendidos(10);
                 if (this.IsDisposed) return;
 
-                if (resultado is JArray productos)
+                var dt = new System.Data.DataTable();
+                dt.Columns.Add("ProductoNombre", typeof(string));
+                dt.Columns.Add("CantidadTotal", typeof(int));
+                dt.Columns.Add("MontoTotal", typeof(string));
+
+                if (resultado != null)
                 {
-                    var dt = new System.Data.DataTable();
-                    dt.Columns.Add("Producto", typeof(string));
-                    dt.Columns.Add("Cantidad Vendida", typeof(int));
-                    dt.Columns.Add("Total Vendido", typeof(string));
-
-                    foreach (var p in productos)
+                    // Si viene como JArray (Newtonsoft.Json)
+                    if (resultado is Newtonsoft.Json.Linq.JArray productosJArray)
                     {
-                        dt.Rows.Add(
-                            p["nombre"]?.ToString() ?? "",
-                            p["cantidadVendida"]?.Value<int>() ?? 0,
-                            (p["totalVendido"]?.Value<decimal>() ?? 0).ToString("C2")
-                        );
+                        foreach (var p in productosJArray)
+                        {
+                            string nombre = p["nombre"]?.ToString() ?? p["ProductoNombre"]?.ToString() ?? "";
+                            int cantidad = p["cantidadVendida"]?.Value<int>() ?? p["Cantidad"]?.Value<int>() ?? 0;
+                            decimal total = p["totalVendido"]?.Value<decimal>() ?? p["Total"]?.Value<decimal>() ?? 0m;
+
+                            dt.Rows.Add(nombre, cantidad, total.ToString("C2"));
+                        }
                     }
+                    // Si viene como lista o enumerable tipado
+                    else if (resultado is System.Collections.IEnumerable lista)
+                    {
+                        foreach (var item in lista)
+                        {
+                            var json = Newtonsoft.Json.JsonConvert.SerializeObject(item);
+                            var obj = Newtonsoft.Json.Linq.JObject.Parse(json);
 
-                    // Reconfiguramos las columnas de la grilla temporalmente
-                    DGVResumen.SuspendLayout();
+                            string nombre = obj["nombre"]?.ToString() ?? obj["ProductoNombre"]?.ToString() ?? "";
+                            int cantidad = obj["cantidadVendida"]?.Value<int>() ?? obj["Cantidad"]?.Value<int>() ?? 0;
+                            decimal total = obj["totalVendido"]?.Value<decimal>() ?? obj["Total"]?.Value<decimal>() ?? 0m;
 
-                    // Ocultamos las columnas viejas y mostramos las nuevas
-                    DGVResumen.DataSource = null;
-                    DGVResumen.Columns.Clear();
-
-                    DGVResumen.AutoGenerateColumns = true;
-                    DGVResumen.DataSource = dt;
-
-                    DGVResumen.ResumeLayout();
+                            dt.Rows.Add(nombre, cantidad, total.ToString("C2"));
+                        }
+                    }
                 }
+
+                DGVResumen.SuspendLayout();
+                DGVResumen.DataSource = null;
+
+                // 1. Asignar explícitamente el DataPropertyName a las columnas del diseñador
+                ColPeriodo.DataPropertyName = "ProductoNombre";
+                ColPeriodo.HeaderText = "Producto / Insumo";
+                ColPeriodo.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+                ColPeriodo.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
+                ColPeriodo.Visible = true;
+
+                ColCantVentas.DataPropertyName = "CantidadTotal";
+                ColCantVentas.HeaderText = "Cantidad Vendida";
+                ColCantVentas.Width = 160;
+                ColCantVentas.AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet;
+                ColCantVentas.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                ColCantVentas.Visible = true;
+
+                ColTotalVentas.DataPropertyName = "MontoTotal";
+                ColTotalVentas.HeaderText = "Total Facturado ($)";
+                ColTotalVentas.Width = 200;
+                ColTotalVentas.AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet;
+                ColTotalVentas.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+                ColTotalVentas.Visible = true;
+
+                // 2. Ocultar columnas que no aplican a esta vista
+                ColTotalCompras.Visible = false;
+                ColGananciaNeta.Visible = false;
+                ColMargen.Visible = false;
+
+                // 3. Vincular datos
+                DGVResumen.AutoGenerateColumns = false;
+                DGVResumen.DataSource = dt;
+                DGVResumen.ResumeLayout();
+
+                DGVResumen.ClearSelection();
+                if (DGVResumen.CurrentCell != null) DGVResumen.CurrentCell = null;
             }
             catch (Exception ex)
             {
@@ -181,7 +225,6 @@ namespace CapaPresentacion
                     _ventasMes[i] = (float)(p["ingresos"]?.Value<decimal>() ?? 0);
                     _comprasMes[i] = (float)(p["costos"]?.Value<decimal>() ?? 0);
                 }
-
                 ActualizarTablaEvolucion(json);
             }
         }
@@ -293,7 +336,10 @@ namespace CapaPresentacion
             }
         }
         private void CargarTiposReporte()
-        {
+        {      
+            DTPFechaDesde.Value = DateTime.Now.AddMonths(-6);
+            DTPFechaHasta.Value = DateTime.Now;
+
             CBTipoReporte.Items.Clear();
             CBTipoReporte.Items.AddRange(new object[] {
                 "Ventas y Rentabilidad Consolidada",
@@ -302,9 +348,6 @@ namespace CapaPresentacion
                 "Resumen por Medio de Cobro"
             });
             CBTipoReporte.SelectedIndex = 0;
-
-            DTPFechaDesde.Value = DateTime.Now.AddMonths(-6);
-            DTPFechaHasta.Value = DateTime.Now;
         }
         // NUEVO: Al cambiar el tipo de reporte, se ocultan/muestran paneles
         private void CBTipoReporte_SelectedIndexChanged(object sender, EventArgs e)
@@ -358,24 +401,54 @@ namespace CapaPresentacion
         }
         private void RestaurarColumnasEvolucion()
         {
-            if (DGVResumen.Columns.Count > 0 && DGVResumen.Columns[0].Name == "ColPeriodo") return; // Ya está
-
             DGVResumen.SuspendLayout();
-            DGVResumen.DataSource = null;
-            DGVResumen.Columns.Clear();
-            DGVResumen.AutoGenerateColumns = false;
+            ColPeriodo.DataPropertyName = "ColPeriodo";
+            ColCantVentas.DataPropertyName = "ColCantVentas";
+            ColTotalVentas.DataPropertyName = "ColTotalVentas";
+            ColTotalCompras.DataPropertyName = "ColTotalCompras";
+            ColGananciaNeta.DataPropertyName = "ColGananciaNeta";
+            ColMargen.DataPropertyName = "ColMargen";
+            // 1. Restaurar textos originales
+            ColPeriodo.HeaderText = "Período / Día";
+            ColCantVentas.HeaderText = "Comprobantes";
+            ColTotalVentas.HeaderText = "Total Ingresos ($)";
+            ColTotalCompras.HeaderText = "Total Costos ($)";
+            ColGananciaNeta.HeaderText = "Margen Bruto ($)";
+            ColMargen.HeaderText = "Rentab. (%)";
 
-            // Recrear columnas
-            var colPeriodo = new DataGridViewTextBoxColumn { Name = "ColPeriodo", DataPropertyName = "ColPeriodo", HeaderText = "Período" };
-            var colCantVentas = new DataGridViewTextBoxColumn { Name = "ColCantVentas", DataPropertyName = "ColCantVentas", HeaderText = "Comprobantes" };
-            var colTotalVentas = new DataGridViewTextBoxColumn { Name = "ColTotalVentas", DataPropertyName = "ColTotalVentas", HeaderText = "Ingresos" };
-            var colTotalCompras = new DataGridViewTextBoxColumn { Name = "ColTotalCompras", DataPropertyName = "ColTotalCompras", HeaderText = "Costos" };
-            var colGananciaNeta = new DataGridViewTextBoxColumn { Name = "ColGananciaNeta", DataPropertyName = "ColGananciaNeta", HeaderText = "Margen" };
-            var colMargen = new DataGridViewTextBoxColumn { Name = "ColMargen", DataPropertyName = "ColMargen", HeaderText = "Rentabilidad" };
+            // 2. Restaurar anchos y modos del diseñador original
+            ColPeriodo.AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet;
+            ColPeriodo.Width = 140;
+            ColPeriodo.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleLeft;
 
-            DGVResumen.Columns.AddRange(colPeriodo, colCantVentas, colTotalVentas, colTotalCompras, colGananciaNeta, colMargen);
+            ColCantVentas.AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet;
+            ColCantVentas.Width = 110;
+            ColCantVentas.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
 
-            // Volver a cargar la evolución (esto rellena los datos)
+            ColTotalVentas.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            ColTotalVentas.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            ColTotalCompras.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            ColTotalCompras.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            ColGananciaNeta.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            ColGananciaNeta.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+
+            ColMargen.AutoSizeMode = DataGridViewAutoSizeColumnMode.NotSet;
+            ColMargen.Width = 110;
+            ColMargen.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+
+            // 3. Hacer visibles todas las columnas
+            ColPeriodo.Visible = true;
+            ColCantVentas.Visible = true;
+            ColTotalVentas.Visible = true;
+            ColTotalCompras.Visible = true;
+            ColGananciaNeta.Visible = true;
+            ColMargen.Visible = true;
+
+            DGVResumen.ResumeLayout();
+
+            // 4. Volver a cargar los datos de evolución
             _ = CargarEvolucionYTablaAsync();
         }
         private async Task CargarEvolucionYTablaAsync()
